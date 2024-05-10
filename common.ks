@@ -62,5 +62,5 @@ function printLine {
 		set currentPrintLine to currentPrintLine + 1.
 		print text.
 	}
-	set priorLineOverwritable = overwriteLast.
+	set priorLineOverwritable to overwriteLast.
 }

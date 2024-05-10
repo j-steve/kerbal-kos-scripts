@@ -43,12 +43,13 @@ if lateralMotion > 0.11 and collisionEta > 60 {
 				lock THROTTLE to 0.2.
 			}
 		} else {
-			printLine("Waiting for heading alignment | lateralMotion = " + round(lateralMotion), true).
+			printLine("Waiting for alignment | lateralMotion = " + round(lateralMotion), true).
 			lock THROTTLE to 0.
 		}
 	}
 	lock THROTTLE to 0.
-	printLine("  OK").
+	unlock THROTTLE.
+	printLine("  done").
 }
 if collisionEta < 60 {
 	printLine("No time for lateral burn kill, collision in " + collisionEta).
@@ -63,21 +64,24 @@ printLine("Waiting for final descent burn...").
 //wait until calcMaxFallSpeed(SHIP:ALTITUDE) <= SHIP:VELOCITY:SURFACE:MAG * 1.15. // 1.15 = 15% "saftey buffer" in stopping distance.
 lock surfaceBurnTime to SHIP:VELOCITY:SURFACE:MAG / acceleration.
 if collisionEta - surfaceBurnTime > 30 {
+	printLine("  Warping to get closer to burn time...").
 	set WARP to 2.
 	wait until collisionEta - surfaceBurnTime < 30 or collisionEta < MIN_COLLISION_ETA.
 	set WARP to 0.
+	printLine("    done").
 }
 until surfaceBurnTime >= collisionEta {
-	unlock throttle.
-	printLine("collision ETA: " + round(collisionEta) + " | burn time: " + round(surfaceBurnTime), true).
+	printLine("  collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s", true).
 }
 set WARP to 0.
 if surfaceBurnTime > MIN_BURN_TIME or collisionEta < MIN_COLLISION_ETA {
 	printLine("Starting final descent burn...").
-	set WARP to 0.
-	lock THROTTLE to 1.
-	wait until fallSpeed < TARGET_TOUCHDOWN_SPEED.
-	printLine("  OK").
+	//until fallSpeed < TARGET_TOUCHDOWN_SPEED {
+	until ALT:RADAR < 10 {
+		printLine("collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s | speed: " + round(fallSpeed), true).
+		lock THROTTLE to surfaceBurnTime / collisionEta.
+	}
+	printLine("  done").
 	lock THROTTLE to 0.
 }
 lock STEERING to SRFRETROGRADE.
@@ -96,7 +100,7 @@ until ALT:RADAR < 4 {
 		lock THROTTLE to 0.
 	}
 }
-printLine("  OK").
+printLine("  done").
 
 printLine("Landed! (Hopefully!)").
 
