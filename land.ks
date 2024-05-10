@@ -1,6 +1,7 @@
 RUNPATH("0:/common.ks").
 
 clearscreen.
+SAS off.
 printLine("Executing landing.").
 printLine("").
 
