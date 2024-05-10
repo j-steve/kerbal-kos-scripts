@@ -9,6 +9,8 @@ printLine("").
 local MIN_BURN_TIME is 1.5.
 // Height in m at which to shut off the engines, should be slightly above ground level so we fall the last few meters.
 local ENGINE_CUTOFF_ALTITUDE is 1.
+// Pretend the terrain is this many meters higher, so that we land with some buffer.
+local RADAR_HEIGHT_OFFSET is 0.
 // If the jets aren't on and collision is within this many seconds, turn on the jets!!  There might not be time for a correction otherwise.
 local MIN_COLLISION_ETA is 5.
 // How many seconds ahead of a start time we should come out of warp, to be safe.  Prevents warping past the expected start time.
@@ -17,8 +19,9 @@ local WARP_BUFFER_SECONDS is 30.
 local shipHeightOffset is calcShipHeight().
 
 lock fallSpeed to -VERTICALSPEED.
-lock collisionEta to (ALT:RADAR + shipHeightOffset) / fallSpeed.
-
+lock collisionEta to (ALT:RADAR - shipHeightOffset - RADAR_HEIGHT_OFFSET) / fallSpeed.
+lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
+lock surfaceBurnTime to SHIP:VELOCITY:SURFACE:MAG / acceleration.
 
 if ALT:RADAR > 50000 {
 	printLine("Warping to get close...").
@@ -26,16 +29,14 @@ if ALT:RADAR > 50000 {
 	wait until ALT:RADAR < 50000.
 }
 
-set WARP to 0.
-
 // Burn to 0 so we are falling straight down.
+set WARP to 0.
 lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
 if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 	alignRetrograde().
 	printLine("Burning retrograde to kill lateral motion...").
 	until lateralMotion < 0.1 or (collisionEta > 0 and collisionEta < 60) {
 		if isFacingRetrograde() {
-			lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 			lock orbitBurnTime to SHIP:VELOCITY:ORBIT:MAG / acceleration.
 			if orbitBurnTime > MIN_BURN_TIME {
 				printLine("  Doing solid burn for <= " + round(orbitBurnTime) + "s", true).
@@ -61,12 +62,11 @@ if collisionEta < 60 {
 // Lock steering to surface retrograde.
 printLine("Angling to surface retrograde..."). 
 lock STEERING to SRFRETROGRADE.
-wait until isFacingSurfaceRetrograde() or collisionEta - surfaceBurnTime > WARP_BUFFER_SECONDS.
+wait until isFacingSurfaceRetrograde() or collisionEta - surfaceBurnTime < WARP_BUFFER_SECONDS.
 printline("  done").
 
 // Wait for final descent burn time start (warp if needed).
 printLine("Waiting for final descent burn...").
-lock surfaceBurnTime to SHIP:VELOCITY:SURFACE:MAG / acceleration.
 if collisionEta - surfaceBurnTime > WARP_BUFFER_SECONDS {
 	printLine("  Warping to get closer to burn time...").
 	wait 1. // Not sure why this is needed, maybe warp cant start because engine is still running?
@@ -88,15 +88,15 @@ until ALT:RADAR <= shipHeightOffset + ENGINE_CUTOFF_ALTITUDE {
 }
 printLine("  done").
 
-// Stabalize
+// Stabalize touchdown.
 lock STEERING to UP.
 lock THROTTLE to 0.
 unlock THROTTLE.
 printLine("Landed! (Hopefully!)").
-printLine("Stabalizing...").
+printLine("Stabalizing for 20s...").
 wait 20.
 
-// Quit
+// Exit the program.
 printLine("Landing sequence complete.").
 SAS on.
 unlock STEERING.

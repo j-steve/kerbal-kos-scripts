@@ -58,11 +58,15 @@ function printLine {
 		if not priorLineOverwritable {
 			// Add a "real" line for this overwritable line to use, to prevent it from overwriting non-overwritable text
 			// and so that subsequent "print" statements show up on the subsequent line rather than on this line.
-			print CLEAR_LINE.
+			print "".
 		}
 		set text to text + CLEAR_LINE.
 		print text at (0, currentPrintLine).
 	} else {
+		if priorLineOverwritable {
+			// Clear the text from the prior line.
+			print CLEAR_LINE at (0, currentPrintLine - 1).
+		}
 		set currentPrintLine to currentPrintLine + 1.
 		print text.
 	}
