@@ -16,8 +16,11 @@ local MIN_COLLISION_ETA is 5.
 // How many seconds ahead of a start time we should come out of warp, to be safe.  Prevents warping past the expected start time.
 local WARP_BUFFER_SECONDS is 30.
 
+local shipHeightOffset = calcShipHeightOffset().
+
 lock fallSpeed to -VERTICALSPEED.
 lock collisionEta to (ALT:RADAR + TARGET_STOP_ALTITUDE) / fallSpeed.
+
 
 if ALT:RADAR > 50000 {
 	printLine("Warping to get close...").
@@ -66,7 +69,7 @@ printLine("Waiting for final descent burn...").
 lock surfaceBurnTime to SHIP:VELOCITY:SURFACE:MAG / acceleration.
 if collisionEta - surfaceBurnTime > WARP_BUFFER_SECONDS {
 	printLine("  Warping to get closer to burn time...").
-	set WARP to 2.
+	wait 1. // Not sure why this is needed, maybe warp cant start because engine is still running?
 	set WARP to 2.
 	wait until collisionEta - surfaceBurnTime < WARP_BUFFER_SECONDS or collisionEta < MIN_COLLISION_ETA.
 	set WARP to 0.
@@ -91,6 +94,10 @@ printLine("  done").
 printLine("Landed! (Hopefully!)").
 unlock STEERING.
 SAS on.
+
+
+function calcShipHeightOffset() {
+}
 
 // Function to calculate gravitational acceleration
 function CalculateGravity {
