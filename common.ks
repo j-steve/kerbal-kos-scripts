@@ -46,7 +46,7 @@ function isFacingRetrograde {
 
 local currentPrintLine is -1.
 local priorLineOverwritable is false.
-local CLEAR_LINE is "                                                                                          ".
+local CLEAR_LINE is "                                                                                                  ".
 
 function printLine {
 	parameter text, overwriteLast is false.
@@ -54,7 +54,7 @@ function printLine {
 		if not priorLineOverwritable {
 			// Add a "real" line for this overwritable line to use, to prevent it from overwriting non-overwritable text
 			// and so that subsequent "print" statements show up on the subsequent line rather than on this line.
-			print "".
+			print CLEAR_LINE.
 		}
 		set text to text + CLEAR_LINE.
 		print text at (0, currentPrintLine).

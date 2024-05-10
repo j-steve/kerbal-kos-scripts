@@ -7,15 +7,17 @@ printLine("").
 // The minimum safe time for a burn; shorter than this and there is the risk of accidentally burning too long,
 // so we will lower the max engine output accordingly.
 local MIN_BURN_TIME is 1.5.
-// Ideal speed for touchdown in m/s.
-local TARGET_TOUCHDOWN_SPEED is 5.
+// Height in m above actual ground level at which we will target coming to a complete stop.
+local TARGET_STOP_ALTITUDE is 10.
 // Height in m at which to shut off the engines, should be slightly above ground level so we fall the last few meters.
-local ENGINE_CUTOFF_ALTITUDE is 0.
+local ENGINE_CUTOFF_ALTITUDE is 1.
 // If the jets aren't on and collision is within this many seconds, turn on the jets!!  There might not be time for a correction otherwise.
 local MIN_COLLISION_ETA is 5.
+// How many seconds ahead of a start time we should come out of warp, to be safe.  Prevents warping past the expected start time.
+local WARP_BUFFER_SECONDS is 30.
 
 lock fallSpeed to -VERTICALSPEED.
-lock collisionEta to (ALT:RADAR + ENGINE_CUTOFF_ALTITUDE) / fallSpeed.
+lock collisionEta to (ALT:RADAR + TARGET_STOP_ALTITUDE) / fallSpeed.
 
 if ALT:RADAR > 50000 {
 	printLine("Warping to get close...").
@@ -23,27 +25,27 @@ if ALT:RADAR > 50000 {
 	wait until ALT:RADAR < 50000.
 }
 
-set warp to 0.
+set WARP to 0.
 
 // Burn to 0 so we are falling straight down.
 lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
 if lateralMotion > 0.11 and collisionEta > 60 {
-	printLine("Burning retrograde to kill lateral motion...").
 	alignRetrograde().
+	printLine("Burning retrograde to kill lateral motion...").
 	until lateralMotion < 0.1 or collisionEta < 60 {
 		if isFacingRetrograde() {
 			lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 			lock orbitBurnTime to SHIP:VELOCITY:ORBIT:MAG / acceleration.
 			if orbitBurnTime > MIN_BURN_TIME {
-				printLine("Doing solid burn for <=" + round(orbitBurnTime) + "s", true).
+				printLine("  Doing solid burn for <= " + round(orbitBurnTime) + "s", true).
 				lock THROTTLE to 1.
 			}
 			if SHIP:VELOCITY:ORBIT:MAG  < 10 {
-				printLine("Doing correction burn | lateralMotion = " + round(lateralMotion), true).
+				printLine("  Doing correction burn | lateral speed: " + round(lateralMotion), true).
 				lock THROTTLE to 0.2.
 			}
 		} else {
-			printLine("Waiting for alignment | lateralMotion = " + round(lateralMotion), true).
+			printLine("  Waiting for alignment | lateral speed: " + round(lateralMotion), true).
 			lock THROTTLE to 0.
 		}
 	}
@@ -55,54 +57,40 @@ if collisionEta < 60 {
 	printLine("No time for lateral burn kill, collision in " + collisionEta).
 }
 
-// Lock steering to veritical.
-printLine("Locking steering to up.").
-lock steering to up.
+// Lock steering to surface retrograde.
+printLine("Locking steering to surface retrograde."). 
+lock STEERING to SRFRETROGRADE..
 
-// Wait then burn for final slow.
+// Wait for final descent burn time start (warp if needed).
 printLine("Waiting for final descent burn...").
-//wait until calcMaxFallSpeed(SHIP:ALTITUDE) <= SHIP:VELOCITY:SURFACE:MAG * 1.15. // 1.15 = 15% "saftey buffer" in stopping distance.
 lock surfaceBurnTime to SHIP:VELOCITY:SURFACE:MAG / acceleration.
-if collisionEta - surfaceBurnTime > 30 {
+if collisionEta - surfaceBurnTime > WARP_BUFFER_SECONDS {
 	printLine("  Warping to get closer to burn time...").
 	set WARP to 2.
-	wait until collisionEta - surfaceBurnTime < 30 or collisionEta < MIN_COLLISION_ETA.
+	set WARP to 2.
+	wait until collisionEta - surfaceBurnTime < WARP_BUFFER_SECONDS or collisionEta < MIN_COLLISION_ETA.
 	set WARP to 0.
 	printLine("    done").
 }
 until surfaceBurnTime >= collisionEta {
 	printLine("  collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s", true).
 }
+
+// Execute final descent burn.
 set WARP to 0.
-if surfaceBurnTime > MIN_BURN_TIME or collisionEta < MIN_COLLISION_ETA {
-	printLine("Starting final descent burn...").
-	//until fallSpeed < TARGET_TOUCHDOWN_SPEED {
-	until ALT:RADAR < 10 {
-		printLine("collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s | speed: " + round(fallSpeed), true).
-		lock THROTTLE to surfaceBurnTime / collisionEta.
-	}
-	printLine("  done").
-	lock THROTTLE to 0.
+printLine("Starting final descent burn...").
+until ALT:RADAR < ENGINE_CUTOFF_ALTITUDE {
+	printLine("  collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s | speed: " + round(fallSpeed), true).
+	lock THROTTLE to surfaceBurnTime / collisionEta.
 }
-lock STEERING to SRFRETROGRADE.
-
-wait until ALT:RADAR < 500.
-
-// Set speed to counteract gravity and float down.
-
-printLine("Hovering down to 5m...").
-until ALT:RADAR < 4 {
-	if fallSpeed > TARGET_TOUCHDOWN_SPEED * 2 {
-		lock THROTTLE to 1.
-	} else if fallSpeed > TARGET_TOUCHDOWN_SPEED {
-		lock THROTTLE to 0.25.
-	} else {
-		lock THROTTLE to 0.
-	}
-}
+lock THROTTLE to 0.
+unlock THROTTLE.
 printLine("  done").
 
+// Finalize
 printLine("Landed! (Hopefully!)").
+unlock STEERING.
+SAS on.
 
 // Function to calculate gravitational acceleration
 function CalculateGravity {
