@@ -9,6 +9,15 @@ until false {
 wait 1.
 }
 
+// Returns the height of the ship above ground.
+// Specifically, the height of the core part (the space capsule or control pod) 
+// relative to the height of the lowest-level part (presumably an engine).
+// Useful because basic altitutde caluclation is relative to the core of the ship, not its base.
+function getShipHeight {
+	local lowestPart is getLowestPart().
+	return getPartHeight(SHIP:PARTS[0]) - getPartHeight(lowestPart)
+}
+
 
 function getLowestPart {
     local lowestPartHeight is getPartHeight(SHIP:PARTS[0]).

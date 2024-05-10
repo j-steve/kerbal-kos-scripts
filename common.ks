@@ -44,6 +44,10 @@ function isFacingRetrograde {
 	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 1.
 }
 
+function isFacingSurfaceRetrograde {
+	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 1.
+}
+
 local currentPrintLine is -1.
 local priorLineOverwritable is false.
 local CLEAR_LINE is "                                                                                                  ".
