@@ -33,6 +33,7 @@ if ALT:RADAR > 50000 {
 // Burn to 0 so we are falling straight down.
 set WARP to 0.
 lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
+set closeEnoughTimeout to 0.
 if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 	alignRetrograde().
 	printLine("Burning retrograde to kill lateral motion...").
@@ -46,6 +47,15 @@ if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 			if SHIP:VELOCITY:ORBIT:MAG  < 10 {
 				printLine("  Doing correction burn | lateral speed: " + round(lateralMotion), true).
 				setThrottle(0.2).
+			}
+			// Prevent getting stuck forever making small changes.
+			if lateralMotion < 5 {
+				if closeEnoughTimeout = 0 {
+					set closeEnoughTimeout to time:seconds + 30.
+				} else if time:seconds >= closeEnoughTimeout {
+					printLine("  Close enough, correction timed out. | lateral speed: " + round(lateralMotion)).
+					break.
+				}
 			}
 		} else {
 			printLine("  Waiting for alignment | lateral speed: " + round(lateralMotion), true).
@@ -83,7 +93,7 @@ until surfaceBurnTime >= collisionEta {
 // Execute final descent burn.
 set WARP to 0.
 printLine("Starting final descent burn...").
-until ALT:RADAR <= shipHeightOffset + ENGINE_CUTOFF_ALTITUDE {
+until ALT:RADAR <= shipHeightOffset + ENGINE_CUTOFF_ALTITUDE or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED" {
 	printLine("  collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s | speed: " + round(fallSpeed), true).
 	setThrottle(surfaceBurnTime / collisionEta).
 }
