@@ -46,12 +46,15 @@ if (burnTime > 1) {
 } else {
 	lock THROTTLE to 0.1.
 }
-if SHIP:DELTAV:CURRENT < NEXTNODE:DELTAV:MAG {
+lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
+until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	print "Insufficient thrust in this stage, will have to stage mid-burn.".
-	set stageBurnTime to SHIP:DELTAV:CURRENT / acceleration.
-	wait until SHIP:DELTAV:CURRENT < 0.001.
+	set stageBurnTime to stageDeltaV / acceleration.
+	wait until stageDeltaV <= 0.
 	print "Staging.".
 	stage.
+	wait 10. // Wait for new values so acceleration is updated for next stage.
+	print "  done".
 	set burnTime to burnTime - stageBurnTime.
 }
 //wait burnTime - 5.

@@ -107,7 +107,7 @@ function setThrottle {
 	if SHIP:AVAILABLETHRUST = 0 {
 		lock THROTTLE to 0.
 		stage.
-		wait 1.
+		wait 10. // Wait for new values so acceleration is updated for next stage.
 		set shipHeightOffset to calcShipHeight().
 	} else {
 		lock THROTTLE to throttleVal.
