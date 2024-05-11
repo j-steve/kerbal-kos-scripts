@@ -8,6 +8,13 @@ SAS off.
 lock STEERING to NEXTNODE:BURNVECTOR.
 wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < 0.05.
 
+// Pre-stage, if needed
+until SHIP:AVAILABLETHRUST > 0 {
+	print "No thrust, staging.".
+	stage.
+	wait 5. // Wait for new values so acceleration is updated for next stage.
+}
+
 // Calculate burn time.
 print "Aligned, warping to node start...".
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
