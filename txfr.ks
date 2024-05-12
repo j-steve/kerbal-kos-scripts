@@ -1,8 +1,17 @@
 run common.ks.
 
-run circ.ks. // Orbit must be circularized for subsequent calculations.
+executeTransfer().
 
-createHoffmanTxfrNode(MINMUS:OBT).
+function executeTransfer {
+	if not HASTARGET {
+		printLine("Please select transfer target first.").
+		return.
+	}
+	printLine("Performing Hoffman transfer to " + TARGET:NAME + "...").
+	run circ.ks. // Orbit must be circularized for subsequent calculations.
+	createHoffmanTxfrNode(TARGET:OBT).
+	run mnode.ks.
+}
 
 function createHoffmanTxfrNode {
 	parameter targetOrbit.
