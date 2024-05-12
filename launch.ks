@@ -80,7 +80,7 @@ function calcRequiredVelocityAtApoapsis {
     local periapsisRadius is desiredPeriapsis + BODY:RADIUS. // desired radius at periapsis
 
     // calculate semi-major axis of the new orbit
-    local semiMajorAxis is (apoapsisRadius + periapsisRadius) / 2.
+    local semiMajorAxis is calcSemiMajorAxis(apoapsisRadius, periapsisRadius).
 
     // use vis-viva equation to calculate the required velocity at apoapsis
     local visViva is sqrt(BODY:MU * (2 / apoapsisRadius - 1 / semiMajorAxis)).

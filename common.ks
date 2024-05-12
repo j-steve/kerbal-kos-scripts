@@ -72,3 +72,10 @@ function printLine {
 	}
 	set priorLineOverwritable to overwriteLast.
 }
+
+// Given two orbit radiuses, calculates the semi-major axis between them, which is the straight-line distance between the them
+// (assuming both orbits are circular and on the same plane).
+function calcSemiMajorAxis {
+	parameter radius1, radius2.
+	return (radius1 + radius2) / 2.
+}

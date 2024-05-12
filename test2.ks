@@ -1,30 +1,29 @@
-
-clearscreen.
-
-print "Creating circularization node.".
-local currentV is SHIP:ORBIT:VELOCITY:ORBIT:MAG. // Ideally this would be the projected velocity at apoapsis point instead.
-local requiredV is calcRequiredVelocityAtApoapsis(75000).
-local deltaV is requiredV - currentV.
-
-// create maneuver node at apoapsis with the calculated deltaV as the prograde component
-add node(TIME:SECONDS + ETA:APOAPSIS, deltaV, 0, 0).
+run common.ks.
+//print getPhaseAngle().
+//print calcPhaseAngle().
+local semiMajorAxis is calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS, MUN:ORBIT:APOAPSIS).
+print calcOrbitPeriod(semiMajorAxis, KERBIN).
+print calcOrbitPeriod(ship:orbit:semiMajorAxis, KERBIN).
 
 //stage.
 //wait until SHIP:VELOCITY:ORBIT:MAG >= 100.
 
+function getPhaseAngle {
+    local munPos is mun:position - kerbin:position.
+    local shipPos is ship:position - kerbin:position.
+    local phaseAngle is vang(shipPos, munPos).
+    if vdot(vcrs(shipPos, munPos), kerbin:position:normalized) < 0 {
+        set phaseAngle to 360 - phaseAngle.
+    }
+    return phaseAngle.
+}
 
+function calcPhaseAngle {
+	set x to 10.
+	return 180 - x.
+}
 
-// function to calculate required velocity at apoapsis to achieve desired periapsis
-function calcRequiredVelocityAtApoapsis {
-    parameter desiredPeriapsis. // desired periapsis altitude in meters
-
-    local apoapsisRadius is ship:apoapsis + BODY:RADIUS. // radius at apoapsis
-    local periapsisRadius is desiredPeriapsis + BODY:RADIUS. // desired radius at periapsis
-
-    // calculate semi-major axis of the new orbit
-    local semiMajorAxis is (apoapsisRadius + periapsisRadius) / 2.
-
-    // use vis-viva equation to calculate the required velocity at apoapsis
-    local visViva is sqrt(BODY:MU * (2 / apoapsisRadius - 1 / semiMajorAxis)).
-    return visViva.
+function calcOrbitPeriod {
+	parameter semiMajorAxis, soiBody.
+	return 2 * CONSTANT:PI * SQRT(semiMajorAxis ^ 3 / soiBody:MU).
 }
