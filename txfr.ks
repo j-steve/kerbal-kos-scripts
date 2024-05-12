@@ -2,19 +2,23 @@ run common.ks.
 //print getPhaseAngle().
 //print calcPhaseAngle().
 local txfrSemiMajorAxis is calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS + BODY:RADIUS, MUN:ORBIT:APOAPSIS + BODY:RADIUS).
-local txfrOrbitPeriod is calcOrbitPeriod(txfrSemiMajorAxis).
-local txfrTime is txfrOrbitPeriod / 2. // Only outbound trip is relevent, so split total period in half.
-printLine(".").
-printLine(".").
-printLine(calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS, SHIP:ORBIT:PERIAPSIS)).
-printLine(calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS, SHIP:ORBIT:PERIAPSIS) + KERBIN:RADIUS).
-printLine(calcOrbitPeriod(ship:orbit:semiMajorAxis)).
-printLine(".").
-printLine("WAITTIME: " + waitTime()).
-printLine("WAITTIME: " + (waitTime() / 365)).
-printLine("WAITTIME: " + (waitTime() / 24 /  365)).
-printLine("WAITTIME: " + (waitTime() / 60 / 24 /  365)).
-printLine("WAITTIME: " + (waitTime() / 60 / 60 / 24 /  365)).
+//local txfrOrbitPeriod is calcOrbitPeriod(txfrSemiMajorAxis).
+//local txfrTime is txfrOrbitPeriod / 2. // Only outbound trip is relevent, so split total period in half.
+//printLine(".").
+//printLine(".").
+//printLine(calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS, SHIP:ORBIT:PERIAPSIS)).
+//printLine(calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS, SHIP:ORBIT:PERIAPSIS) + KERBIN:RADIUS).
+//printLine(calcOrbitPeriod(ship:orbit:semiMajorAxis)).
+//printLine(".").
+//printLine("WAITTIME: " + (waitTime() / 60 / 60 / 24 /  365)).
+
+local waitTimmee is newWaitTime(MUN:ORBIT:PERIOD, SHIP:ORBIT:PERIOD, txfrSemiMajorAxis, BODY:MU).
+//local fakeSemiMajor is calcSemiMajorAxis(4.53239* 10 ^9, 1.08209 * 10 ^ 8).
+//newWaitTime(60910.25 * 86400, 224.70 * 86400, fakeSemiMajor, 1.32712 * 10 ^ 11).
+local currentRadius is ship:altitude + body:radius. // Assuming at current altitude
+local txfrDeltaV is calcVisViva(currentRadius, ship:orbit:semimajoraxis, currentRadius, txfrSemiMajorAxis).
+add node(TIME:SECONDS + waitTimmee, 0, 0, txfrDeltaV).
+
 
 //stage.
 //wait until SHIP:VELOCITY:ORBIT:MAG >= 100.
@@ -25,23 +29,26 @@ function calcOrbitPeriod {
 	return 2 * CONSTANT:PI * SQRT(semiMajorAxis ^ 3 / BODY:MU).
 }
 
-function waitTime {
-	local T_i is 60910.25. // days
-	local T_f is 224.70. //  days
-	local n_i is 2 * CONSTANT:PI / (T_i * 86400). // seconds.
-	local n_f is 2 * CONSTANT:PI / (T_f * 86400). // seconds.
-	// OK to this point at least.
+function newWaitTime {
+	parameter orbitPeriodOrigin, orbitPeriodDestination, semiMajorAxis, muu.
+	local n_i is calcMeanMotion(orbitPeriodOrigin).
+	local n_f is calcMeanMotion(orbitPeriodDestination).
 	local r_i is 4.53239E9.
 	local r_f is 1.08209E8.
 	local a_t is (r_i + r_f) / 2.  // km
-	// local t_12 is CONSTANT:PI / SQRT(BODY:MU) * a_t ^ (3/2).
-	local t_12 is CONSTANT:PI / SQRT(1.32712 * 10 ^ 11) * a_t ^ (3/2).
-
+	local t_12 is CONSTANT:PI / SQRT(muu) * semiMajorAxis ^ (3/2).
 	local gamma_1 is calcPhaseAngle(n_f, t_12).
-	printLine("gamma_1:" + gamma_1).
 	local gamma_2 is calcPhaseAngle(n_i, t_12).
-	printLine("gamma_2:" + gamma_2).
-    return (-2 * gamma_2 + 2 * CONSTANT:PI) / (n_f - n_i).
+    local waitTimee is (-2 * gamma_2 + 2 * CONSTANT:PI * 1) / (n_f - n_i).
+	printLine("Wait time: " + waitTimee + "s / " + (waitTimee / 60 / 60 / 24 / 365) + "m").
+	return waitTimee.
+}
+
+// Given an orbit period (number of seconds to complete 1 orbit), returns the mean motion
+// (the angular speed required for a body to complete one orbit), assuming a perfectly circular orbit.
+function calcMeanMotion {
+	parameter orbitPeriod.
+	return 2 * CONSTANT:PI / orbitPeriod.
 }
 
 function calcPhaseAngle {
@@ -49,12 +56,23 @@ function calcPhaseAngle {
 	return MOD(CONSTANT:PI - meanMotion1 * meanMotion2, 2 * CONSTANT:PI).
 }
 
-function getPhaseAngle {
-    local munPos is mun:position - kerbin:position.
-    local shipPos is ship:position - kerbin:position.
-    local phaseAngle is vang(shipPos, munPos).
-    if vdot(vcrs(shipPos, munPos), kerbin:position:normalized) < 0 {
-        set phaseAngle to 360 - phaseAngle.
-    }
-    return phaseAngle.
+function calcVisViva {
+    parameter rCurrent, aCurrent, rManeuver, aNew.
+    local mu is body:mu.
+    // Calculate current orbital speed
+    local vCurrent is sqrt(body:mu * (2 / rCurrent - 1 / aCurrent)).
+
+    // Calculate required orbital speed at the point of maneuver
+    local vNew is sqrt(body:mu * (2 / rManeuver - 1 / aNew)).
+
+    // Calculate delta-v
+    local deltaV is abs(vNew - vCurrent).
+
+    return deltaV.
+
+}
+
+function calcOrbitalSpeed {
+	parameter radius, semiMajorAxis.
+	return sqrt(BODY:MU * (2 / radius - 1 / semiMajorAxis)).
 }
