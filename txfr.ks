@@ -59,22 +59,6 @@ function calcPhaseAngle {
 	return MOD(CONSTANT:PI - meanMotion1 * meanMotion2, 2 * CONSTANT:PI).
 }
 
-function calcVisViva {
-    parameter rCurrent, aCurrent, rManeuver, aNew.
-    local mu is body:mu.
-    // Calculate current orbital speed
-    local vCurrent is sqrt(body:mu * (2 / rCurrent - 1 / aCurrent)).
-
-    // Calculate required orbital speed at the point of maneuver
-    local vNew is sqrt(body:mu * (2 / rManeuver - 1 / aNew)).
-
-    // Calculate delta-v
-    local deltaV is abs(vNew - vCurrent).
-
-    return deltaV.
-
-}
-
 function calcOrbitalSpeed {
 	parameter radius, semiMajorAxis.
 	return sqrt(BODY:MU * (2 / radius - 1 / semiMajorAxis)).
