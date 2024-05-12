@@ -79,19 +79,11 @@ function calcTimeToTxfr {
 	// and its position when the ship arrives at the target.
 	local targetElapsedTravel is txfrOrbitPeriod / 2 / targetOrbitPeriod.
 	
-	printLine("txfrOrbitPeriod: " + txfrOrbitPeriod).
-	printLine("shipOrbitPeriod: " + shipOrbitPeriod).
-	printLine("targetOrbitPeriod: " + targetOrbitPeriod).
-	printLine("shipPosition: " + shipPosition).
-	printLine("targetPosition: " + targetPosition).
-	printLine(".").
-	
 	local bestTimeToGo is -1.
-	from {local i is -2.} until i >= 5 step {set i to i+1.} do {
+	from {local i is -1.} until i >= 5 step {set i to i+1.} do {
 		set numerator to (targetElapsedTravel+(targetPosition-CONSTANT:PI-shipPosition)/(2*CONSTANT:PI)+i).
 		set denominator to ((targetOrbitPeriod-shipOrbitPeriod)/(targetOrbitPeriod*shipOrbitPeriod)).
 		local timeToGo is numerator / denominator.
-        printLine("#" + i + ": " + timeToGo).
 		if timeToGo > 0 and (bestTimeToGo < 0 or timeToGo < bestTimeToGo) {
 			set bestTimeToGo to timeToGo.
 		}
