@@ -12,17 +12,13 @@ local txfrSemiMajorAxis is calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS + BODY:RADIUS, 
 //printLine(".").
 //printLine("WAITTIME: " + (waitTime() / 60 / 60 / 24 /  365)).
 
-local waitTimmee is newWaitTime(MUN:ORBIT:PERIOD, SHIP:ORBIT:PERIOD, txfrSemiMajorAxis, BODY:MU).
-//local fakeSemiMajor is calcSemiMajorAxis(4.53239* 10 ^9, 1.08209 * 10 ^ 8).
-//newWaitTime(60910.25 * 86400, 224.70 * 86400, fakeSemiMajor, 1.32712 * 10 ^ 11).
+local waitTimmee is newWaitTime( SHIP:ORBIT:PERIOD, MUN:ORBIT:PERIOD,txfrSemiMajorAxis, BODY:MU).
+// set waitTimmee to waitTimmee - SHIP:ORBIT:PERIOD / 2. // There's a mistake somewhere that is flipping swhich side of the planet we need to burn at.
+local fakeSemiMajor is calcSemiMajorAxis(4.53239* 10 ^9, 1.08209 * 10 ^ 8).
+newWaitTime(60910.25 * 86400, 224.70 * 86400, fakeSemiMajor, 1.32712 * 10 ^ 11).
 local currentRadius is ship:altitude + body:radius. // Assuming at current altitude
 local txfrDeltaV is calcVisViva(currentRadius, ship:orbit:semimajoraxis, currentRadius, txfrSemiMajorAxis).
-add node(TIME:SECONDS + waitTimmee, 0, 0, txfrDeltaV).
-
-
-//stage.
-//wait until SHIP:VELOCITY:ORBIT:MAG >= 100.
-
+add node(TimeSpan(-waitTimmee), 0, 0, txfrDeltaV).
 
 function calcOrbitPeriod {
 	parameter semiMajorAxis.
@@ -33,14 +29,14 @@ function newWaitTime {
 	parameter orbitPeriodOrigin, orbitPeriodDestination, semiMajorAxis, muu.
 	local n_i is calcMeanMotion(orbitPeriodOrigin).
 	local n_f is calcMeanMotion(orbitPeriodDestination).
-	local r_i is 4.53239E9.
-	local r_f is 1.08209E8.
-	local a_t is (r_i + r_f) / 2.  // km
+	//local r_i is 4.53239E9.
+	//local r_f is 1.08209E8.
+	//local a_t is (r_i + r_f) / 2.  // km
 	local t_12 is CONSTANT:PI / SQRT(muu) * semiMajorAxis ^ (3/2).
 	local gamma_1 is calcPhaseAngle(n_f, t_12).
 	local gamma_2 is calcPhaseAngle(n_i, t_12).
     local waitTimee is (-2 * gamma_2 + 2 * CONSTANT:PI * 1) / (n_f - n_i).
-	printLine("Wait time: " + waitTimee + "s / " + (waitTimee / 60 / 60 / 24 / 365) + "m").
+	printLine("Wait time: " + waitTimee + "s / " + (waitTimee / 60 / 60 / 24 / 365) + "y (gamma="  + round(gamma_2, 1) + ", n_f=" + round(n_f, 2) + ")").
 	return waitTimee.
 }
 
@@ -53,6 +49,7 @@ function calcMeanMotion {
 
 function calcPhaseAngle {
 	parameter meanMotion1, meanMotion2.
+	return CONSTANT:PI - meanMotion1 * meanMotion2.
 	return MOD(CONSTANT:PI - meanMotion1 * meanMotion2, 2 * CONSTANT:PI).
 }
 
