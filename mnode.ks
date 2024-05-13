@@ -24,10 +24,21 @@ local halfBurnTime is burnTime / 2.
 
 local warpTime is NEXTNODE:ETA - halfBurnTime.
 print "  Warping " + round(warpTime) + " seconds.".
+if warpTime > 7200 {
+	print "    Warping speed 6".
+	set WARP to 6.
+	wait warpTime - (7200 / 2). 
+}
 if warpTime > 3600 { 
 	print "    Warping speed 5".
 	set WARP to 5.
 	wait warpTime - (3600 / 2).
+	set warpTime to NEXTNODE:ETA - halfBurnTime.
+}
+if warpTime > 600 { 
+	print "    Warping speed 4".
+	set WARP to 4.
+	wait warpTime - (600 / 2).
 	set warpTime to NEXTNODE:ETA - halfBurnTime.
 }
 if warpTime > 120 {
