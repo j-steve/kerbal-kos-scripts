@@ -57,18 +57,28 @@ lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
 until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	print "Insufficient thrust in this stage, will have to stage mid-burn.".
 	set stageBurnTime to stageDeltaV / acceleration.
-	wait until stageDeltaV <= 0.
+	until stageDeltaV <= 0 {
+		if VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) > 0.05 {
+			lock THROTTLE to 0.
+		} else if NEXTNODE:DELTAV:MAG / acceleration > 2 {
+			lock THROTTLE to 1.
+		}
+	}
 	print "Staging.".
 	stage.
 	wait 10. // Wait for new values so acceleration is updated for next stage.
 	print "  done".
 	set burnTime to burnTime - stageBurnTime.
 }
-//wait burnTime - 5.
-wait until NEXTNODE:DELTAV:MAG / acceleration < 2.
-lock THROTTLE to 0.1.
-wait until NEXTNODE:DELTAV:MAG < 0.1.
-//wait until NEXTNODE:DELTAV:MAG < 0.1.
+until NEXTNODE:DELTAV:MAG < 0.1 {
+	if VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) > 0.05 {
+		lock THROTTLE to 0.
+	} else if NEXTNODE:DELTAV:MAG / acceleration > 2 {
+		lock THROTTLE to 1.
+	} else if NEXTNODE:DELTAV:MAG > 0.1 {
+		lock THROTTLE to 0.1.
+	} 
+}
 lock THROTTLE to 0.
 
 unlock THROTTLE.
