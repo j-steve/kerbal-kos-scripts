@@ -1,3 +1,5 @@
+declare parameter launchHeading is 90.
+
 RUNPATH("0:/common.ks").
 
 local TARGET_ORBIT_RADIUS is 90000.
@@ -13,7 +15,7 @@ printLine("").
 //wait until ALTITUDE >= 100.
 
 printLine("Starting gravity turn...").
-lock STEERING to HEADING(90, 90 - (ALTITUDE / 100)). // Simple gravity turn
+lock STEERING to HEADING(launchHeading, 90 - (ALTITUDE / 100)). // Simple gravity turn
 until ALTITUDE >= 4000 {
 	if SHIP:AVAILABLETHRUST = 0 {
 		stage.
@@ -57,6 +59,8 @@ add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
 run mnode.ks.
 SAS off.
 
+deploySolarPanels().
+
 // TODO: The prior burn is insufficnet, I think because we are using current V rather than apoapsis V for the required delta. So keep burning.
 until PERIAPSIS >= TARGET_ORBIT_RADIUS {
 	lock STEERING to PROGRADE.
@@ -85,4 +89,17 @@ function calcRequiredVelocityAtApoapsis {
     // use vis-viva equation to calculate the required velocity at apoapsis
     local visViva is sqrt(BODY:MU * (2 / apoapsisRadius - 1 / semiMajorAxis)).
     return visViva.
+}
+
+function deploySolarPanels {
+    for part in SHIP:PARTS {
+		for module in part:MODULES {
+			if part:GETMODULE(module):HASEVENT("extend solar panel") {
+				part:GETMODULE(module):doevent("extend solar panel").
+			}
+			if part:GETMODULE(module):HASEVENT("extend antenna") {
+				part:GETMODULE(module):doevent("extend antenna").
+			}
+		}
+    }
 }
