@@ -22,17 +22,17 @@ local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
 print "  Will burn for " + round(burnTime) + " seconds.".
 local halfBurnTime is burnTime / 2.
 
-local warpTime is NEXTNODE:ETA - halfBurnTime.
+lock warpTime to NEXTNODE:ETA - halfBurnTime.
 print "  Warping " + round(warpTime) + " seconds.".
-if warpTime > 7200 {
+if warpTime > 7200 { // 120 mins
 	print "    Warping speed 6".
 	set WARP to 6.
-	wait warpTime - (7200 / 2). 
+	wait warpTime - 7200. 
 }
-if warpTime > 3600 { 
+if warpTime > 1800 {  // 30 mins
 	print "    Warping speed 5".
 	set WARP to 5.
-	wait warpTime - (3600 / 2).
+	wait warpTime - 1800.
 	set warpTime to NEXTNODE:ETA - halfBurnTime.
 }
 if warpTime > 600 { 
