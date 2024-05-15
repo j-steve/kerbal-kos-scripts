@@ -1,4 +1,4 @@
-RUNPATH("0:/common.ks").
+RUNONCEPATH("common.ks").
 
 clearscreen.
 SAS off.

@@ -1,4 +1,4 @@
-run common.ks.
+RUNONCEPATH("common.ks").
 
 // Max percent deviation acceptable in deducing whether current orbit is aligned.
 local MIN_DEVIATION is 0.1.

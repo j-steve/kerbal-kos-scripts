@@ -1,3 +1,10 @@
+RUNONCEPATH("common.ks").
+
+// The minimum deviation between the expected node and the actual node.
+// Lower number means that the final course will match the orignal more precisely,
+// but it may take longer to achieve.
+declare parameter minDeviation is 0.1.
+
 print "Executing next maneuver node.".
 print "".
 
@@ -12,7 +19,7 @@ wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < 0.05.
 until SHIP:AVAILABLETHRUST > 0 {
 	print "No thrust, staging.".
 	stage.
-	wait 5. // Wait for new values so acceleration is updated for next stage.
+	wait until STAGE:READY.
 }
 
 // Calculate burn time.
@@ -77,11 +84,11 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	}
 	print "Staging.".
 	stage.
-	wait 10. // Wait for new values so acceleration is updated for next stage.
+	wait until STAGE:READY.
 	print "  done".
 	set burnTime to burnTime - stageBurnTime.
 }
-until NEXTNODE:DELTAV:MAG < 0.1 {
+until NEXTNODE:DELTAV:MAG < minDeviation {
 	if VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) > 0.05 {
 		lock THROTTLE to 0.
 	} else if NEXTNODE:DELTAV:MAG / acceleration > 2 {

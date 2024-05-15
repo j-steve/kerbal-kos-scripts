@@ -1,4 +1,4 @@
-run common.ks.
+RUNONCEPATH("common.ks").
 
 executeTransfer().
 
