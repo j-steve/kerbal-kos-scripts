@@ -1,4 +1,4 @@
-declare parameter launchHeading is 90.
+declare parameter launchHeading is 90, simpleLaunch is false.
 
 RUNONCEPATH("common.ks").
 
@@ -36,12 +36,20 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 }
 wait until SHIP:VELOCITY:SURFACE:MAG > 100 and ALTITUDE > 100.
 
+
 // Start slow turn to vector.
 printLine("Pitching slightly towards " + launchHeading + "°...").
 local INITIAL_LAUNCH_PITCH is 80.
 lock STEERING to HEADING(launchHeading, INITIAL_LAUNCH_PITCH).
 //wait until SHIP:VELOCITY:SURFACE:MAG > 500 and ALTITUDE > 2500.
 wait until ETA:APOAPSIS >= TARGET_APOAPSIS_ETA.
+
+
+if simpleLaunch {
+	wait until ALTITUDE > 7500.
+	lock STEERING to HEADING(launchHeading, 45).
+	wait until APOAPSIS >= TARGET_ORBIT_RADIUS.
+}
 
 // Set steering to keep apoapsis at the target time
 printLine("Following prograde...").
@@ -71,6 +79,7 @@ until APOAPSIS >= TARGET_ORBIT_RADIUS {
 	// Ensure newPitch remains within the bounds of 0 to 90 degrees
 	LOCK STEERING TO HEADING(launchHeading, MAX(0, MIN(90, newPitch))).
 }
+lock THROTTLE to 0.
 
 // Warp out of atmo.
 lock STEERING to PROGRADE.
