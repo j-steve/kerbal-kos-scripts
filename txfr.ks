@@ -7,26 +7,33 @@ function executeTransfer {
 		printLine("Please select transfer target first.").
 		return.
 	}
-	printLine("Performing Hoffman transfer to " + TARGET:NAME + "...").
+	printLine("Performing Hohmann transfer to " + TARGET:NAME + "...").
 	run circ.ks. // Orbit must be circularized for subsequent calculations.
-	createHoffmanTxfrNode(TARGET:OBT).
+	createHoffmanTxfrNode(TARGET:OBT, SHIP:OBT).
 	run mnode.ks.
 }
 
 function createHoffmanTxfrNode {
-	parameter targetOrbit.
-	local txfrSemiMajorAxis is calcSemiMajorAxis(SHIP:ORBIT:APOAPSIS + BODY:RADIUS, targetOrbit:APOAPSIS + BODY:RADIUS).
-	local waitTime is calcTimeToTxfr(targetOrbit, txfrSemiMajorAxis).
-	local currentRadius is ship:altitude + body:radius. // Assuming at current altitude
-	local txfrDeltaV is calcVisViva(currentRadius, ship:orbit:semimajoraxis, currentRadius, txfrSemiMajorAxis).
-	add node(TimeSpan(waitTime), 0, 0, txfrDeltaV).
+	parameter targetOrbit, startingOrbit.
+	local progradeModifier is 1.
+	if targetOrbit:APOAPSIS < startingOrbit:APOAPSIS {
+		local newTargetOrbit is startingOrbit.
+		set startingOrbit to targetOrbit.
+		set targetOrbit to newTargetOrbit.
+		set progradeModifier to -1.
+	}
+	local txfrSemiMajorAxis is calcSemiMajorAxis(startingOrbit:APOAPSIS + startingOrbit:BODY:RADIUS, targetOrbit:APOAPSIS + targetOrbit:BODY:RADIUS).
+	local waitTime is calcTimeToTxfr(targetOrbit, startingOrbit, txfrSemiMajorAxis).
+	local currentRadius is startingOrbit:APOAPSIS + targetOrbit:BODY:RADIUS. // Assuming a circular orbit, apoapsis = periapsis = current altitude.
+	local txfrDeltaV is calcVisViva(currentRadius, startingOrbit:semimajoraxis, currentRadius, txfrSemiMajorAxis).
+	add node(TimeSpan(waitTime), 0, 0, txfrDeltaV * progradeModifier).
 }
 
 function calcTimeToTxfr {
-	parameter targetOrbit, txfrSemiMajorAxis.
-	local shipPosition is getAbsOrbitalPositionRads(SHIP:OBT).
+	parameter targetOrbit, startingOrbit, txfrSemiMajorAxis.
+	local shipPosition is getAbsOrbitalPositionRads(startingOrbit).
 	local targetPosition is getAbsOrbitalPositionRads(targetOrbit).
-	local shipOrbitPeriod is SHIP:OBT:PERIOD.
+	local shipOrbitPeriod is startingOrbit:PERIOD.
 	local targetOrbitPeriod is targetOrbit:PERIOD.
 	// Orbit period in seconds of the eliptical tranfer orbit which
 	// will be taken by the ship to reach the target.
@@ -38,7 +45,7 @@ function calcTimeToTxfr {
 	local targetElapsedTravel is txfrOrbitPeriod / 2 / targetOrbitPeriod.
 	
 	local bestTimeToGo is -1.
-	from {local i is -1.} until i >= 5 step {set i to i+1.} do {
+	from {local i is -10.} until i >= 10 step {set i to i+1.} do {
 		set numerator to (targetElapsedTravel+(targetPosition-CONSTANT:PI-shipPosition)/(2*CONSTANT:PI)+i).
 		set denominator to ((targetOrbitPeriod-shipOrbitPeriod)/(targetOrbitPeriod*shipOrbitPeriod)).
 		local timeToGo is numerator / denominator.
