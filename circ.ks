@@ -1,22 +1,31 @@
 RUNONCEPATH("common.ks").
 
+parameter atPrograde is true.
+
 // Max percent deviation acceptable in deducing whether current orbit is circularized.
 local MIN_DEVIATION is 0.001.
 
-circularizeOrbit().
+if atPrograde {
+	circularizeOrbit(SHIP:ORBIT:APOAPSIS, SHIP:ORBIT:ETA:APOAPSIS, 1).
+} else {
+	circularizeOrbit(SHIP:ORBIT:PERIAPSIS, SHIP:ORBIT:ETA:PERIAPSIS, -1).
+}
 
 function circularizeOrbit {
-	if 1 - SHIP:ORBIT:PERIAPSIS / SHIP:ORBIT:APOAPSIS < MIN_DEVIATION {
-		printLine("Orbit is alreacdy circularized.").
+	parameter burnPointAltitude, burnPointEta, progradeModifier.
+	lock circularDeviation to 1 - SHIP:ORBIT:PERIAPSIS / SHIP:ORBIT:APOAPSIS.
+	if circularDeviation < MIN_DEVIATION {
+		printLine("Orbit is alreacdy circ'd with " + round(circularDeviation * 100, 4) + "% deviation.").
 		return.
 	}
 
 	printLine("Circularizing orbit..." ).
 
-	local apoapsisRadius is SHIP:ORBIT:APOAPSIS + BODY:RADIUS. // Assuming at current altitude
-	local txfrDeltaV is calcVisViva(apoapsisRadius, SHIP:ORBIT:SEMIMAJORAXIS, apoapsisRadius, apoapsisRadius).
-	add node(TimeSpan(SHIP:OBT:ETA:APOAPSIS), 0, 0, txfrDeltaV).
+	local burnPointRadius is burnPointAltitude + BODY:RADIUS. // Assuming at current altitude
+	local txfrDeltaV is calcVisViva(burnPointRadius, SHIP:ORBIT:SEMIMAJORAXIS, burnPointRadius, burnPointRadius).
+	add node(TimeSpan(burnPointEta), 0, 0, txfrDeltaV * progradeModifier).
 	run mnode.ks.
 
-	printLine("  done: circularized at " + round(SHIP:ORBIT:APOAPSIS / 1000) + " km").
+	
+	printLine("  done: circ'd at " + round(SHIP:ORBIT:APOAPSIS / 1000) + " km with" + round(circularDeviation * 100, 4) + "% deviation.").
 }
