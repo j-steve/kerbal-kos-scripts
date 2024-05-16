@@ -1,9 +1,23 @@
-declare parameter launchHeading is 90, simpleLaunch is false.
-
 RUNONCEPATH("common.ks").
+
+declare parameter launchHeading is 90, simpleLaunch is true.
+
+clearscreen.
+SAS off.
 
 local TARGET_ORBIT_RADIUS is 90000.
 local TARGET_APOAPSIS_ETA is 30.
+
+printLine("5", true).
+wait 1.
+printLine("4", true).
+wait 1.
+printLine("3", true).
+wait 1.
+printLine("2", true).
+wait 1.
+printLine("1", true).
+wait 1.
 
 clearscreen.
 SAS off.
@@ -42,12 +56,20 @@ printLine("Pitching slightly towards " + launchHeading + "°...").
 local INITIAL_LAUNCH_PITCH is 80.
 lock STEERING to HEADING(launchHeading, INITIAL_LAUNCH_PITCH).
 //wait until SHIP:VELOCITY:SURFACE:MAG > 500 and ALTITUDE > 2500.
-wait until ETA:APOAPSIS >= TARGET_APOAPSIS_ETA.
 
 
 if simpleLaunch {
-	wait until ALTITUDE > 7500.
+	printLine("Waiting to 6.5k").
+	wait until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS.
+	printLine("Tilting to 75°").
+	lock STEERING to HEADING(launchHeading, 75).
+	printLine("Waiting til 15k").
+	wait until ALTITUDE > 15000 or APOAPSIS >= TARGET_ORBIT_RADIUS.
+	printLine("Tilting to 45°").
 	lock STEERING to HEADING(launchHeading, 45).
+	printLine("Waiting til 45k").
+	wait until ALTITUDE >= 45000 or APOAPSIS >= TARGET_ORBIT_RADIUS.
+	lock STEERING to HEADING(launchHeading, 0).
 	wait until APOAPSIS >= TARGET_ORBIT_RADIUS.
 }
 
@@ -91,7 +113,7 @@ if BODY:ATM:EXISTS and ALTITUDE < BODY:ATM:HEIGHT {
 }
 
 // Correct apoapsis if it's fallen below min.
-until APOAPSIS >= TARGET_ORBIT_RADIUS {
+until APOAPSIS > TARGET_ORBIT_RADIUS + 500 {
 	lock THROTTLE to 1.
 }
 lock THROTTLE to 0.
