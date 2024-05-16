@@ -24,7 +24,8 @@ until SHIP:AVAILABLETHRUST > 0 {
 
 // Calculate burn time.
 print "Aligned, warping to node start...".
-lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
+// Atomic engines may show an initial acceleration of 0 (they need to warm up), change to a small number instead.
+lock acceleration to MAX(SHIP:AVAILABLETHRUST / SHIP:MASS, 0.001). 
 local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
 print "  Will burn for " + round(burnTime) + " seconds.".
 local halfBurnTime is burnTime / 2.
@@ -67,6 +68,7 @@ if (warpTime > 0) {
 	set warpTime to NEXTNODE:ETA - halfBurnTime.
 	wait warpTime.
 }
+set WARP to 0.
 
 //executeBurn(NEXTNODE:DELTAV:MAG).
 
