@@ -17,9 +17,6 @@ function createHoffmanTxfrNode {
 	parameter startingOrbit, targetOrbit.
 	local progradeModifier is 1.
 	if targetOrbit:APOAPSIS < startingOrbit:APOAPSIS {
-		local newTargetOrbit is startingOrbit.
-		set startingOrbit to targetOrbit.
-		set targetOrbit to newTargetOrbit.
 		set progradeModifier to -1.
 	}
 	local txfrSemiMajorAxis is calcSemiMajorAxis(startingOrbit:APOAPSIS + startingOrbit:BODY:RADIUS, targetOrbit:APOAPSIS + targetOrbit:BODY:RADIUS).
@@ -35,6 +32,9 @@ function calcTimeToTxfr {
 	local targetPosition is getAbsOrbitalPositionRads(targetOrbit).
 	local shipOrbitPeriod is startingOrbit:PERIOD.
 	local targetOrbitPeriod is targetOrbit:PERIOD.
+	if targetOrbit:NAME = "EVE" { // TODO: find a better way to detect "reverse orbits".
+		set targetOrbitPeriod to targetOrbitPeriod * -1.
+	}
 	// Orbit period in seconds of the eliptical tranfer orbit which
 	// will be taken by the ship to reach the target.
 	local txfrOrbitPeriod is calcOrbitPeriod(txfrSemiMajorAxis).
