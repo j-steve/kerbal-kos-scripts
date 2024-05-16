@@ -64,11 +64,15 @@ if (warpTime > 0) {
 	set WARP to 1.
 	print "    Warping speed 1".
 	wait warpTime - 10.
+	print "    Warping speed 0".
 	set WARP to 0.
 	set warpTime to NEXTNODE:ETA - halfBurnTime.
 	wait warpTime.
 }
-set WARP to 0.
+if WARP > 0 {
+	print "    Warping speed 0".
+	set WARP to 0.
+}
 
 //executeBurn(NEXTNODE:DELTAV:MAG).
 
