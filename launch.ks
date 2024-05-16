@@ -120,9 +120,10 @@ lock THROTTLE to 0.
 
 // Circularize.
 printline("Creating circularization node.").
-local currentV is SHIP:ORBIT:VELOCITY:ORBIT:MAG. // Ideally this would be the projected velocity at apoapsis point instead.
+//local currentV is SHIP:ORBIT:VELOCITY:ORBIT:MAG. // Ideally this would be the projected velocity at apoapsis point instead.
+local currentV is VELOCITYAT(SHIP, TIME:SECONDS + ETA:APOAPSIS).
 local requiredV is calcRequiredVelocityAtApoapsis(TARGET_ORBIT_RADIUS).
-local deltaV is (requiredV - currentV) * 1.2.  // Try to make up for currentV shortcoming.
+local deltaV is (requiredV - currentV).
 
 print "NEED DV:" + deltaV .
 
