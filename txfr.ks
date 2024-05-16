@@ -9,12 +9,12 @@ function executeTransfer {
 	}
 	printLine("Performing Hohmann transfer to " + TARGET:NAME + "...").
 	run circ.ks. // Orbit must be circularized for subsequent calculations.
-	createHoffmanTxfrNode(TARGET:OBT, SHIP:OBT).
+	createHoffmanTxfrNode(SHIP:OBT, TARGET:OBT).
 	run mnode.ks.
 }
 
 function createHoffmanTxfrNode {
-	parameter targetOrbit, startingOrbit.
+	parameter startingOrbit, targetOrbit.
 	local progradeModifier is 1.
 	if targetOrbit:APOAPSIS < startingOrbit:APOAPSIS {
 		local newTargetOrbit is startingOrbit.
@@ -23,14 +23,14 @@ function createHoffmanTxfrNode {
 		set progradeModifier to -1.
 	}
 	local txfrSemiMajorAxis is calcSemiMajorAxis(startingOrbit:APOAPSIS + startingOrbit:BODY:RADIUS, targetOrbit:APOAPSIS + targetOrbit:BODY:RADIUS).
-	local waitTime is calcTimeToTxfr(targetOrbit, startingOrbit, txfrSemiMajorAxis).
+	local waitTime is calcTimeToTxfr(startingOrbit, targetOrbit, txfrSemiMajorAxis).
 	local currentRadius is startingOrbit:APOAPSIS + targetOrbit:BODY:RADIUS. // Assuming a circular orbit, apoapsis = periapsis = current altitude.
 	local txfrDeltaV is calcVisViva(currentRadius, startingOrbit:semimajoraxis, currentRadius, txfrSemiMajorAxis).
 	add node(TimeSpan(waitTime), 0, 0, txfrDeltaV * progradeModifier).
 }
 
 function calcTimeToTxfr {
-	parameter targetOrbit, startingOrbit, txfrSemiMajorAxis.
+	parameter startingOrbit, targetOrbit, txfrSemiMajorAxis.
 	local shipPosition is getAbsOrbitalPositionRads(startingOrbit).
 	local targetPosition is getAbsOrbitalPositionRads(targetOrbit).
 	local shipOrbitPeriod is startingOrbit:PERIOD.
