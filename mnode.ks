@@ -95,8 +95,8 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 }
 until NEXTNODE:DELTAV:MAG < minDeviation {
 	local newThrottle is safeThrottle.
-	if NEXTNODE:DELTAV:MAG < 0.1 {
-		set newThrottle to newThrottle * 0.1.
+	if NEXTNODE:DELTAV:MAG / acceleration < 1.5 { // last 1.5 seconds of burn
+		set newThrottle to newThrottle * 0.2.
 	}
 	lock throttle to newThrottle.
 }
