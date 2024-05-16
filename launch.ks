@@ -132,11 +132,13 @@ RUNPATH("mnode.ks", 10). // Run the maneuver node, set deviation to a high value
 SAS off.
 
 // TODO: The prior burn is insufficnet, I think because we are using current V rather than apoapsis V for the required delta. So keep burning.
-until PERIAPSIS >= TARGET_ORBIT_RADIUS {
+until PERIAPSIS >= BODY:ATM:HEIGHT + 500 {
 	lock STEERING to PROGRADE.
 	lock THROTTLE to 0.5.
 }
 lock THROTTLE to 0.
+
+RUNPATH("circ.ks.").
 
 
 // Exit.
