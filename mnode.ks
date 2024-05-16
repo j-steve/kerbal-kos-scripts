@@ -71,6 +71,10 @@ if (warpTime > 0) {
 //executeBurn(NEXTNODE:DELTAV:MAG).
 
 print "Starting burn...".
+
+lock facingError to VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR).
+lock safeThrottle to 1 - sqrt(facingError / 0.1). // Full stop at an error of 0.05 or more.
+		
 if (burnTime > 1) {
 	lock THROTTLE to 1.0.
 } else {
@@ -81,11 +85,7 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	print "Insufficient thrust in this stage, will have to stage mid-burn.".
 	set stageBurnTime to stageDeltaV / acceleration.
 	until stageDeltaV <= 0 {
-		if VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) > 0.05 {
-			lock THROTTLE to 0.
-		} else if NEXTNODE:DELTAV:MAG / acceleration > 2 {
-			lock THROTTLE to 1.
-		}
+		lock throttle to safeThrottle.
 	}
 	print "Staging.".
 	stage.
@@ -94,13 +94,11 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	set burnTime to burnTime - stageBurnTime.
 }
 until NEXTNODE:DELTAV:MAG < minDeviation {
-	if VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) > 0.05 {
-		lock THROTTLE to 0.
-	} else if NEXTNODE:DELTAV:MAG / acceleration > 2 {
-		lock THROTTLE to 1.
-	} else if NEXTNODE:DELTAV:MAG > 0.1 {
-		lock THROTTLE to 0.1.
-	} 
+	local newThrottle is safeThrottle.
+	if NEXTNODE:DELTAV:MAG < 0.1 {
+		set newThrottle to newThrottle * 0.1.
+	}
+	lock throttle to newThrottle.
 }
 lock THROTTLE to 0.
 
