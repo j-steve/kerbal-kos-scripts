@@ -3,7 +3,7 @@ RUNONCEPATH("common.ks").
 // The minimum deviation between the expected node and the actual node.
 // Lower number means that the final course will match the orignal more precisely,
 // but it may take longer to achieve.
-declare parameter minDeviation is 0.1.
+declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is 0.5.
 
 printLine("Executing next maneuver node.").
 printLine("").
@@ -79,7 +79,7 @@ if WARP > 0 {
 printLine("Starting burn...").
 
 lock facingError to VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR).
-lock safeThrottle to 1 - sqrt(facingError / 0.1). // Full stop at an error of 0.05 or more.
+lock safeThrottle to 1 - sqrt(facingError / maxFacingDeviation). // Full stop at an error of maxFacingDeviation.
 		
 if (burnTime > 1) {
 	lock THROTTLE to 1.0.
@@ -99,7 +99,7 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	printLine("    done").
 	set burnTime to burnTime - stageBurnTime.
 }
-until NEXTNODE:DELTAV:MAG < minDeviation {
+until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 1.5 { // last 1.5 seconds of burn
 		set newThrottle to newThrottle * 0.2.
