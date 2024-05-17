@@ -8,16 +8,19 @@ SAS off.
 local TARGET_ORBIT_RADIUS is 90000.
 local TARGET_APOAPSIS_ETA is 30.
 
-printLine("5", true).
-wait 1.
-printLine("4", true).
-wait 1.
-printLine("3", true).
-wait 1.
-printLine("2", true).
-wait 1.
-printLine("1", true).
-wait 1.
+
+if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
+	printLine("5", true).
+	wait 1.
+	printLine("4", true).
+	wait 1.
+	printLine("3", true).
+	wait 1.
+	printLine("2", true).
+	wait 1.
+	printLine("1", true).
+	wait 1.
+}
 
 clearscreen.
 SAS off.
@@ -63,13 +66,17 @@ if simpleLaunch {
 	wait until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS.
 	printLine("Tilting to 75°").
 	lock STEERING to HEADING(launchHeading, 75).
+	printLine("Waiting til 12k").
+	wait until ALTITUDE > 12000 or APOAPSIS >= TARGET_ORBIT_RADIUS.
+	printLine("Tilting to 60°").
+	lock STEERING to HEADING(launchHeading, 60).
 	printLine("Waiting til 15k").
 	wait until ALTITUDE > 15000 or APOAPSIS >= TARGET_ORBIT_RADIUS.
 	printLine("Tilting to 45°").
 	lock STEERING to HEADING(launchHeading, 45).
 	printLine("Waiting til 45k").
-	wait until ALTITUDE >= 45000 or APOAPSIS >= TARGET_ORBIT_RADIUS.
-	lock STEERING to HEADING(launchHeading, 0).
+	wait until ALTITUDE >= 45000 or APOAPSIS >= 70000.
+	lock STEERING to HEADING(launchHeading, 5).
 	wait until APOAPSIS >= TARGET_ORBIT_RADIUS.
 }
 
@@ -123,7 +130,7 @@ printline("Creating circularization node.").
 //local currentV is SHIP:ORBIT:VELOCITY:ORBIT:MAG. // Ideally this would be the projected velocity at apoapsis point instead.
 local currentV is VELOCITYAT(SHIP, TIME:SECONDS + ETA:APOAPSIS).
 local requiredV is calcRequiredVelocityAtApoapsis(TARGET_ORBIT_RADIUS).
-local deltaV is (requiredV - currentV).
+local deltaV is (requiredV - currentV:ORBIT:MAG).
 
 print "NEED DV:" + deltaV .
 
