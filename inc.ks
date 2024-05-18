@@ -33,13 +33,81 @@ function calcAndDraw {
 	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
 	local shipPlane is calcOrbitalPlaneNormal2(SHIP:ORBIT).
 	local intersectPlane is VECTORCROSSPRODUCT(targetPlane, shipPlane).
-	printLine("plane:" + targetPlane).
+	//printLine("plane:" + targetPlane).
 	clearvecdraws().
 	vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
 	vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
 	vecdraw(SHIP:POSITION,  intersectPlane * 10000000000, RGB(0, 1, 0), "intersect normal", 0.15, true).
+	printLine("Waiting for " + getPointString(intersectPlane:NORMALIZED)).
+	local minMag is 99999999999999999999999999.
+	local minPosition is SHIP:POSITION - SHIP:OBT:BODY:POSITION.
+	local myNode is NODE(Time:SECONDS, 0, 0, 0).
+	add myNode.
+	until false {
+		//printLine(getPointString(intersectPlane - SHIP:POSITION - SHIP:OBT:BODY:POSITION), true).
+		//local thisMag is (intersectPlane - SHIP:POSITION - SHIP:OBT:BODY:POSITION):MAG.
+		local thisMag is VectorAngle(intersectPlane, SHIP:OBT:BODY:POSITION).
+		printLine(thisMag, true).
+		if thisMag < minMag {
+			set minMag to thisMag.
+			set minPosition to (SHIP:OBT:BODY:POSITION):NORMALIZED.
+			remove myNode.
+			set myNode to  NODE(TIME:SECONDS, 0, 0, 0).
+			add myNode.
+		}
+		//printLine((intersectPlane - SHIP:POSITION - SHIP:OBT:BODY:POSITION):MAG, true).
+		wait 0.5.
+	}
 	//drawPlane(obj:POSITION, targetPlane).
 	
+	
+}
+
+function getPointString {
+	parameter pointVal.
+	return "(" + round(pointVal:X, 2) + ","  + round(pointVal:Y, 2) + "," + round(pointVal:Z, 2) + ")".
+}
+
+function findIntersectionPoints {
+	parameter shipPosition, shipVelocity, normVector, targetPosition.
+    // Define the plane equation: normVector . (r - targetPosition) = 0
+    // Substitute the parameterized orbit equation: r(t) = shipPosition + t * shipVelocity
+    // Solve normVector . (shipPosition + t * shipVelocity - targetPosition) = 0 for t
+
+    local coeffT is VDOT(normVector, shipVelocity).
+    local constantt is VDOT(normVector, shipPosition - targetPosition).
+
+    if coeffT = 0 {
+        return "No intersection or infinite intersections (parallel or coincident).".
+    }
+
+    local t is -constantt / coeffT.
+
+    // Calculate the intersection point
+    local intersectionPoint is shipPosition + t * shipVelocity.
+    return intersectionPoint.
+}
+
+FUNCTION VectorAngle1 {
+    PARAMETER vec1, vec2.
+
+    LOCAL dotProduct IS VDOT(vec1, vec2).
+    LOCAL magnitudeProduct IS vec1:MAG * vec2:MAG.
+    
+    IF magnitudeProduct = 0 {
+        RETURN 0. // Avoid division by zero if one of the vectors is zero
+    }
+
+    LOCAL cosTheta IS dotProduct / magnitudeProduct.
+    LOCAL angle IS ARCCOS(cosTheta). // Result in radians
+
+    RETURN angle.
+}
+
+
+function calculateD {
+    parameter normVec, pointOnPlane.
+    return normVec:X * pointOnPlane:X + normVec:Y * pointOnPlane:Y + normVec:Z * pointOnPlane:Z.
 }
 
 function drawPlane {
