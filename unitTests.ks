@@ -4,12 +4,16 @@ testInc().
 
 function testInc {
 	RUNONCEPATH("inc.ks.").
-
+	local allPass is true.
 	if 38.0990705883338 - calcEccentricAnomaly(0.18, 45) > 0.000001 {
-		printLine("TEST FAILED: calcEccentricAnomaly").
+		printLine("ERROR - TEST FAILED: calcEccentricAnomaly").
+		set allPass to false.
 	}
 	if 31.735562 - calcMeanAnomaly(0.18, 45) > 0.000001  {
-		printLine("TEST FAILED: calcMeanAnomaly").
+		printLine("ERROR - TEST FAILED: calcMeanAnomaly").
+		set allPass to false.
 	}
-	printLine("Testing complete.").
+	if allPass {
+		printLine("All tests passed!.").
+	}
 }
