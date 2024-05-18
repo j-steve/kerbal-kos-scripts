@@ -11,17 +11,52 @@ function matchTargetInc {
 	printLine("Adjusting inclination to match " + TARGET:NAME + ".").
 	printLine("").
 	local ascNode is calcAscendingNode(SHIP:ORBIT, TARGET:ORBIT).
+	
+	printLine("Orbit1  : " + SHIP:ORBIT:LAN).
+	printLine("Orbit2  : " + TARGET:ORBIT:LAN).
+	printLine("asc node: " + ascNode).
+	local targetPlane is calcOrbitalPlaneNormal(SHIP:ORBIT).
+	printLine("plane: " + targetPlane).
+	drawPlane(SHIP:POSITION, targetPlane).
+
+	
 	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, TARGET:ORBIT:ECCENTRICITY - SHIP:ORBIT:ECCENTRICITY).
-	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNode + SHIP:ORBIT:LAN).
-	add NODE(TIME:SECONDS + nodeEta, inclDeltaV, 0, 0).
+	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNode + SHIP:ORBIT:ARGUMENTOFPERIAPSIS ).
+	//add NODE(TIME:SECONDS + nodeEta, inclDeltaV, 0, 0).
+}
+
+function drawPlane {
+	parameter startPos, planeVector.
+	clearvecdraws().
+	local DRAW_DIST is 1000000.
+	local DRAW_COUNT is 20.
+	local i is -DRAW_DIST.
+	until i > DRAW_DIST {
+		local startPos is startPos + planeVector * i.
+		vecdraw(startPos, V(1,0,0) * DRAW_DIST * DRAW_COUNT, RGB(1, 0, 0), "", 0.1, true).
+		set i to i + DRAW_DIST/DRAW_COUNT.
+	}
 }
 
 function calcAscendingNode {
 	parameter orbit1, orbit2.
-	local ascNodeDeg is orbit1:LONGITUDEOFASCENDINGNODE - orbit2:LONGITUDEOFASCENDINGNODE.
-	printLine("Orbit1  : " + orbit1:LAN).
-	printLine("Orbit2  : " + orbit2:LAN).
-	printLine("asc node: " + ascNodeDeg).
+	// Find the 
+	local ascNodeDeg is orbit1:LONGITUDEOFASCENDINGNODE - SHIP:ORBIT:LAN.
+	return ascNodeDeg.
+}
+
+function calcOrbitalPlaneNormal {
+    parameter myOrbit.
+    local x is SIN(myOrbit:INCLINATION) * COS(myOrbit:LONGITUDEOFASCENDINGNODE).
+    local y is SIN(myOrbit:INCLINATION) * SIN(myOrbit:LONGITUDEOFASCENDINGNODE).
+    local z is COS(myOrbit:INCLINATION).
+    return V(x, y, z).
+
+}
+
+function calcAscendingNodeSimple {
+	parameter orbit1, orbit2.
+	local ascNodeDeg is orbit1:LONGITUDEOFASCENDINGNODE - SHIP:ORBIT:LAN.
 	return ascNodeDeg.
 }
 
