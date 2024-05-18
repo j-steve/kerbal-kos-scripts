@@ -88,22 +88,6 @@ function findIntersectionPoints {
     return intersectionPoint.
 }
 
-FUNCTION VectorAngle1 {
-    PARAMETER vec1, vec2.
-
-    LOCAL dotProduct IS VDOT(vec1, vec2).
-    LOCAL magnitudeProduct IS vec1:MAG * vec2:MAG.
-    
-    IF magnitudeProduct = 0 {
-        RETURN 0. // Avoid division by zero if one of the vectors is zero
-    }
-
-    LOCAL cosTheta IS dotProduct / magnitudeProduct.
-    LOCAL angle IS ARCCOS(cosTheta). // Result in radians
-
-    RETURN angle.
-}
-
 
 function calculateD {
     parameter normVec, pointOnPlane.
