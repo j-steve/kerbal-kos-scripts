@@ -10,23 +10,38 @@ function matchTargetInc {
 	printLine("").
 	
 	// TEST CODE
-	lock currentRads to SHIP:ORBIT:TRUEANOMALY * CONSTANT:DEGTORAD.
-	printLine("Current rads is " + round(currentRads, 3) + " (" + round(currentRads * CONSTANT:RADTODEG) + " deg)").
-	local RAD_DIFF is .91. // How far ahead to increment for testing.
-	local targetRads is currentRads + RAD_DIFF.
-	printLine("Targeting rads: " + round(targetRads, 3) + " (" + round(targetRads * CONSTANT:RADTODEG) + " deg)").
-	local myEta is calcEtaToRadian2(SHIP:ORBIT, targetRads).
+	local testRes is calcEccentricAnomaly(0.18 	, 45 ).
+	printLine("test ecc:" + testRes + " aka " + testRes * CONSTANT:DEGTORAD).
+	set testRes to calcMeanAnomaly(0.18 	, 45).
+	printLine("test mean:" + testRes + " aka " + testRes * CONSTANT:DEGTORAD).
+
+	
+	lock currentDegree to SHIP:ORBIT:TRUEANOMALY.
+	printLine("Current position is " + round(currentDegree) + "° | mean: " + round(calcMeanAnomaly(SHIP:ORBIT:ECCENTRICITY, currentDegree)) + "°").
+	local DEGREE_DIFF is 14. // How far ahead to increment for testing.
+	local targetDegree is currentDegree + DEGREE_DIFF.
+	printLine("Targeting position: " + round(targetDegree) + "° | mean: " + round(calcMeanAnomaly(SHIP:ORBIT:ECCENTRICITY, targetDegree)) + "°").
+	local myEta is calcEtaToDegree(SHIP:ORBIT, targetDegree).
 	printLine("ETA is " + round(myEta, 2)).
 	local startTime is TIME:SECONDS.
 	printline("Wait until...").
-	until currentRads >= targetRads {
-		//printLine("CurrentRads: " + round(currentRads, 3), true).
-		local eccRad is calcEccentricAnomaly(SHIP:ORBIT:ECCENTRICITY, SHIP:ORBIT:TRUEANOMALY).
-		printLine("ETA: " + round(myEta - (TIME:SECONDS - startTime), 0) + " | rads: " + round(currentRads * CONSTANT:RADTODEG) + "| ecc="+ round(eccRad * CONSTANT:RADTODEG), true).
+	until currentDegree >= targetDegree {
+		//printLine("CurrentRads: " + round(currentDegree, 3), true).
+		local eccDegree is calcEccentricAnomaly(SHIP:ORBIT:ECCENTRICITY, SHIP:ORBIT:TRUEANOMALY).
+		local meanDegree is calcMeanAnomaly(SHIP:ORBIT:ECCENTRICITY, SHIP:ORBIT:TRUEANOMALY).
+		local statusLine is "ETA: " + round(myEta - (TIME:SECONDS - startTime), 0).
+		local startTime2 is TIME:SECONDS.
+		wait until calcMeanAnomaly(SHIP:ORBIT:ECCENTRICITY, SHIP:ORBIT:TRUEANOMALY) >= meanDegree + 0.01.
+		local endTime2 is TIME:SECONDS - startTime2.
+		set statusLine to statusLine + " | true: " + round(SHIP:ORBIT:TRUEANOMALY, 0) + "°".
+		set statusLine to statusLine + " | ecc: " + round(eccDegree, 0) + "°".
+		set statusLine to statusLine + " | mean: " + round(meanDegree, 2) + "°".
+		set statusLine to statusLine + " | elaps: " + round(endTime2, 2) + "s".
+		printLine(statusLine, true).
 	}
 	local actualTime is TIME:SECONDS - startTime.
 	printLine("Elapsed time: " + round(actualTime,2) + " | deviation: " + round(abs(1 - (myEta / actualTime)) * 100, 3) + "%").
-	printLine("Current rads is " + currentRads).
+	printLine("Current position is " + currentDegree + "°").
 	return.
 	// END TEST CODE
 	
@@ -34,10 +49,10 @@ function matchTargetInc {
 	printLine(calcInclinationDeltaV(SHIP:ORBIT, 32)).
 }
 
-function calcAscendingNodeRad {
+function calcAscendingNodeDegree {
 	parameter orbit1, orbit2.
 	local ascNodeDeg is orbit1:LONGITUDEOFASCENDINGNODE - orbit2:LONGITUDEOFASCENDINGNODE.
-	return ascNodeDeg * CONSTANT:DEGTORAD.
+	return ascNodeDeg.
 }
 
 function calcInclinationDeltaV {
@@ -56,6 +71,14 @@ function calcMeanMotion {
 	//return TWOPI / myOrbit:PERIOD.
 }
 
+function calcEtaToDegree {
+	parameter myOrbit, targetDegrees.
+	local meanAnomalyCurrent is calcMeanAnomaly(myOrbit:ECCENTRICITY, myOrbit:TRUEANOMALY).
+	local meanAnomalyTarget is calcMeanAnomaly(myOrbit:ECCENTRICITY, targetDegrees).
+	//return (meanAnomalyTarget - meanAnomalyCurrent) / calcMeanMotion(myOrbit).
+	return (meanAnomalyTarget - meanAnomalyCurrent) / 360 * myOrbit:PERIOD.
+}
+
 function calcEtaToRadian2 {
 	parameter myOrbit, targetTrueAnomalyRad.
 	local currentTrueAnomalyRad is myOrbit:TRUEANOMALY * CONSTANT:DEGTORAD.
@@ -65,14 +88,33 @@ function calcEtaToRadian2 {
 }
 
 function calcMeanAnomaly {
-	// https://en.wikipedia.org/wiki/Eccentric_anomaly#From_the_mean_anomaly
-	parameter eccentricity, trueAnomalyRad.
+	// https://space.stackexchange.com/questions/54396/how-to-calculate-the-time-to-reach-a-given-true-anomaly
+	parameter eccentricity, trueAnomaly.
 	//local eccentricAnomaly is COS(-1 (-1 * (r/a-1) * (1/e))).
-	local eccentricAnomaly is calcEccentricAnomaly(eccentricity, trueAnomalyRad).
-	return eccentricAnomaly - eccentricity * SIN(eccentricAnomaly).
+	local eccentricAnomaly is calcEccentricAnomaly(eccentricity, trueAnomaly).
+	//printLine("eccentricity is " + eccentricity).
+	//printLine("eccentricAnomaly is " + eccentricAnomaly).
+	local sinecc is SIN(eccentricAnomaly) * CONSTANT:RADTODEG.
+	//printLine("Sin is " + sinecc).
+	local ectimessin is eccentricity * sinecc.
+	//printLine("Sin time ecc is is " + ectimessin).
+	return eccentricAnomaly - ectimessin.
 }
 
 function calcEccentricAnomaly {
+	// https://space.stackexchange.com/questions/54396/how-to-calculate-the-time-to-reach-a-given-true-anomaly
+	parameter eccentricity, trueAnomaly.
+	local eccentricAnomaly is ARCCOS((eccentricity + COS(trueAnomaly)) / (1 + eccentricity * COS(trueAnomaly))).
+	if (eccentricAnomaly < 180) and (trueAnomaly > 180) {
+		// Computed eccentric anomaly is always between the peripsis and the apoapsis.  
+		// Flip it to the other half of the orbit circle if we've passed the apoapsis, 
+		// aka, if current true anomaly > 180°.
+		set eccentricAnomaly to 360 - eccentricAnomaly.
+	}
+	return eccentricAnomaly.
+}
+
+function calcMeanAnomaly22 {
 	// https://en.wikipedia.org/wiki/Eccentric_anomaly#From_the_true_anomaly
 	// https://www.csun.edu/~hcmth017/master/node14.html
     parameter eccentricity, trueAnomaly.
