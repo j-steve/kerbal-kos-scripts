@@ -31,8 +31,14 @@ function matchTargetInc {
 function calcAndDraw {
 	parameter obj.
 	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
+	local shipPlane is calcOrbitalPlaneNormal2(SHIP:ORBIT).
+	local intersectPlane is VECTORCROSSPRODUCT(targetPlane, shipPlane).
 	printLine("plane:" + targetPlane).
-	drawPlane(obj:POSITION, targetPlane).
+	clearvecdraws().
+	vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
+	vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
+	vecdraw(SHIP:POSITION,  intersectPlane * 10000000000, RGB(0, 1, 0), "intersect normal", 0.15, true).
+	//drawPlane(obj:POSITION, targetPlane).
 	
 }
 
@@ -91,15 +97,7 @@ function calcAscendingNode {
 function calcOrbitalPlaneNormal2 {
     parameter myOrbit.
 	local positionRelativeToShip is myOrbit:POSITION - myOrbit:BODY:POSITION.
-	return VECTORCROSSPRODUCT(myOrbit:VELOCITY:ORBIT, positionRelativeToShip).
-
-}
-function calcOrbitalPlaneNormal {
-    parameter myOrbit.
-    local x is SIN(myOrbit:INCLINATION) * COS(myOrbit:LONGITUDEOFASCENDINGNODE).
-    local y is SIN(myOrbit:INCLINATION) * SIN(myOrbit:LONGITUDEOFASCENDINGNODE).
-    local z is COS(myOrbit:INCLINATION).
-    return V(x, y, z).
+	return VECTORCROSSPRODUCT(myOrbit:VELOCITY:ORBIT, positionRelativeToShip):NORMALIZED.
 
 }
 
