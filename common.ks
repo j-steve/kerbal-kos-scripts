@@ -65,9 +65,10 @@ function printLine {
 	} else {
 		if priorLineOverwritable {
 			// Clear the text from the prior line.
-			print CLEAR_LINE at (0, currentPrintLine - 1).
+			//print CLEAR_LINE at (0, currentPrintLine).
+		} else {
+			set currentPrintLine to currentPrintLine + 1.
 		}
-		set currentPrintLine to currentPrintLine + 1.
 		print text.
 	}
 	set priorLineOverwritable to overwriteLast.
