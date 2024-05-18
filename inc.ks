@@ -5,37 +5,77 @@ SAS off.
 matchTargetInc().
 
 function matchTargetInc {
+	local targt is SHIP.
 	if not HASTARGET {
-		set TARGET to MINMUS.
+		printLine("targna").
+		//set TARGET to MINMUS.
+	} else {
+		printLine("taryaa").
+		set targt to TARGET.
 	}
-	printLine("Adjusting inclination to match " + TARGET:NAME + ".").
+	printLine("Adjusting inclination to match " + targt:NAME + ".").
 	printLine("").
-	local ascNode is calcAscendingNode(SHIP:ORBIT, TARGET:ORBIT).
+	local ascNode is calcAscendingNode(SHIP:ORBIT, targt:ORBIT).
 	
 	printLine("Orbit1  : " + SHIP:ORBIT:LAN).
-	printLine("Orbit2  : " + TARGET:ORBIT:LAN).
+	printLine("Orbit2  : " + targt:ORBIT:LAN).
 	printLine("asc node: " + ascNode).
-	local targetPlane is calcOrbitalPlaneNormal(SHIP:ORBIT).
-	printLine("plane: " + targetPlane).
-	drawPlane(SHIP:POSITION, targetPlane).
+	calcAndDraw(targt).
 
 	
-	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, TARGET:ORBIT:ECCENTRICITY - SHIP:ORBIT:ECCENTRICITY).
+	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:ECCENTRICITY - SHIP:ORBIT:ECCENTRICITY).
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNode + SHIP:ORBIT:ARGUMENTOFPERIAPSIS ).
 	//add NODE(TIME:SECONDS + nodeEta, inclDeltaV, 0, 0).
 }
 
+function calcAndDraw {
+	parameter obj.
+	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
+	printLine("plane:" + targetPlane).
+	drawPlane(obj:POSITION, targetPlane).
+	
+}
+
 function drawPlane {
-	parameter startPos, planeVector.
+	parameter centerPos, planeNormalVector.
 	clearvecdraws().
+	set planeNormalVector to planeNormalVector:NORMALIZED. // Convert vector to ship-based vector.
+	
+	local upVector is V(0, 0, 1). // Assuming this is a vector not aligned with the planeNormalVector
+    if abs(vdot(planeNormalVector, upVector)) > 0.99 {
+        set upVector to V(0, 1, 0).
+    }
+	// Create two vectors that are perpendicular to the planeNormalVector and to each other
+    local v1 is VECTORCROSSPRODUCT(planeNormalVector, upVector):NORMALIZED.
+    local v2 is VECTORCROSSPRODUCT(planeNormalVector, v1):NORMALIZED.
+
+
+	printLine("Up vector is " + upVector).
+	printLine("v1 is " + v1).
+	printLine("v2 is " + v2).
+	
 	local DRAW_DIST is 1000000.
 	local DRAW_COUNT is 20.
+	
+	vecdraw(centerPos, upVector * DRAW_DIST * DRAW_COUNT, RGB(.5, .5, .5), "up", 0.15, true).
+	vecdraw(centerPos, planeNormalVector * DRAW_DIST * DRAW_COUNT, RGB(0, 1, 0), "normal", 0.25, true).
+	vecdraw(centerPos, v1 * DRAW_DIST * DRAW_COUNT, RGB(1, 0, 0), "v1", 0.25, true).
+	vecdraw(centerPos, v2 * DRAW_DIST * DRAW_COUNT, RGB(0, 0, 1), "v2", 0.25, true).
+	return.
+	
+	
 	local i is -DRAW_DIST.
-	until i > DRAW_DIST {
-		local startPos is startPos + planeVector * i.
-		vecdraw(startPos, V(1,0,0) * DRAW_DIST * DRAW_COUNT, RGB(1, 0, 0), "", 0.1, true).
-		set i to i + DRAW_DIST/DRAW_COUNT.
-	}
+	from {local i is -DRAW_DIST.} until i >= DRAW_DIST step {set i to i + DRAW_DIST / DRAW_COUNT.} DO {
+		local pos is centerPos + planeNormalVector * i.
+		vecdraw(pos, V(1,0,0) * DRAW_DIST * DRAW_COUNT, RGB(1, 0, 0), "", 0.1, true).
+		vecdraw(pos, V(1,0,0) * DRAW_DIST * DRAW_COUNT, RGB(1, 1, 0), "", 0.1, true).
+		
+		//local pos is centerPos + (v1 * x * DRAW_DIST) + (v2 * y * DRAW_DIST).
+		//printLine(pos).
+        //vecdraw(pos, v1 * DRAW_DIST * DRAW_COUNT, RGB(1, 0, 0), "", 1, true).
+		//vecdraw(pos, v2 * DRAW_DIST * DRAW_COUNT, RGB(0, 1, 0), "", 1, true).
+    }
+
 }
 
 function calcAscendingNode {
@@ -45,6 +85,15 @@ function calcAscendingNode {
 	return ascNodeDeg.
 }
 
+// Returns the normal vector of the plane defined by the given orbit (relative to ship position).
+// This is, the vector pointing "directly up" from the plane, or technically, a vector "z" that is
+// exactly perpendicular to all four plane vectors (x, y, -x, -y).
+function calcOrbitalPlaneNormal2 {
+    parameter myOrbit.
+	local positionRelativeToShip is myOrbit:POSITION - myOrbit:BODY:POSITION.
+	return VECTORCROSSPRODUCT(myOrbit:VELOCITY:ORBIT, positionRelativeToShip).
+
+}
 function calcOrbitalPlaneNormal {
     parameter myOrbit.
     local x is SIN(myOrbit:INCLINATION) * COS(myOrbit:LONGITUDEOFASCENDINGNODE).
