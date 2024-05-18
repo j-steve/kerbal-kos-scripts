@@ -1,4 +1,5 @@
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
+global TWOPI is 2 * CONSTANT:PI.
 
 function executeBurn {
 	parameter deltaV.
