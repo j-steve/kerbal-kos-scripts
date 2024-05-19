@@ -32,32 +32,19 @@ function calcAndDraw {
 	parameter obj.
 	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
 	local shipPlane is calcOrbitalPlaneNormal2(SHIP:ORBIT).
-	local intersectPlane is VECTORCROSSPRODUCT(targetPlane, shipPlane).
+	local ascNodeVector is VECTORCROSSPRODUCT(targetPlane, shipPlane).
 	//printLine("plane:" + targetPlane).
 	clearvecdraws().
 	vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
 	vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
-	vecdraw(SHIP:POSITION,  intersectPlane * 10000000000, RGB(0, 1, 0), "intersect normal", 0.15, true).
-	printLine("Waiting for " + getPointString(intersectPlane:NORMALIZED)).
-	local minMag is 99999999999999999999999999.
-	local minPosition is SHIP:POSITION - SHIP:OBT:BODY:POSITION.
-	local myNode is NODE(Time:SECONDS, 0, 0, 0).
-	add myNode.
-	until false {
-		//printLine(getPointString(intersectPlane - SHIP:POSITION - SHIP:OBT:BODY:POSITION), true).
-		//local thisMag is (intersectPlane - SHIP:POSITION - SHIP:OBT:BODY:POSITION):MAG.
-		local thisMag is VectorAngle(intersectPlane, SHIP:OBT:BODY:POSITION).
-		printLine(thisMag, true).
-		if thisMag < minMag {
-			set minMag to thisMag.
-			set minPosition to (SHIP:OBT:BODY:POSITION):NORMALIZED.
-			remove myNode.
-			set myNode to  NODE(TIME:SECONDS, 0, 0, 0).
-			add myNode.
-		}
-		//printLine((intersectPlane - SHIP:POSITION - SHIP:OBT:BODY:POSITION):MAG, true).
-		wait 0.5.
-	}
+	vecdraw(SHIP:POSITION,  ascNodeVector * 10000000000, RGB(0, 1, 0), "intersect normal", 0.15, true).
+	vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 10000000000, RGB(1, 1, 0), "asc node", 0.15, true).
+	printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
+	
+	local orbitRotationTheta is SHIP:ORBIT:LAN + SHIP:ORBIT:ARGUMENTOFPERIAPSIS.
+	printLine("theta is " + orbitRotationTheta).
+	
+
 	//drawPlane(obj:POSITION, targetPlane).
 	
 	
@@ -66,6 +53,29 @@ function calcAndDraw {
 function getPointString {
 	parameter pointVal.
 	return "(" + round(pointVal:X, 2) + ","  + round(pointVal:Y, 2) + "," + round(pointVal:Z, 2) + ")".
+}
+
+function waitForIntersect {
+	parameter ascNodeVector.
+	local minMag is 99999999999999999999999999.
+	local minPosition is SHIP:POSITION - SHIP:OBT:BODY:POSITION.
+	local myNode is NODE(Time:SECONDS, 0, 0, 0).
+	add myNode.
+	until false {
+		//printLine(getPointString(ascNodeVector - SHIP:POSITION - SHIP:OBT:BODY:POSITION), true).
+		//local thisMag is (ascNodeVector - SHIP:POSITION - SHIP:OBT:BODY:POSITION):MAG.
+		local thisMag is VectorAngle(ascNodeVector, SHIP:OBT:BODY:POSITION).
+		printLine(thisMag, true).
+		if thisMag < minMag {
+			set minMag to thisMag.
+			set minPosition to (SHIP:OBT:BODY:POSITION):NORMALIZED.
+			remove myNode.
+			set myNode to  NODE(TIME:SECONDS, 0, 0, 0).
+			add myNode.
+		}
+		//printLine((ascNodeVector - SHIP:POSITION - SHIP:OBT:BODY:POSITION):MAG, true).
+		wait 0.5.
+	}
 }
 
 function findIntersectionPoints {
