@@ -1,5 +1,7 @@
 RUNONCEPATH("common.ks").
 
+parameter skipCirc is false.
+
 executeTransfer().
 
 function executeTransfer {
@@ -8,7 +10,9 @@ function executeTransfer {
 		return.
 	}
 	printLine("Performing Hohmann transfer to " + TARGET:NAME + "...").
-	run circ.ks. // Orbit must be circularized for subsequent calculations.
+	if not skipCirc {
+		run circ.ks. // Orbit must be circularized for subsequent calculations.
+	}
 	createHoffmanTxfrNode(SHIP:OBT, TARGET:OBT).
 	run mnode.ks.
 }
