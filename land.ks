@@ -44,7 +44,7 @@ if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 				printLine("  Doing solid burn for <= " + round(orbitBurnTime) + "s", true).
 				setThrottle(1).
 			}
-			if SHIP:VELOCITY:ORBIT:MAG  < 10 {
+			if SHIP:VELOCITY:ORBIT:MAG / acceleration  < 2 {
 				printLine("  Doing correction burn | lateral speed: " + round(lateralMotion), true).
 				setThrottle(0.2).
 			}
