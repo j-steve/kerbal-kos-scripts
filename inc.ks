@@ -30,6 +30,7 @@ function matchTargetInc {
 
 function calcAndDraw {
 	parameter obj.
+	 
 	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
 	local shipPlane is calcOrbitalPlaneNormal2(SHIP:ORBIT).
 	local ascNodeVector is VECTORCROSSPRODUCT(targetPlane, shipPlane).
@@ -41,13 +42,33 @@ function calcAndDraw {
 	vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 10000000000, RGB(1, 1, 0), "asc node", 0.15, true).
 	printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
 	
-	local orbitRotationTheta is SHIP:ORBIT:LAN + SHIP:ORBIT:ARGUMENTOFPERIAPSIS.
-	printLine("theta is " + orbitRotationTheta).
+	vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 3", 0.3, true).
+	
+	
+	//vecdraw(elipseCenter,  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 2", 0.3, true).
+	
+	//vecdraw(elipseCenter2,  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 2b", 0.3, true).
+	//vecdraw(V(SHIP:BODY:POSITION:X - fociToElipseCenterDist, SHIP:BODY:POSITION:Y, SHIP:BODY:POSITION:Z - fociToElipseCenterDist),  ascNodeVector * 100000000, RGB(1, 0.2, 1), "asc 3", 0.3, true).
+	//vecdraw(V(SHIP:BODY:POSITION:X + fociToElipseCenterDist, SHIP:BODY:POSITION:Y, SHIP:BODY:POSITION:Z + fociToElipseCenterDist),  ascNodeVector * 100000000, RGB(1, 0.2, 1), "asc 3", 0.3, true).
 	
 
 	//drawPlane(obj:POSITION, targetPlane).
 	
 	
+}
+
+// Calulates the midpoint of the orbit, equidistant between apoapsis and peripsis in space.
+// For perfectly circular orbits this will be the center of the planet.
+// Returns the coordinatees, relative to the current ship position.
+function calcOrbitCenter {
+	parameter myOrbit.
+	local fociToElipseCenterDist is myOrbit:ECCENTRICITY * myOrbit:SEMIMAJORAXIS.
+	// We know the offset, but now we must rotate the offset around the axis so that it is positioned correctly.
+	// See https://stackoverflow.com/questions/73922517/how-can-i-find-the-x-y-from-a-rotated-degree
+	local orbitRotationTheta is myOrbit:ARGUMENTOFPERIAPSIS * myOrbit:ECCENTRICITY.
+	local newX is myOrbit:BODY:POSITION:X + (fociToElipseCenterDist * COS(orbitRotationTheta)) .
+	local newZ is myOrbit:BODY:POSITION:Z + (fociToElipseCenterDist * SIN(orbitRotationTheta)).
+	return V(newX, myOrbit:BODY:POSITION:Y, newZ).
 }
 
 function getPointString {
