@@ -65,7 +65,14 @@ function calcAscNodeTrueAnomaly {
 	// From an overhead view, the vector line will intersect the orbit at the point of the ascending node.
 	// To find the degree at which the intersection occurs, take the arctan of that vector line.
 	// (We ignore the y coordinate given that this is an overhead view. It's not needed since the orbital plane is 2D.)
-	return ARCTAN2( ascNodeVector:Z, ascNodeVector:X) + SHIP:ORBIT:LONGITUDEOFASCENDINGNODE.	
+	local ascendingNodeAngle is ARCTAN2( ascNodeVector:Z, ascNodeVector:X).	
+	
+	// This angle is correct based on some x axis.  To convert this to a useable true anomaly, use the ship's current position
+	// to determine the degree difference between reported trueanomaly, and degrees from 0 on the X axis.
+	// This gives us a number to add to the calculated degree position to get the "actual" true anomaly position to use.
+	local currentShipAngle is ARCTAN2(-SHIP:ORBIT:BODY:POSITION:Z, -SHIP:ORBIT:BODY:POSITION:X).
+	local trueAnomalyOffset is SHIP:ORBIT:TRUEANOMALY - currentShipAngle.
+	return ascendingNodeAngle + trueAnomalyOffset.
 	
 	
 	//vecdraw(elipseCenter,  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 2", 0.3, true).
