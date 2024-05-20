@@ -105,18 +105,16 @@ function startup {
 	if message <> "" {
 		printLine(message).
 	}
-	local startupData is lexicon("SAS_WAS_ON", false, "END", {
-			parameter startupData.
-			if startupData:SAS_WAS_ON {
-				set SAS to true.
-			}
-			unlock THROTTLE.
-			unlock STEERING.
-			SAS on.
-		}).
-		
+	local sasWasOn is false.
 	if SAS {
-		set startupData:SAS_WAS_ON to true.
+		set sasWasOn to true.
 	}
-	return startupData.
+	return Lexicon("END", {
+		if sasWasOn {
+			set SAS to true.
+		}
+		unlock THROTTLE.
+		unlock STEERING.
+		SAS on.
+	}).
 }

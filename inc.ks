@@ -123,11 +123,11 @@ function calcAscNodeTrueAnomaly {
 	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
 	local shipPlane is calcOrbitalPlaneNormal2(SHIP:ORBIT).
 	local ascNodeVector is VECTORCROSSPRODUCT(targetPlane, shipPlane).
-	clearvecdraws().
-	vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
-	vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
-	vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000, RGB(1, 1, 0), "asc node", 0.4, true).
-	printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
+	//clearvecdraws().
+	//vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
+	//vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
+	//vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000, RGB(1, 1, 0), "asc node", 0.4, true).
+	//printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
 	
 	//vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * SHIP:ORBIT:APOAPSIS + SHIP:ORBIT:BODY:RADIUS, RGB(1, 0, 1), "asc 3", 0.5, true).
 	// From an overhead view, the vector line will intersect the orbit at the point of the ascending node.
@@ -194,27 +194,8 @@ function calcInclinationDeltaV2 {
 	// Adjusting trigonometric calculations to use radians
 	local sinHalfInc is SIN(incChange / 2).
 	local oneEccCosAnom is 1 + ecc * COS(trueAnom).
-	printLine("meanMotion : " + meanMotion + "deg"). // 0.0812626032652063
-	printLine("sinHalfInc is " +  sinHalfInc). // -0.0545300431332953
-	printLine("oneEccCosAnom is " +  oneEccCosAnom). // 1.25697225651533
-	printLine("semiMajor is " +  myOrbit:SEMIMAJORAXIS). // 1.254173
-	LOG "argOfPEri : " + myOrbit:ARGUMENTOFPERIAPSIS + "deg" to mylog.txt.
-	LOG "trueAnom : " + trueAnom + "deg" to mylog.txt.
-	LOG "meanMotion : " + meanMotion + "deg" to mylog.txt.
-	LOG "incChange : " + incChange to mylog.txt.
-	LOG "sinHalfInc : " + sinHalfInc to mylog.txt.
-	LOG "oneEccCosAnom : " + oneEccCosAnom to mylog.txt.
-	LOG "semiMajor : " + myOrbit:SEMIMAJORAXIS to mylog.txt.
-	LOG "ECCENTRICITY : " + myOrbit:ECCENTRICITY to mylog.txt.
 	local numerator is  2 * sinHalfInc * oneEccCosAnom * meanMotion * myOrbit:SEMIMAJORAXIS.
-	// 2 * SIN(-6.25178357684145 / 2) * (1 + 0.304801556356221 * COS(33.4891677362819)) * 0.0812626032208042 * 1206364.19048674
-	// = -13409.183058859
-	printLine("Num is " + numerator).
 	local denominator is SQRT(1 - ecc ^ 2) * COS((myOrbit:ARGUMENTOFPERIAPSIS + trueAnom)).
-	// SQRT(1 - 0.304801556426352 ^ 2) * COS((333.89658605365 + 33.3975645259517))
-	// = 0.94470836986431
-	printLine("Denom is " + denominator).
-
 	return numerator / denominator.
 }
 
