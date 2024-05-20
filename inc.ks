@@ -21,7 +21,7 @@ function matchTargetInc {
 	printLine("Angle of asc node: " + round(ascNodeTrueAnomaly,0)).
 	// Check angular difference to see if we've passed the ascending node within the last half rotation.
 	// If so it'll be faster to hit the descending node instead.
-	local ascBurnMultiplier is 1.
+	local ascBurnMultiplier is -1.
 	if targt:ORBIT:INCLINATION < SHIP:ORBIT:INCLINATION {
 		//set ascBurnMultiplier to ascBurnMultiplier * -1.
 	}
@@ -39,10 +39,13 @@ function matchTargetInc {
 		printLine("Adding period").
 	}
 	
-	local inclDeltaV is calcInclinationDeltaV2(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION, ascNodeTrueAnomaly).
-	//local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT:MAG.
+	RUNPATH("circ.ks").
+	//local inclDeltaV is calcInclinationDeltaV5(targt:ORBIT:INCLINATION, nodeEta):MAG.
+	local incChange is targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION.
+	local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT:MAG.
 	//printLine("Velocity at node is " + velocityAtNode).
-	//local inclDeltaV is calcInclinationDeltaV4(velocityAtNode, velocityAtNode, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
+	local inclDeltaV is calcInclinationDeltaV4(velocityAtNode, velocityAtNode, incChange).
+	//local inclDeltaV is -calcInclinationDeltaV(SHIP:ORBIT, incChange, ascNodeTrueAnomaly).
 	printLine("asc node true anom: " + ascNodeTrueAnomaly).
 	printLine("inclDeltaV: " + round(inclDeltaV,0)).
 	
@@ -52,10 +55,16 @@ function matchTargetInc {
 			wait 0.25.
 		}
 	}
-	ADD NODE(TIME:SECONDS + nodeEta, 0, inclDeltaV  * ascBurnMultiplier , 0).
-	until false {
-		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
-	}
+	local normalDeltaV is inclDeltaV * COS(SHIP:ORBIT:INCLINATION) * ascBurnMultiplier.
+	local progradeDeltaV is inclDeltaV * -SIN(SHIP:ORBIT:INCLINATION).
+	vecdraw(SHIP:POSITION,  V(0, 1, 0)  * 100000000, RGB(0.75, 0.75, 0.75), "up", 0.35, true).
+	vecdraw(SHIP:POSITION,  V(progradeDeltaV, normalDeltaV, 0)  * 100000000, RGB(0.75, 0, 1), "normal vector", 0.35, true).
+	printLine("Burning " + round(normalDeltaV) + " normal + " + round(progradeDeltaV) + "prograde").
+	//ADD NODE(TIME:SECONDS + nodeEta, progradeDeltaV, normalDeltaV, 0).
+	ADD NODE(TIME:SECONDS + nodeEta, 0,- inclDeltaV, 0).
+	//until false {
+//		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
+	//}
 	//RUNPATH("mnode.ks", 0.5).
 }
 
@@ -107,6 +116,15 @@ function calcOrbitalPlaneNormal2 {
 
 }
 
+// Gives the delta V required for the given inclination change, provided both orbits are near circular.
+function calcInclinationDeltaV5 {
+	parameter targetInclination, burnNodeEta.
+	local incChange is SHIP:ORBIT:INCLINATION - targetInclination.
+	local velocityAtNode is VELOCITYAT(SHIP, burnNodeEta):ORBIT.
+	// See https://en.wikipedia.org/wiki/Orbital_inclination_change#Calculation
+	return 2 * velocityAtNode * SIN(incChange / 2).
+}
+
 function calcInclinationDeltaV4 {
 	parameter initialVelocity, targetVelocity, incChange.
 	return SQRT(initialVelocity^2 + targetVelocity^2 - 2 * initialVelocity * targetVelocity * COS(incChange)).
@@ -119,19 +137,37 @@ function calcInclinationDeltaV3 {
 
 function calcInclinationDeltaV2 {
 	// Converts angles from degrees to radians
-	local DEG_TO_RAD is CONSTANT():PI / 180.
-
 	// See https://en.wikipedia.org/wiki/Orbital_inclination_change#Calculation
-	parameter myOrbit, incChange, incChangeTrueAnom.
+	parameter myOrbit, incChange, trueAnom.
 	local meanMotion is calcMeanMotion(myOrbit).
-	printLine("meanMotion : " + meanMotion).
 
 	// Convert inclination change from degrees to radians for trigonometric functions
-	local incChangeRad is incChange .
+	local incChangeRad is incChange.
+	local ecc is myOrbit:ECCENTRICITY.
 
 	// Adjusting trigonometric calculations to use radians
-	local numerator is  2 * SIN(incChangeRad / 2) * (1 + myOrbit:ECCENTRICITY * COS(incChangeTrueAnom * DEG_TO_RAD)) * meanMotion * myOrbit:SEMIMAJORAXIS.
-	local denominator is SQRT(1 - myOrbit:ECCENTRICITY ^ 2) * COS((myOrbit:ARGUMENTOFPERIAPSIS + incChangeTrueAnom) * DEG_TO_RAD).
+	local sinHalfInc is SIN(incChange / 2).
+	local oneEccCosAnom is 1 + ecc * COS(trueAnom).
+	printLine("meanMotion : " + meanMotion + "deg"). // 0.0812626032652063
+	printLine("sinHalfInc is " +  sinHalfInc). // -0.0545300431332953
+	printLine("oneEccCosAnom is " +  oneEccCosAnom). // 1.25697225651533
+	printLine("semiMajor is " +  myOrbit:SEMIMAJORAXIS). // 1.254173
+	LOG "argOfPEri : " + myOrbit:ARGUMENTOFPERIAPSIS + "deg" to mylog.txt.
+	LOG "trueAnom : " + trueAnom + "deg" to mylog.txt.
+	LOG "meanMotion : " + meanMotion + "deg" to mylog.txt.
+	LOG "incChange : " + incChange to mylog.txt.
+	LOG "sinHalfInc : " + sinHalfInc to mylog.txt.
+	LOG "oneEccCosAnom : " + oneEccCosAnom to mylog.txt.
+	LOG "semiMajor : " + myOrbit:SEMIMAJORAXIS to mylog.txt.
+	LOG "ECCENTRICITY : " + myOrbit:ECCENTRICITY to mylog.txt.
+	local numerator is  2 * sinHalfInc * oneEccCosAnom * meanMotion * myOrbit:SEMIMAJORAXIS.
+	// 2 * SIN(-6.25178357684145 / 2) * (1 + 0.304801556356221 * COS(33.4891677362819)) * 0.0812626032208042 * 1206364.19048674
+	// = -13409.183058859
+	printLine("Num is " + numerator).
+	local denominator is SQRT(1 - ecc ^ 2) * COS((myOrbit:ARGUMENTOFPERIAPSIS + trueAnom)).
+	// SQRT(1 - 0.304801556426352 ^ 2) * COS((333.89658605365 + 33.3975645259517))
+	// = 0.94470836986431
+	printLine("Denom is " + denominator).
 
 	return numerator / denominator.
 }

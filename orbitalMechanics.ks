@@ -1,11 +1,12 @@
 
 
+// Returns the average angular velocity in degrees.
 function calcMeanMotion {
 	// Mean motion can be expressed as 2pi / orbit period, or sqrt (mu / semiMajorAxis^3) -- both are equivelant.
 	parameter myOrbit.
 	printLine("sma " + myOrbit:SEMIMAJORAXIS).
-	//return SQRT(myOrbit:BODY:MU / (myOrbit:SEMIMAJORAXIS ^ 3)).
-	return 2 * CONSTANT:PI / myOrbit:PERIOD.
+	//return SQRT(myOrbit:BODY:MU / (myOrbit:SEMIMAJORAXIS ^ 3)) * CONSTANT:RADTODEB.
+	return 360 / myOrbit:PERIOD.
 }
 
 // Returns the time in seconds it will take to travel from the current position 
