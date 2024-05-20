@@ -20,21 +20,24 @@ function matchTargetInc {
 	printLine("Orbit1  : " + SHIP:ORBIT:LAN).
 	printLine("Orbit2  : " + targt:ORBIT:LAN).
 	printLine("asc node: " + ascNode).
-	calcAndDraw(targt).
-
+	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(targt).
+	printLine("Angle of asc vector: " + round(ascNodeTrueAnomaly,0)).
 	
 	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:ECCENTRICITY - SHIP:ORBIT:ECCENTRICITY).
-	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNode + SHIP:ORBIT:ARGUMENTOFPERIAPSIS ).
-	//add NODE(TIME:SECONDS + nodeEta, inclDeltaV, 0, 0).
+	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
+
+	ADD NODE(TIME:SECONDS + nodeEta, inclDeltaV,0,0).
 }
 
-function calcAndDraw {
+function calcAscNodeTrueAnomaly {
 	parameter obj.
-	 
+	// To get the ascending node vector, find the normal vectors of the ship plane & target plane,
+	// then take the cross product of those two to find a new vector perpendicular to both.
+	// That vector will neccessarily be the line along which the two objects overlap,
+	// which is also the point at which me must burn to adjust our inclination to match.
 	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
 	local shipPlane is calcOrbitalPlaneNormal2(SHIP:ORBIT).
 	local ascNodeVector is VECTORCROSSPRODUCT(targetPlane, shipPlane).
-	//printLine("plane:" + targetPlane).
 	clearvecdraws().
 	vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
 	vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
@@ -43,6 +46,10 @@ function calcAndDraw {
 	printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
 	
 	vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 3", 0.3, true).
+	// From an overhead view, the vector line will intersect the orbit at the point of the ascending node.
+	// To find the degree at which the intersection occurs, take the arctan of that vector line.
+	// (We ignore the y coordinate given that this is an overhead view. It's not needed since the orbital plane is 2D.)
+	return ARCTAN2( ascNodeVector:Z, ascNodeVector:X) + SHIP:ORBIT:LONGITUDEOFASCENDINGNODE.	
 	
 	
 	//vecdraw(elipseCenter,  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 2", 0.3, true).
