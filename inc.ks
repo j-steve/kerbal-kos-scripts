@@ -26,20 +26,22 @@ function matchTargetInc {
 	
 	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
 	//printLine("inclDeltaV: " + round(inclDeltaV,0)).
+	local ascBurnMultiplier is 1.
+	if ABS(ascNodeTrueAnomaly - SHIP:ORBIT:TRUEANOMALY) > 180 {
+		local degreesToPeriapsis is 360 - ascNodeTrueAnomaly.
+		set ascNodeTrueAnomaly to degreesToPeriapsis.
+		printLine("Using the other one.").
+		set ascBurnMultiplier to -1.
+	}
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
 	if ascNodeTrueAnomaly < SHIP:ORBIT:TRUEANOMALY {
 		set nodeEta to nodeEta + SHIP:ORBIT:PERIOD.
 		printLine("Adding period").
 	}
-	local ascBurnMultiplier is -1.
-	if nodeEta > SHIP:ORBIT:PERIOD / 2 {
-		//set nodeEta to nodeEta - SHIP:ORBIT:PERIOD / 2.
-		//set ascBurnMultiplier to 1.
-	}
 	until not hasnode {
 		remove nextnode.
 	}
-	ADD NODE(TIME:SECONDS + nodeEta, 0,inclDeltaV * ascBurnMultiplier,0).
+	ADD NODE(TIME:SECONDS + nodeEta, 0, -inclDeltaV * ascBurnMultiplier,0).
 	until false {
 		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
 	}
