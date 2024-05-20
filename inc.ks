@@ -22,11 +22,14 @@ function matchTargetInc {
 	// Check angular difference to see if we've passed the ascending node within the last half rotation.
 	// If so it'll be faster to hit the descending node instead.
 	local ascBurnMultiplier is 1.
+	if targt:ORBIT:INCLINATION < SHIP:ORBIT:INCLINATION {
+		//set ascBurnMultiplier to ascBurnMultiplier * -1.
+	}
 	local angularDifference is MOD(SHIP:ORBIT:TRUEANOMALY - ascNodeTrueAnomaly + 360, 360).	
 	if angularDifference < 180 {.
 		printLine("Using the other one: " + ascNodeTrueAnomaly).
 		set ascNodeTrueAnomaly to mod(180 + ascNodeTrueAnomaly, 360).
-		set ascBurnMultiplier to -1.
+		set ascBurnMultiplier to ascBurnMultiplier * -1.
 	}
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
 	if ascNodeTrueAnomaly < SHIP:ORBIT:TRUEANOMALY {
@@ -35,15 +38,19 @@ function matchTargetInc {
 	}
 	
 	// Add node
-	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
-	//printLine("inclDeltaV: " + round(inclDeltaV,0)).
+	//local inclDeltaV is calcInclinationDeltaV2(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
+	local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT:MAG.
+	printLine("Velocity at node is " + velocityAtNode).
+	local inclDeltaV is calcInclinationDeltaV4(velocityAtNode, velocityAtNode, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
+	printLine("inclDeltaV: " + round(inclDeltaV,0)).
+	
 	if hasnode {
 		until not hasnode {
 			remove nextnode.
 			wait 2.
 		}
 	}
-	ADD NODE(TIME:SECONDS + nodeEta, 0, -inclDeltaV * ascBurnMultiplier,0).
+	ADD NODE(TIME:SECONDS + nodeEta, 0, -inclDeltaV  * ascBurnMultiplier , 0).
 	until false {
 		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
 	}
@@ -228,6 +235,16 @@ function calcAscendingNodeSimple {
 	return ascNodeDeg.
 }
 
+function calcInclinationDeltaV4 {
+	parameter initialVelocity, targetVelocity, incChange.
+	return SQRT(initialVelocity^2 + targetVelocity^2 - 2 * initialVelocity * targetVelocity * COS(incChange)).
+}
+
+function calcInclinationDeltaV3 {
+	parameter orbitalVelocityAtNode, incChange.
+	return 2 * orbitalVelocityAtNode * SIN(incChange / 2).
+}
+
 function calcInclinationDeltaV2 {
 	// Converts angles from degrees to radians
 	local DEG_TO_RAD is CONSTANT():PI / 180.
@@ -237,7 +254,7 @@ function calcInclinationDeltaV2 {
 	local meanMotion is calcMeanMotion(myOrbit).
 
 	// Convert inclination change from degrees to radians for trigonometric functions
-	local incChangeRad is incChange * DEG_TO_RAD.
+	local incChangeRad is incChange .
 
 	// Adjusting trigonometric calculations to use radians
 	local numerator is  2 * SIN(incChangeRad / 2) * (1 + myOrbit:ECCENTRICITY * COS(myOrbit:TRUEANOMALY * DEG_TO_RAD)) * meanMotion * myOrbit:SEMIMAJORAXIS.
@@ -249,8 +266,10 @@ function calcInclinationDeltaV2 {
 function calcInclinationDeltaV {
 	// See https://en.wikipedia.org/wiki/Orbital_inclination_change#Calculation
 	parameter myOrbit, incChange.
+	local incChangeRad is incChange * CONSTANT:DEGTORAD.
+
 	local meanMotion is calcMeanMotion(myOrbit).
-	local numerator is  2 * SIN(incChange/2) * (1 + myOrbit:ECCENTRICITY * COS(myOrbit:TRUEANOMALY)) * meanMotion * myOrbit:semiMajorAxis.
+	local numerator is  2 * SIN(incChangeRad/2) * (1 + myOrbit:ECCENTRICITY * COS(myOrbit:TRUEANOMALY)) * meanMotion * myOrbit:semiMajorAxis.
 	local denominator is SQRT(1 - myOrbit:ECCENTRICITY ^ 2) * COS(myOrbit:ARGUMENTOFPERIAPSIS + myOrbit:TRUEANOMALY).
 	return numerator / denominator.
 }
