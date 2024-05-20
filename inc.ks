@@ -91,6 +91,10 @@ function crappyNode {
 	local targetPlane is calcOrbitalPlaneNormal2(TARGET:ORBIT).
 	local shipPlane is calcOrbitalPlaneNormal2(incNode:ORBIT).
 	local lastDiff is ABS((targetPlane - shipPlane):MAG).
+	// Start with a high dV increment.  When we "overshoot" the target plane, 
+	// go back and check again in the other direction (make it negative)
+	// but with a more granular value (divide it by 10).
+	// Stop when we reach a reasonably small dV increment.
 	until ABS(dv) < 0.00001 {
 		set lastDiff to ABS((targetPlane - shipPlane):MAG).
 		set incNode:NORMAL to incNode:NORMAL + dv.
@@ -99,7 +103,6 @@ function crappyNode {
 			set dv to -dv / 10.
 		} 
 	}
-	printLine("Final diff: " + (targetPlane - shipPlane):MAG).
 }
 
 function clearNodes {
