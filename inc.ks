@@ -15,22 +15,17 @@ function matchTargetInc {
 	}
 	printLine("Adjusting inclination to match " + targt:NAME + ".").
 	printLine("").
-	local ascNode is calcAscendingNode(SHIP:ORBIT, targt:ORBIT).
 	
-	printLine("Orbit1  : " + SHIP:ORBIT:LAN).
-	printLine("Orbit2  : " + targt:ORBIT:LAN).
-	printLine("asc node: " + ascNode).
+	// Get the ascending node.
 	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(targt).
-	printLine("Angle of asc vector: " + round(ascNodeTrueAnomaly,0) + " aka " + round(mod(ascNodeTrueAnomaly, 360))).
-	set ascNodeTrueAnomaly to mod(ascNodeTrueAnomaly, 360).
-	
-	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
-	//printLine("inclDeltaV: " + round(inclDeltaV,0)).
+	printLine("Angle of asc node: " + round(ascNodeTrueAnomaly,0)).
+	// Check angular difference to see if we've passed the ascending node within the last half rotation.
+	// If so it'll be faster to hit the descending node instead.
 	local ascBurnMultiplier is 1.
-	if ABS(ascNodeTrueAnomaly - SHIP:ORBIT:TRUEANOMALY) > 180 {
-		local degreesToPeriapsis is 360 - ascNodeTrueAnomaly.
-		set ascNodeTrueAnomaly to degreesToPeriapsis.
-		printLine("Using the other one.").
+	local angularDifference is MOD(SHIP:ORBIT:TRUEANOMALY - ascNodeTrueAnomaly + 360, 360).	
+	if angularDifference < 180 {.
+		printLine("Using the other one: " + ascNodeTrueAnomaly).
+		set ascNodeTrueAnomaly to mod(180 + ascNodeTrueAnomaly, 360).
 		set ascBurnMultiplier to -1.
 	}
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
@@ -38,8 +33,15 @@ function matchTargetInc {
 		set nodeEta to nodeEta + SHIP:ORBIT:PERIOD.
 		printLine("Adding period").
 	}
-	until not hasnode {
-		remove nextnode.
+	
+	// Add node
+	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
+	//printLine("inclDeltaV: " + round(inclDeltaV,0)).
+	if hasnode {
+		until not hasnode {
+			remove nextnode.
+			wait 2.
+		}
 	}
 	ADD NODE(TIME:SECONDS + nodeEta, 0, -inclDeltaV * ascBurnMultiplier,0).
 	until false {
@@ -74,7 +76,11 @@ function calcAscNodeTrueAnomaly {
 	// This gives us a number to add to the calculated degree position to get the "actual" true anomaly position to use.
 	local currentShipAngle is ARCTAN2(-SHIP:ORBIT:BODY:POSITION:Z, -SHIP:ORBIT:BODY:POSITION:X).
 	local trueAnomalyOffset is SHIP:ORBIT:TRUEANOMALY - currentShipAngle.
-	return ascendingNodeAngle + trueAnomalyOffset.
+	local descNode is ascendingNodeAngle + trueAnomalyOffset.
+	
+	// Technically this logic has found us the descending node (because of the way we used the acsending vector).
+	// So add 180 to get the ascending node instead and return that on a 360-degree scale.
+	return MOD(descNode + 180, 360).
 	
 	
 	//vecdraw(elipseCenter,  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 2", 0.3, true).
