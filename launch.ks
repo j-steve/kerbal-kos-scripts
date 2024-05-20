@@ -2,12 +2,11 @@ RUNONCEPATH("common.ks").
 
 declare parameter launchHeading is 90, simpleLaunch is true.
 
-clearscreen.
-SAS off.
+local startupData is startup("Executing launch.").
 
 local TARGET_ORBIT_RADIUS is 90000.
 local TARGET_APOAPSIS_ETA is 30.
-
+local initialDeltaV is SHIP:DELTAV:VACUUM.
 
 if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 	printLine("5", true).
@@ -21,12 +20,6 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 	printLine("1", true).
 	wait 1.
 }
-
-clearscreen.
-SAS off.
-printLine("Executing launch.").
-printLine("").
-local initialDeltaV is SHIP:DELTAV:VACUUM.
 
 // Set trigger to deploy solar panels when hitting space.
 if BODY:ATM:EXISTS {
@@ -154,9 +147,8 @@ printline("Orbit complete.").
 local consumedDeltaV is round(initialDeltaV - SHIP:DELTAV:VACUUM).
 local deltaVPerfection is consumedDeltaV / 3000 - 1. // 3000 = min to orbit of kerbin.
 printline("  Consumed " + consumedDeltaV + " delta V (" + round(deltaVPerfection * 100) + "% excess).").
-unlock THROTTLE.
-unlock STEERING.
-SAS on.
+
+startupData:END().
 
 // function to calculate required velocity at apoapsis to achieve desired periapsis
 function calcRequiredVelocityAtApoapsis {

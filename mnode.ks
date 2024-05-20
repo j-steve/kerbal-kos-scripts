@@ -5,8 +5,8 @@ RUNONCEPATH("common.ks").
 // but it may take longer to achieve.
 declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is 0.5.
 
-printLine("Executing next maneuver node.").
-printLine("").
+
+local startupData is startup("Executing next maneuver node.").
 
 // Align header.
 printLine("Aligning header...").
@@ -111,6 +111,4 @@ lock THROTTLE to 0.
 unlock THROTTLE.
 printLine("Burn complete.").
 
-unlock STEERING.
-remove NEXTNODE.
-SAS on.
+startupData:END().

@@ -19,7 +19,7 @@ function circularizeOrbit {
 		return.
 	}
 
-	printLine("Circularizing orbit..." ).
+	local startupData is startup("Circularizing orbit...").
 
 	local burnPointRadius is burnPointAltitude + BODY:RADIUS. // Assuming at current altitude
 	local txfrDeltaV is calcVisViva(burnPointRadius, SHIP:ORBIT:SEMIMAJORAXIS, burnPointRadius, burnPointRadius).
@@ -28,4 +28,5 @@ function circularizeOrbit {
 
 	
 	printLine("  done: circ'd at " + round(SHIP:ORBIT:APOAPSIS / 1000) + " km with" + round(circularDeviation * 100, 4) + "% deviation.").
+	startupData:END().
 }

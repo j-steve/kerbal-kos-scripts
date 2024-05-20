@@ -1,8 +1,8 @@
 RUNONCEPATH("common.ks").
 
-clearscreen.
-SAS off.
+local startupData is startup().
 matchTargetInc().
+startupData:END().
 
 function matchTargetInc {
 	local targt is SHIP.
@@ -42,7 +42,7 @@ function matchTargetInc {
 	//RUNPATH("circ.ks")
 	
 	crappyNode(nodeEta, targt:ORBIT:INCLINATION).
-	RUNPATH("node.ks").
+	RUNPATH("mnode.ks").
 	return.
 	
 	
