@@ -37,7 +37,6 @@ function matchTargetInc {
 		printLine("Adding period").
 	}
 	
-	// Add node
 	//local inclDeltaV is calcInclinationDeltaV2(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
 	local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT:MAG.
 	printLine("Velocity at node is " + velocityAtNode).
@@ -50,7 +49,7 @@ function matchTargetInc {
 			wait 2.
 		}
 	}
-	ADD NODE(TIME:SECONDS + nodeEta, 0, -inclDeltaV  * ascBurnMultiplier , 0).
+	ADD NODE(TIME:SECONDS + nodeEta, 0, -inclDeltaV  * ascBurnMultiplier, 0).
 	until false {
 		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
 	}
