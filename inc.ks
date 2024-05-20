@@ -21,21 +21,28 @@ function matchTargetInc {
 	printLine("Orbit2  : " + targt:ORBIT:LAN).
 	printLine("asc node: " + ascNode).
 	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(targt).
-	printLine("Angle of asc vector: " + round(ascNodeTrueAnomaly,0)).
+	printLine("Angle of asc vector: " + round(ascNodeTrueAnomaly,0) + " aka " + round(mod(ascNodeTrueAnomaly, 360))).
+	set ascNodeTrueAnomaly to mod(ascNodeTrueAnomaly, 360).
 	
 	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
-	printLine("inclDeltaV: " + round(inclDeltaV,0)).
+	//printLine("inclDeltaV: " + round(inclDeltaV,0)).
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
 	if ascNodeTrueAnomaly < SHIP:ORBIT:TRUEANOMALY {
 		set nodeEta to nodeEta + SHIP:ORBIT:PERIOD.
+		printLine("Adding period").
 	}
 	local ascBurnMultiplier is -1.
 	if nodeEta > SHIP:ORBIT:PERIOD / 2 {
 		//set nodeEta to nodeEta - SHIP:ORBIT:PERIOD / 2.
 		//set ascBurnMultiplier to 1.
 	}
-
+	until not hasnode {
+		remove nextnode.
+	}
 	ADD NODE(TIME:SECONDS + nodeEta, 0,inclDeltaV * ascBurnMultiplier,0).
+	until false {
+		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
+	}
 	//RUNPATH("mnode.ks", 0.5).
 }
 
@@ -51,11 +58,10 @@ function calcAscNodeTrueAnomaly {
 	clearvecdraws().
 	vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
 	vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
-	vecdraw(SHIP:POSITION,  ascNodeVector * 10000000000, RGB(0, 1, 0), "intersect normal", 0.15, true).
-	vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000000, RGB(1, 1, 0), "asc node", 0.15, true).
+	vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000, RGB(1, 1, 0), "asc node", 0.4, true).
 	printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
 	
-	vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 3", 0.3, true).
+	//vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * SHIP:ORBIT:APOAPSIS + SHIP:ORBIT:BODY:RADIUS, RGB(1, 0, 1), "asc 3", 0.5, true).
 	// From an overhead view, the vector line will intersect the orbit at the point of the ascending node.
 	// To find the degree at which the intersection occurs, take the arctan of that vector line.
 	// (We ignore the y coordinate given that this is an overhead view. It's not needed since the orbital plane is 2D.)
