@@ -1,3 +1,5 @@
+RUNONCEPATH("orbitalMechanics.ks").
+
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 global TWOPI is 2 * CONSTANT:PI.
 

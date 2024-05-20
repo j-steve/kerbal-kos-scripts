@@ -26,10 +26,12 @@ function matchTargetInc {
 		//set ascBurnMultiplier to ascBurnMultiplier * -1.
 	}
 	local angularDifference is MOD(SHIP:ORBIT:TRUEANOMALY - ascNodeTrueAnomaly + 360, 360).	
-	if angularDifference < 180 {.
-		printLine("Using the other one: " + ascNodeTrueAnomaly).
-		set ascNodeTrueAnomaly to mod(180 + ascNodeTrueAnomaly, 360).
-		set ascBurnMultiplier to ascBurnMultiplier * -1.
+	if angularDifference < 180 {
+		// TODO: re-enable.
+		// TODO: in elliptical orbits, it will take less delta v to burn at the point closer to apoapsis, so use that one instead.
+		//printLine("Using the other one: " + ascNodeTrueAnomaly).
+		//set ascNodeTrueAnomaly to mod(180 + ascNodeTrueAnomaly, 360).
+		//set ascBurnMultiplier to ascBurnMultiplier * -1.
 	}
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
 	if ascNodeTrueAnomaly < SHIP:ORBIT:TRUEANOMALY {
@@ -37,19 +39,20 @@ function matchTargetInc {
 		printLine("Adding period").
 	}
 	
-	//local inclDeltaV is calcInclinationDeltaV2(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
-	local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT:MAG.
-	printLine("Velocity at node is " + velocityAtNode).
-	local inclDeltaV is calcInclinationDeltaV4(velocityAtNode, velocityAtNode, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
+	local inclDeltaV is calcInclinationDeltaV2(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION, ascNodeTrueAnomaly).
+	//local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT:MAG.
+	//printLine("Velocity at node is " + velocityAtNode).
+	//local inclDeltaV is calcInclinationDeltaV4(velocityAtNode, velocityAtNode, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
+	printLine("asc node true anom: " + ascNodeTrueAnomaly).
 	printLine("inclDeltaV: " + round(inclDeltaV,0)).
 	
 	if hasnode {
 		until not hasnode {
 			remove nextnode.
-			wait 2.
+			wait 0.25.
 		}
 	}
-	ADD NODE(TIME:SECONDS + nodeEta, 0, -inclDeltaV  * ascBurnMultiplier, 0).
+	ADD NODE(TIME:SECONDS + nodeEta, 0, inclDeltaV  * ascBurnMultiplier , 0).
 	until false {
 		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
 	}
@@ -89,43 +92,9 @@ function calcAscNodeTrueAnomaly {
 	return MOD(descNode + 180, 360).
 }
 
-// Calulates the midpoint of the orbit, equidistant between apoapsis and peripsis in space.
-// For perfectly circular orbits this will be the center of the planet.
-// Returns the coordinatees, relative to the current ship position.
-function calcOrbitCenter {
-	parameter myOrbit.
-	local fociToElipseCenterDist is myOrbit:ECCENTRICITY * myOrbit:SEMIMAJORAXIS.
-	// We know the offset, but now we must rotate the offset around the axis so that it is positioned correctly.
-	// See https://stackoverflow.com/questions/73922517/how-can-i-find-the-x-y-from-a-rotated-degree
-	local orbitRotationTheta is myOrbit:ARGUMENTOFPERIAPSIS * myOrbit:ECCENTRICITY.
-	local newX is myOrbit:BODY:POSITION:X + (fociToElipseCenterDist * COS(orbitRotationTheta)) .
-	local newZ is myOrbit:BODY:POSITION:Z + (fociToElipseCenterDist * SIN(orbitRotationTheta)).
-	return V(newX, myOrbit:BODY:POSITION:Y, newZ).
-}
-
 function getPointString {
 	parameter pointVal.
 	return "(" + round(pointVal:X, 2) + ","  + round(pointVal:Y, 2) + "," + round(pointVal:Z, 2) + ")".
-}
-
-function findIntersectionPoints {
-	parameter shipPosition, shipVelocity, normVector, targetPosition.
-    // Define the plane equation: normVector . (r - targetPosition) = 0
-    // Substitute the parameterized orbit equation: r(t) = shipPosition + t * shipVelocity
-    // Solve normVector . (shipPosition + t * shipVelocity - targetPosition) = 0 for t
-
-    local coeffT is VDOT(normVector, shipVelocity).
-    local constantt is VDOT(normVector, shipPosition - targetPosition).
-
-    if coeffT = 0 {
-        return "No intersection or infinite intersections (parallel or coincident).".
-    }
-
-    local t is -constantt / coeffT.
-
-    // Calculate the intersection point
-    local intersectionPoint is shipPosition + t * shipVelocity.
-    return intersectionPoint.
 }
 
 // Returns the normal vector of the plane defined by the given orbit (relative to ship position).
@@ -153,63 +122,27 @@ function calcInclinationDeltaV2 {
 	local DEG_TO_RAD is CONSTANT():PI / 180.
 
 	// See https://en.wikipedia.org/wiki/Orbital_inclination_change#Calculation
-	parameter myOrbit, incChange.
+	parameter myOrbit, incChange, incChangeTrueAnom.
 	local meanMotion is calcMeanMotion(myOrbit).
+	printLine("meanMotion : " + meanMotion).
 
 	// Convert inclination change from degrees to radians for trigonometric functions
 	local incChangeRad is incChange .
 
 	// Adjusting trigonometric calculations to use radians
-	local numerator is  2 * SIN(incChangeRad / 2) * (1 + myOrbit:ECCENTRICITY * COS(myOrbit:TRUEANOMALY * DEG_TO_RAD)) * meanMotion * myOrbit:SEMIMAJORAXIS.
-	local denominator is SQRT(1 - myOrbit:ECCENTRICITY ^ 2) * COS((myOrbit:ARGUMENTOFPERIAPSIS + myOrbit:TRUEANOMALY) * DEG_TO_RAD).
+	local numerator is  2 * SIN(incChangeRad / 2) * (1 + myOrbit:ECCENTRICITY * COS(incChangeTrueAnom * DEG_TO_RAD)) * meanMotion * myOrbit:SEMIMAJORAXIS.
+	local denominator is SQRT(1 - myOrbit:ECCENTRICITY ^ 2) * COS((myOrbit:ARGUMENTOFPERIAPSIS + incChangeTrueAnom) * DEG_TO_RAD).
 
 	return numerator / denominator.
 }
 
 function calcInclinationDeltaV {
 	// See https://en.wikipedia.org/wiki/Orbital_inclination_change#Calculation
-	parameter myOrbit, incChange.
+	parameter myOrbit, incChange, ascNodeTrueAnom.
 	local incChangeRad is incChange * CONSTANT:DEGTORAD.
 
 	local meanMotion is calcMeanMotion(myOrbit).
-	local numerator is  2 * SIN(incChangeRad/2) * (1 + myOrbit:ECCENTRICITY * COS(myOrbit:TRUEANOMALY)) * meanMotion * myOrbit:semiMajorAxis.
-	local denominator is SQRT(1 - myOrbit:ECCENTRICITY ^ 2) * COS(myOrbit:ARGUMENTOFPERIAPSIS + myOrbit:TRUEANOMALY).
+	local numerator is  2 * SIN(incChangeRad/2) * (1 + myOrbit:ECCENTRICITY * COS(ascNodeTrueAnom)) * meanMotion * myOrbit:semiMajorAxis.
+	local denominator is SQRT(1 - myOrbit:ECCENTRICITY ^ 2) * COS(myOrbit:ARGUMENTOFPERIAPSIS + ascNodeTrueAnom).
 	return numerator / denominator.
-}
-
-function calcMeanMotion {
-	// Mean motion can be expressed as 2pi / orbit period, or sqrt (mu / semiMajorAxis^3) -- both are equivelant.
-	parameter myOrbit.
-	//return SQRT(myOrbit:BODY:MU / (myOrbit:SEMIMAJORAXIS ^ 3)).
-	return 2 * CONSTANT:PI / myOrbit:PERIOD.
-}
-
-// Returns the time in seconds it will take to travel from the current position 
-// (the current true anomaly) in the given orbit to the given position (true anomaly, in degrees).
-function calcEtaToTrueAnomaly {
-	parameter myOrbit, targetDegrees.
-	local meanAnomalyCurrent is calcMeanAnomaly(myOrbit:ECCENTRICITY, myOrbit:TRUEANOMALY).
-	local meanAnomalyTarget is calcMeanAnomaly(myOrbit:ECCENTRICITY, targetDegrees).
-	return (meanAnomalyTarget - meanAnomalyCurrent) / 360 * myOrbit:PERIOD.
-}
-
-function calcMeanAnomaly {
-	// https://space.stackexchange.com/questions/54396/how-to-calculate-the-time-to-reach-a-given-true-anomaly
-	parameter eccentricity, trueAnomaly.
-	local eccentricAnomaly is calcEccentricAnomaly(eccentricity, trueAnomaly).
-	local sinOfEccentricAnomaly is SIN(eccentricAnomaly) * CONSTANT:RADTODEG.
-	return eccentricAnomaly - eccentricity * sinOfEccentricAnomaly.
-}
-
-function calcEccentricAnomaly {
-	// https://space.stackexchange.com/questions/54396/how-to-calculate-the-time-to-reach-a-given-true-anomaly
-	parameter eccentricity, trueAnomaly.
-	local eccentricAnomaly is ARCCOS((eccentricity + COS(trueAnomaly)) / (1 + eccentricity * COS(trueAnomaly))).
-	if (eccentricAnomaly < 180) and (trueAnomaly > 180) {
-		// Computed eccentric anomaly is always between the peripsis and the apoapsis.  
-		// Flip it to the other half of the orbit circle if we've passed the apoapsis, 
-		// aka, if current true anomaly > 180°.
-		set eccentricAnomaly to 360 - eccentricAnomaly.
-	}
-	return eccentricAnomaly.
 }
