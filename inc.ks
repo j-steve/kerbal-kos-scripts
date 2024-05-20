@@ -39,13 +39,24 @@ function matchTargetInc {
 		printLine("Adding period").
 	}
 	
-	RUNPATH("circ.ks").
+	//RUNPATH("circ.ks")
+	
+	crappyNode(nodeEta, targt:ORBIT:INCLINATION).
+	RUNPATH("node.ks").
+	return.
+	
+	
 	//local inclDeltaV is calcInclinationDeltaV5(targt:ORBIT:INCLINATION, nodeEta):MAG.
 	local incChange is targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION.
-	local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT:MAG.
-	//printLine("Velocity at node is " + velocityAtNode).
-	local inclDeltaV is calcInclinationDeltaV4(velocityAtNode, velocityAtNode, incChange).
+	local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT.
+	
+	if velocityAtNode:y > 0 {
+		set ascBurnMultiplier to ascBurnMultiplier * -1.
+	}
+	//printLine("Velocity at node is " + velocityAtNode:MAG).
+	//local inclDeltaV is calcInclinationDeltaV4(velocityAtNode:MAG, velocityAtNode:MAG, incChange).
 	//local inclDeltaV is -calcInclinationDeltaV(SHIP:ORBIT, incChange, ascNodeTrueAnomaly).
+	local inclDeltaV is calcInclinationDeltaV3(velocityAtNode:MAG, incChange).
 	printLine("asc node true anom: " + ascNodeTrueAnomaly).
 	printLine("inclDeltaV: " + round(inclDeltaV,0)).
 	
@@ -61,11 +72,43 @@ function matchTargetInc {
 	vecdraw(SHIP:POSITION,  V(progradeDeltaV, normalDeltaV, 0)  * 100000000, RGB(0.75, 0, 1), "normal vector", 0.35, true).
 	printLine("Burning " + round(normalDeltaV) + " normal + " + round(progradeDeltaV) + "prograde").
 	//ADD NODE(TIME:SECONDS + nodeEta, progradeDeltaV, normalDeltaV, 0).
-	ADD NODE(TIME:SECONDS + nodeEta, 0,- inclDeltaV, 0).
+	ADD NODE(TIME:SECONDS + nodeEta, 0, inclDeltaV * ascBurnMultiplier, 0).
 	//until false {
 //		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
 	//}
 	//RUNPATH("mnode.ks", 0.5).
+}
+
+function crappyNode {
+	parameter nodeEta, targetInclination.
+	clearNodes().
+	local incNode is NODE(TIME:SECONDS + nodeEta, 0, 0, 0).
+	add incNode.
+	local dv is 10.
+	if SHIP:ORBIT:INCLINATION > targetInclination {
+		set dv to -10.
+	}
+	local targetPlane is calcOrbitalPlaneNormal2(TARGET:ORBIT).
+	local shipPlane is calcOrbitalPlaneNormal2(incNode:ORBIT).
+	local lastDiff is ABS((targetPlane - shipPlane):MAG).
+	until ABS(dv) < 0.00001 {
+		set lastDiff to ABS((targetPlane - shipPlane):MAG).
+		set incNode:NORMAL to incNode:NORMAL + dv.
+		set shipPlane to calcOrbitalPlaneNormal2(incNode:ORBIT).
+		if ABS((targetPlane - shipPlane):MAG) > lastDiff {
+			set dv to -dv / 10.
+		} 
+	}
+	printLine("Final diff: " + (targetPlane - shipPlane):MAG).
+}
+
+function clearNodes {
+	if hasnode {
+		until not hasnode {
+			remove nextnode.
+			wait 0.25.
+		}
+	}
 }
 
 function calcAscNodeTrueAnomaly {
