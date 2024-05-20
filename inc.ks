@@ -23,10 +23,20 @@ function matchTargetInc {
 	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(targt).
 	printLine("Angle of asc vector: " + round(ascNodeTrueAnomaly,0)).
 	
-	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:ECCENTRICITY - SHIP:ORBIT:ECCENTRICITY).
+	local inclDeltaV is calcInclinationDeltaV(SHIP:ORBIT, targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION).
+	printLine("inclDeltaV: " + round(inclDeltaV,0)).
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
+	if ascNodeTrueAnomaly < SHIP:ORBIT:TRUEANOMALY {
+		set nodeEta to nodeEta + SHIP:ORBIT:PERIOD.
+	}
+	local ascBurnMultiplier is -1.
+	if nodeEta > SHIP:ORBIT:PERIOD / 2 {
+		//set nodeEta to nodeEta - SHIP:ORBIT:PERIOD / 2.
+		//set ascBurnMultiplier to 1.
+	}
 
-	ADD NODE(TIME:SECONDS + nodeEta, inclDeltaV,0,0).
+	ADD NODE(TIME:SECONDS + nodeEta, 0,inclDeltaV * ascBurnMultiplier,0).
+	//RUNPATH("mnode.ks", 0.5).
 }
 
 function calcAscNodeTrueAnomaly {
@@ -42,7 +52,7 @@ function calcAscNodeTrueAnomaly {
 	vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
 	vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
 	vecdraw(SHIP:POSITION,  ascNodeVector * 10000000000, RGB(0, 1, 0), "intersect normal", 0.15, true).
-	vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 10000000000, RGB(1, 1, 0), "asc node", 0.15, true).
+	vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000000, RGB(1, 1, 0), "asc node", 0.15, true).
 	printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
 	
 	vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * 100000000, RGB(1, 0, 1), "asc 3", 0.3, true).
@@ -195,6 +205,24 @@ function calcAscendingNodeSimple {
 	parameter orbit1, orbit2.
 	local ascNodeDeg is orbit1:LONGITUDEOFASCENDINGNODE - SHIP:ORBIT:LAN.
 	return ascNodeDeg.
+}
+
+function calcInclinationDeltaV2 {
+	// Converts angles from degrees to radians
+	local DEG_TO_RAD is CONSTANT():PI / 180.
+
+	// See https://en.wikipedia.org/wiki/Orbital_inclination_change#Calculation
+	parameter myOrbit, incChange.
+	local meanMotion is calcMeanMotion(myOrbit).
+
+	// Convert inclination change from degrees to radians for trigonometric functions
+	local incChangeRad is incChange * DEG_TO_RAD.
+
+	// Adjusting trigonometric calculations to use radians
+	local numerator is  2 * SIN(incChangeRad / 2) * (1 + myOrbit:ECCENTRICITY * COS(myOrbit:TRUEANOMALY * DEG_TO_RAD)) * meanMotion * myOrbit:SEMIMAJORAXIS.
+	local denominator is SQRT(1 - myOrbit:ECCENTRICITY ^ 2) * COS((myOrbit:ARGUMENTOFPERIAPSIS + myOrbit:TRUEANOMALY) * DEG_TO_RAD).
+
+	return numerator / denominator.
 }
 
 function calcInclinationDeltaV {
