@@ -54,10 +54,15 @@ function isFacingSurfaceRetrograde {
 local currentPrintLine is -1.
 local priorLineOverwritable is false.
 local CLEAR_LINE is "                                                                                                  ".
+local isFirstPrint is true.
 
 function printLine {
 	parameter text, overwriteLast is false.
-	if (overwriteLast) {
+	if isFirstPrint {
+		CLEARSCREEN.
+		set isFirstPrint to false.
+	}
+	if overwriteLast {
 		if not priorLineOverwritable {
 			// Add a "real" line for this overwritable line to use, to prevent it from overwriting non-overwritable text
 			// and so that subsequent "print" statements show up on the subsequent line rather than on this line.
