@@ -76,7 +76,7 @@ set targetHeading to PROGRADE.
 set WARP to 2.
 wait until ALTITUDE > BODY:ATM:HEIGHT * .9.
 
-printLine("Out of atmo, fixing apoapsis if needed.")
+printLine("Out of atmo, fixing apoapsis if needed.").
 set WARP to 0.
 // Correct apoapsis if it's fallen below min.
 until APOAPSIS > TARGET_ORBIT_RADIUS + 500 {.
