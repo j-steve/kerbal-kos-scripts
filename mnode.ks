@@ -8,7 +8,6 @@ if maxFacingDeviation = -1 {
 	set maxFacingDeviation to maxFinalDeviation * 5.
 }
 
-
 local startupData is startup("Executing next maneuver node.").
 
 // Align header.
@@ -77,8 +76,6 @@ if WARP > 0 {
 	set WARP to 0.
 }
 
-//executeBurn(NEXTNODE:DELTAV:MAG).
-
 printLine("Starting burn...").
 
 lock facingError to VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR).
@@ -101,6 +98,7 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	wait until STAGE:READY.
 	printLine("    done").
 	set burnTime to burnTime - stageBurnTime.
+    wait 0.001.
 }
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	local newThrottle is safeThrottle.
@@ -108,6 +106,7 @@ until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 		set newThrottle to newThrottle * 0.2.
 	}
 	lock throttle to newThrottle.
+	wait 0.001.
 }
 lock THROTTLE to 0.
 
