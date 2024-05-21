@@ -38,44 +38,38 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 	lock THROTTLE to 1.
 	stage.
-	until SHIP:VELOCITY:SURFACE:MAG > 75 and ALTITUDE > 100 {maintainHeading().}
+	until SHIP:VELOCITY:SURFACE:MAG > 75 and ALTITUDE > 100 {maintainHeading(90).}
 }
 
 // Start slow turn to vector.
 printLine("Pitching slightly towards " + launchHeading + "°...").
-local INITIAL_LAUNCH_PITCH is 80.
-set targetHeading to HEADING(launchHeading, INITIAL_LAUNCH_PITCH).
 
 // Adjust heading as we climb.
 printLine("Waiting to 6.5k").
-until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading().}
+until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(80).}
 printLine("Tilting to 75°").
-set targetHeading to HEADING(launchHeading, 75).
 
 printLine("Waiting til 10k").
-until ALTITUDE > 10000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading().}
+until ALTITUDE > 10000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(75).}
 printLine("Tilting to 70°").
-set targetHeading to HEADING(launchHeading, 70).
 
 printLine("Waiting til 12k").
-until ALTITUDE > 12000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading().}
+until ALTITUDE > 12000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(70).}
 printLine("Tilting to 60°").
-set targetHeading to HEADING(launchHeading, 60).
 
 printLine("Waiting til 15k").
-until ALTITUDE > 15000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading().}
+until ALTITUDE > 15000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(60).}
 printLine("Tilting to 45°").
-set targetHeading to HEADING(launchHeading, 45).
 
 printLine("Waiting til 30k").
-until ALTITUDE > 30000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading().}
+until ALTITUDE > 30000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(45).}
 printLine("Tilting to 25°").
-set targetHeading to HEADING(launchHeading, 25).
 
 printLine("Waiting til 45k").
-until ALTITUDE >= 45000 or APOAPSIS >= 70000 {maintainHeading().}
-set targetHeading to HEADING(launchHeading, 5).
-until APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading().}
+until ALTITUDE >= 45000 or APOAPSIS >= 70000 {maintainHeading(25).}
+
+printLine("Waiting til APOAPSIS = " + TARGET_ORBIT_RADIUS).
+until APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(5).}
 lock THROTTLE to 0.
 
 // Warp out of atmo.
@@ -87,7 +81,7 @@ set WARP to 0.
 
 // Correct apoapsis if it's fallen below min.
 until APOAPSIS > TARGET_ORBIT_RADIUS + 500 {.
-	maintainHeading().
+	maintainHeading(APOAPSIS:VECTOR).
 }
 lock THROTTLE to 0.
 set RCS to false.
@@ -101,7 +95,7 @@ print "NEED DV:" + deltaV .
 
 // Create maneuver node at apoapsis with the calculated deltaV as the prograde component
 add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
-RUNPATH("mnode.ks", 10). // Run the maneuver node, set deviation to a high value because burning NOW is more important than burning precisely.
+until NEXTNODE:DELTAV:MAG < 1 {maintainHeading(NEXTNODE:BURNVECTOR).}
 RUNPATH("circ.ks.").
 
 // Exit.
@@ -111,15 +105,20 @@ local deltaVPerfection is consumedDeltaV / 3000 - 1. // 3000 = min to orbit of k
 printline("  Consumed " + consumedDeltaV + " delta V (" + round(deltaVPerfection * 100) + "% excess).").
 startupData:END().
 
-
+// 
 function maintainHeading {
+	parameter targetVector. // Either a vector, or a target pitch (scalar).
 	if SHIP:AVAILABLETHRUST = 0 {
 		lock THROTTLE to 1.
 		stage.
 		wait 5.
 		wait until stage:ready.
 	}
-	local facingError is VANG(SHIP:FACING:FOREVECTOR, targetHeading:VECTOR).
+	if targetVector:ISTYPE("scalar") {
+		set targetVector to HEADING(launchHeading, targetVector):VECTOR.
+	}
+	lock STEERING to targetVector.
+	local facingError is VANG(SHIP:FACING:FOREVECTOR, targetVector).
 	lock THROTTLE to MAX(1 - facingError / 360, 0.25). // Always fire thrusters at at least 33%, as they may be needed to correct heading.
 	set RCS to facingError > 5.
 	wait 0.01.
