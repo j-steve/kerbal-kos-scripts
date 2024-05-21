@@ -3,7 +3,10 @@ RUNONCEPATH("common.ks").
 // The minimum deviation between the expected node and the actual node.
 // Lower number means that the final course will match the orignal more precisely,
 // but it may take longer to achieve.
-declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is 0.5.
+declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is -1.
+if maxFacingDeviation = -1 {
+	set maxFacingDeviation to maxFinalDeviation * 5.
+}
 
 
 local startupData is startup("Executing next maneuver node.").
@@ -13,7 +16,7 @@ printLine("Aligning header...").
 set WARP to 0.
 SAS off.
 lock STEERING to NEXTNODE:BURNVECTOR.
-wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < 0.05.
+wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < maxFacingDeviation / 2.
 
 // Pre-stage, if needed
 until SHIP:AVAILABLETHRUST > 0 {

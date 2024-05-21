@@ -22,9 +22,6 @@ function matchTargetInc {
 	// Check angular difference to see if we've passed the ascending node within the last half rotation.
 	// If so it'll be faster to hit the descending node instead.
 	local ascBurnMultiplier is -1.
-	if targt:ORBIT:INCLINATION < SHIP:ORBIT:INCLINATION {
-		//set ascBurnMultiplier to ascBurnMultiplier * -1.
-	}
 	local angularDifference is MOD(SHIP:ORBIT:TRUEANOMALY - ascNodeTrueAnomaly + 360, 360).	
 	if angularDifference < 180 {
 		// TODO: re-enable.

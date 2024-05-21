@@ -129,7 +129,7 @@ print "NEED DV:" + deltaV .
 
 // create maneuver node at apoapsis with the calculated deltaV as the prograde component
 add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
-RUNPATH("mnode.ks", 10). // Run the maneuver node, set deviation to a high value (10) because this number is innacurate anyways.
+RUNPATH("mnode.ks", 10). // Run the maneuver node, set deviation to a high value  because this number is innacurate anyways.
 SAS off.
 
 // TODO: The prior burn is insufficnet, I think because we are using current V rather than apoapsis V for the required delta. So keep burning.
