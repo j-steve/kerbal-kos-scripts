@@ -111,6 +111,7 @@ until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 lock THROTTLE to 0.
 
 unlock THROTTLE.
+if HASNODE {remove NEXTNODE.}
 printLine("Burn complete.").
 
 startupData:END().

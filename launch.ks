@@ -42,8 +42,10 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 }
 
 // Adjust heading as we climb.
-printLine("Pitching slightly towards " + launchHeading + "°, waiting to 6.5k...").
-until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(80).}
+if ALTITUDE < 6500 {
+	printLine("Pitching slightly towards " + launchHeading + "°, waiting to 6.5k...").
+	until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(80).}
+}
 
 printLine("Tilting to 75°, waiting til 10k").
 until ALTITUDE > 10000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(75).}
@@ -54,7 +56,7 @@ until ALTITUDE > 12500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(70).}
 printLine("Tilting to 65°, waiting til 15k").
 until ALTITUDE > 15000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(65).}
 
-printLine("Tilting to 65°, waiting til 20k").
+printLine("Tilting to 60°, waiting til 20k").
 until ALTITUDE > 20000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(60).}
 
 printLine("Tilting to 55°, waiting til 25k").
@@ -66,18 +68,21 @@ until ALTITUDE > 30000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(45).}
 printLine("Tilting to 25°, waiting til 45k").
 until ALTITUDE >= 45000 or APOAPSIS >= 70000 {maintainHeading(25).}
 
-printLine("Tilting to 5°, Waiting til APOAPSIS = " + TARGET_ORBIT_RADIUS).
+printLine("Tilting to 5°, waiting til APOAPSIS = " + TARGET_ORBIT_RADIUS).
 until APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(5).}
 
 // Warp out of atmo.
-printLine("Waiting to exit atmo..."). // Subsequent calcuations will be innacurate if we're still losing momentum due to atmo.
-lock THROTTLE to 0.
-set targetHeading to PROGRADE.
-set WARP to 2.
-wait until ALTITUDE > BODY:ATM:HEIGHT * .9.
+if ALTITUDE < BODY:ATM:HEIGHT {
+	printLine("Waiting to exit atmo..."). // Subsequent calcuations will be innacurate if we're still losing momentum due to atmo.
+	lock THROTTLE to 0.
+	set targetHeading to PROGRADE.
+	set WARP to 2.
+	wait until ALTITUDE > BODY:ATM:HEIGHT * .9.
+	set WARP to 0.
+	wait until ALTITUDE > BODY:ATM:HEIGHT.
+}
 
 printLine("Out of atmo, fixing apoapsis if needed.").
-set WARP to 0.
 // Correct apoapsis if it's fallen below min.
 until APOAPSIS > TARGET_ORBIT_RADIUS + 500 {.
 	maintainHeading(PROGRADE:VECTOR).
@@ -87,17 +92,25 @@ set RCS to false.
 
 // Create maneuver node at apoapsis with the calculated deltaV as the prograde component
 // Compute dV to complete orbit..
-printLine("Rasing periapsis...").
+printLine("Creating periapsis adjustment node and waiting for node start...").
 local currentV is VELOCITYAT(SHIP, TIME:SECONDS + ETA:APOAPSIS).
 local requiredV is calcRequiredVelocityAtApoapsis(TARGET_ORBIT_RADIUS).
 local deltaV is (requiredV - currentV:ORBIT:MAG).
 add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
-until NEXTNODE:DELTAV:MAG < 10 {maintainHeading(NEXTNODE:BURNVECTOR).}
+lock steering to NEXTNODE:BURNVECTOR.
+local acceleration is MAX(SHIP:AVAILABLETHRUST / SHIP:MASS, 0.001).
+local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
+wait NEXTNODE:ETA - burnTime / 2 + 5. // Start burning so that total burn will be around apoapsis, with 5-second buffer
+
+printLine("Rasing periapsis...").
+// TODO: slow thrust at end, when burnTime is approaching 0, to prevent adding too much deltaV (raising pariapsis more than needed).
+until PERIAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(PROGRADE:VECTOR).}
 lock THROTTLE to 0.
 set RCS to false.
+if HASNODE {remove NEXTNODE.}
 
 // Circularize as needed.
-RUNPATH("circ.ks.").
+// RUNPATH("circ.ks.").
 
 // Exit.
 printline("Orbit complete.").
