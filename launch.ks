@@ -41,61 +41,62 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 	until SHIP:VELOCITY:SURFACE:MAG > 75 and ALTITUDE > 100 {maintainHeading(90).}
 }
 
-// Start slow turn to vector.
-printLine("Pitching slightly towards " + launchHeading + "°...").
-
 // Adjust heading as we climb.
-printLine("Waiting to 6.5k").
+printLine("Pitching slightly towards " + launchHeading + "°, waiting to 6.5k...").
 until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(80).}
-printLine("Tilting to 75°").
 
-printLine("Waiting til 10k").
+printLine("Tilting to 75°, waiting til 10k").
 until ALTITUDE > 10000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(75).}
-printLine("Tilting to 70°").
 
-printLine("Waiting til 12k").
-until ALTITUDE > 12000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(70).}
-printLine("Tilting to 60°").
+printLine("Tilting to 70°, waiting til 12.5k").
+until ALTITUDE > 12500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(70).}
 
-printLine("Waiting til 15k").
-until ALTITUDE > 15000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(60).}
-printLine("Tilting to 45°").
+printLine("Tilting to 65°, waiting til 15k").
+until ALTITUDE > 15000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(65).}
 
-printLine("Waiting til 30k").
+printLine("Tilting to 65°, waiting til 20k").
+until ALTITUDE > 20000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(60).}
+
+printLine("Tilting to 55°, waiting til 25k").
+until ALTITUDE > 25000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(55).}
+
+printLine("Tilting to 45°, waiting til 30k").
 until ALTITUDE > 30000 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(45).}
-printLine("Tilting to 25°").
 
-printLine("Waiting til 45k").
+printLine("Tilting to 25°, waiting til 45k").
 until ALTITUDE >= 45000 or APOAPSIS >= 70000 {maintainHeading(25).}
 
-printLine("Waiting til APOAPSIS = " + TARGET_ORBIT_RADIUS).
+printLine("Tilting to 5°, Waiting til APOAPSIS = " + TARGET_ORBIT_RADIUS).
 until APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(5).}
-lock THROTTLE to 0.
 
 // Warp out of atmo.
+printLine("Waiting to exit atmo..."). // Subsequent calcuations will be innacurate if we're still losing momentum due to atmo.
+lock THROTTLE to 0.
 set targetHeading to PROGRADE.
-printline("Waiting to exit atmo..."). // Subsequent calcuations will be innacurate if we're still losing momentum due to atmo.
 set WARP to 2.
 wait until ALTITUDE > BODY:ATM:HEIGHT * .9.
-set WARP to 0.
 
+printLine("Out of atmo, fixing apoapsis if needed.")
+set WARP to 0.
 // Correct apoapsis if it's fallen below min.
 until APOAPSIS > TARGET_ORBIT_RADIUS + 500 {.
-	maintainHeading(APOAPSIS:VECTOR).
+	maintainHeading(PROGRADE:VECTOR).
 }
 lock THROTTLE to 0.
 set RCS to false.
 
+// Create maneuver node at apoapsis with the calculated deltaV as the prograde component
 // Compute dV to complete orbit..
-printline("Creating circularization node.").
+printLine("Rasing periapsis...").
 local currentV is VELOCITYAT(SHIP, TIME:SECONDS + ETA:APOAPSIS).
 local requiredV is calcRequiredVelocityAtApoapsis(TARGET_ORBIT_RADIUS).
 local deltaV is (requiredV - currentV:ORBIT:MAG).
-print "NEED DV:" + deltaV .
-
-// Create maneuver node at apoapsis with the calculated deltaV as the prograde component
 add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
-until NEXTNODE:DELTAV:MAG < 1 {maintainHeading(NEXTNODE:BURNVECTOR).}
+until NEXTNODE:DELTAV:MAG < 10 {maintainHeading(NEXTNODE:BURNVECTOR).}
+lock THROTTLE to 0.
+set RCS to false.
+
+// Circularize as needed.
 RUNPATH("circ.ks.").
 
 // Exit.
@@ -105,7 +106,7 @@ local deltaVPerfection is consumedDeltaV / 3000 - 1. // 3000 = min to orbit of k
 printline("  Consumed " + consumedDeltaV + " delta V (" + round(deltaVPerfection * 100) + "% excess).").
 startupData:END().
 
-// 
+// Keeps the ship pointed at the given vector or pitch; stages and toggles RCS as when necessary.
 function maintainHeading {
 	parameter targetVector. // Either a vector, or a target pitch (scalar).
 	if SHIP:AVAILABLETHRUST = 0 {
@@ -120,11 +121,11 @@ function maintainHeading {
 	lock STEERING to targetVector.
 	local facingError is VANG(SHIP:FACING:FOREVECTOR, targetVector).
 	lock THROTTLE to MAX(1 - facingError / 360, 0.25). // Always fire thrusters at at least 33%, as they may be needed to correct heading.
-	set RCS to facingError > 5.
+	set RCS to facingError > 10.
 	wait 0.01.
 }
 
-// function to calculate required velocity at apoapsis to achieve desired periapsis
+// Returns the required deltaV at apoapsis to achieve the desired periapsis.
 function calcRequiredVelocityAtApoapsis {
     parameter desiredPeriapsis. // desired periapsis altitude in meters
 
@@ -139,6 +140,7 @@ function calcRequiredVelocityAtApoapsis {
     return visViva.
 }
 
+// Activates all deployables that should be initated when we hit space: solar panels, fairings, antennas.
 function deploySolarPanels {
     for part in SHIP:PARTS {
 		for module in part:MODULES {
@@ -153,9 +155,6 @@ function deploySolarPanels {
 			}
 			if part:GETMODULE(module):HASEVENT("extend antenna") {
 				part:GETMODULE(module):doevent("extend antenna").
-			}
-			if part:GETMODULE(module):HASEVENT("extend solar panel") {
-				part:GETMODULE(module):doevent("extend solar panel").
 			}
 		}
     }
