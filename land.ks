@@ -61,6 +61,7 @@ if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 			printLine("  Waiting for alignment | lateral speed: " + round(lateralMotion), true).
 			lock THROTTLE to 0.
 		}
+		wait 0.001.
 	}
 	lock THROTTLE to 0.
 	unlock THROTTLE.
@@ -88,6 +89,7 @@ if collisionEta - surfaceBurnTime > WARP_BUFFER_SECONDS {
 }
 until surfaceBurnTime >= collisionEta {
 	printLine("  collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s", true).
+	wait 0.001.
 }
 
 // Execute final descent burn.
