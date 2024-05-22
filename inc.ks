@@ -11,6 +11,7 @@ function matchTargetInc {
 	}
 	local startupData is startup("Adjusting inclination to match " + TARGET:NAME + ".").
 	
+	clearNodes(). // TODO: remove this.
 	// Get the ascending node.
 	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(TARGET).
 	printLine("Angle of asc node: " + round(ascNodeTrueAnomaly,0)).
@@ -30,10 +31,11 @@ function matchTargetInc {
 		set nodeEta to nodeEta + SHIP:ORBIT:PERIOD.
 		printLine("Adding period").
 	}
-	printline("calcin").
 
-
-	set nodeEta to calcEtaToTrueAnomaly(SHIP:ORBIT, 53 ). // TODO: REMOVE THIS
+	add node(time:seconds + nodeEta, 0,0,0).
+	// until false {
+	// 	printLine(round(SHIP:ORBIT:trueanomaly, 2), true).
+	// }
 	
 	// Create and execute maneuver node.
 	createIncTransferNode(nodeEta).
@@ -153,6 +155,7 @@ function clearNodes {
 
 function calcAscNodeTrueAnomaly {
 	parameter obj.
+
 	// To get the ascending node vector, find the normal vectors of the ship plane & target plane,
 	// then take the cross product of those two to find a new vector perpendicular to both.
 	// That vector will neccessarily be the line along which the two objects overlap,
@@ -162,34 +165,59 @@ function calcAscNodeTrueAnomaly {
 	local ascNodeVector is VECTORCROSSPRODUCT(targetPlane, shipPlane).
 	if debugMode {
 		clearvecdraws().
-		vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
-		vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
-		vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000, RGB(1, 1, 0), "asc node", 0.4, true).
-		printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
+		vecdraw(obj:POSITION,  targetPlane * 10000000, RGB(1, 0, 0), "target normal", 0.15, true).
+		vecdraw(SHIP:POSITION,  shipPlane * 10000000, RGB(0, 0, 1), "ship normal", 0.15, true).
+		vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 10000000, RGB(1, 1, 0), "asc node", 0.4, true).
+		printLine("asc node vector: " + getPointString(ascNodeVector:NORMALIZED)).
 	}
 	// From an overhead view, the vector line will intersect the orbit at the point of the ascending node.
 	// To find the degree at which the intersection occurs, take the arctan of that vector line.
 	// (We ignore the y coordinate given that this is an overhead view. It's not needed since the orbital plane is 2D.)
 	local ascendingNodeAngle is ARCTAN2( ascNodeVector:Z, ascNodeVector:X).	
-	printLine("asc node vector is " + round(ascNodeVector:Z, 2) + " x " + round(ascNodeVector:X)).
-	printLine("ascendingNodeAngle " + round(ascendingNodeAngle, 2) + "°").
-	vecdraw(SHIP:BODY:POSITION,  V(1, 0, 0) * 100000000, RGB(0.5, 0.5, 0.5), "X", 0.4, true).
-	vecdraw(SHIP:BODY:POSITION,  V(0, 1, 0) * 100000000, RGB(0.75, 0.75, 0.75), "Y", 0.4, true).
-	vecdraw(SHIP:BODY:POSITION,  V(0, 0, 1) * 100000000, RGB(0.85, 0.85, 0.85), "Z", 0.4, true).
-	vecdraw(SHIP:BODY:POSITION,  V(ascNodeVector:X, 0, ascNodeVector:Z) * 100000000, RGB(0, 1, 1), "asc node v", 0.4, true).
-	
-	// This angle is correct based on some x axis.  To convert this to a useable true anomaly, use the ship's current position
-	// to determine the degree difference between reported trueanomaly, and degrees from 0 on the X axis.
-	// This gives us a number to add to the calculated degree position to get the "actual" true anomaly position to use.
-	local currentShipAngle is ARCTAN2(-SHIP:ORBIT:BODY:POSITION:Z, -SHIP:ORBIT:BODY:POSITION:X).
-	printLine("currentShipAngle " + round(currentShipAngle, 2) + "°").
-	printLine("SHIP:ORBIT:TRUEANOMALY " + round(SHIP:ORBIT:TRUEANOMALY, 2) + "°").
-	local trueAnomalyOffset is SHIP:ORBIT:TRUEANOMALY - currentShipAngle.
-	//local inclinationOffset is choose 1 if SHIP:ORBIT:INCLINATION <= 90 else -1.
-	set ascendingNodeAngle to ascendingNodeAngle .
-	printLine("trueAnomalyOffset " + round(trueAnomalyOffset, 2) + "°").
-	
-	printLine("Descending node true anomaly is " + round(ascendingNodeAngle, 2) + "°").
+	if debugMode {
+		printLine("asc node vector is " + getPointString(ascNodeVector)).
+		printLine("ascendingNodeAngle " + round(ascendingNodeAngle, 2) + "°").
+		vecdraw(SHIP:BODY:POSITION,  V(1, 0, 0) * 10000000, RGB(0.5, 0.5, 0.5), "X", 0.4, true).
+		vecdraw(SHIP:BODY:POSITION,  V(0, 1, 0) * 10000000, RGB(0.75, 0.75, 0.75), "Y", 0.4, true).
+		vecdraw(SHIP:BODY:POSITION,  V(0, 0, 1) * 10000000, RGB(0.85, 0.85, 0.85), "Z", 0.4, true).
+		vecdraw(SHIP:BODY:POSITION,  V(ascNodeVector:X, 0, ascNodeVector:Z):normalized * 10000000, RGB(0, 1, 1), "asc node v", 0.4, true).
+		printLine("Body position: " + getPointString(SHIP:BODY:POSITION)).
+	}
+
+	// TODO: the ideal 2D view would be the orbit's normal vector, not sure how to do that.
+	if ABS(90 - SHIP:ORBIT:INCLINATION) < 35 or ABS(-90 - SHIP:ORBIT:INCLINATION) < 35 {
+		printLine("--------------------------------------------").
+		printLine("WARNING: Current orbit is highly polar!").
+		printLine("    Inclination calulation may be imprecise.").
+		printLine("--------------------------------------------").
+	}
+
+	// This angle is correct based on some x axis.  To convert this to a useable true anomaly, find the angle of the periapsis, 
+	// and then subtract that to get the true anomoly (since true anomaly is "0" at periapsis.)
+	local periapsisCoords is POSITIONAT(SHIP, TIME:SECONDS + ETA:PERIAPSIS) - SHIP:ORBIT:BODY:POSITION.
+	local periapsisAngle is ARCTAN2(periapsisCoords:Z, periapsisCoords:X).
+	if SHIP:ORBIT:INCLINATION > 90 {
+		// The orbit is retrograde (clockwise).
+		set ascendingNodeAngle to (360 - ascendingNodeAngle) + periapsisAngle.
+	} else {
+		// The orbit is prograde (counterclockwise).
+		printLine("Using CCW logic").
+		set ascendingNodeAngle to (360 - periapsisAngle) + ascendingNodeAngle.
+	}
+
+
+	if debugMode {
+		vecdraw(SHIP:BODY:POSITION,  periapsisCoords:normalized * 10000000, RGB(0.99, 0, 0.55), "periapsis", 0.4, true).
+		printLine("Periapsis coords: " + getPointString(periapsisCoords)).
+		printLine("Periapsis angle: " + round(periapsisAngle, 2) +  "°").
+		printLine("SHIP:ORBIT:TRUEANOMALY " + round(SHIP:ORBIT:TRUEANOMALY, 2) + "°").
+		printLine("Descending node true anomaly is " + round(ascendingNodeAngle, 2) + "°").
+
+		local halfwayPoint is (periapsisCoords:normalized - ascNodeVector:normalized):NORMALIZED.
+		printLine("halfwayPoint coords: " + getPointString(halfwayPoint)).
+		vecdraw(SHIP:BODY:POSITION,  halfwayPoint * 10000000, RGB(0.15, 0.35, 0.25), "halfway", 0.4, true).
+	}
+
 	// Technically this logic has found us the descending node (because of the way we used the acsending vector).
 	// So add 180 to get the ascending node instead and return that on a 360-degree scale.
 	return MOD(ascendingNodeAngle + 180, 360).
