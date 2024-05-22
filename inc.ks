@@ -53,18 +53,35 @@ function createIncTransferNode {
 
 function tuneNode {
 	parameter tnode, evaluationFunc, minDeltaVIncrement is 0.00001.
-	local dv is 10.
-	local thrustVector is LIST(1, 1, 1).
+	local dv is 100.
+	local mVector is LIST(1, 1, 1).
 	local i is 0.
 	local priorDiff is evaluationFunc:CALL().
+	printLine("Tuning node...").
 	until ABS(dv) < minDeltaVIncrement {
-		set tnode:NORMAL to tnode:NORMAL + dv.
+		if i = 0 {
+			set tnode:PROGRADE to tnode:PROGRADE + dv * mVector[i].
+		} else if i = 1 {
+			set tnode:NORMAL to tnode:NORMAL + dv * mVector[i].
+		} else if i = 2 {
+			set tnode:RADIALOUT to tnode:RADIALOUT + dv * mVector[i].
+		}
 		local newDiff is evaluationFunc:CALL().
-		if newDiff > priorDiff {
-			set dv to -dv / 10.
-		} 
+		if newDiff >= priorDiff {
+			if mVector[i] = 1 {
+				set mVector[i] to -1.
+			} else if mVector[i] = -1 {
+				set mVector[i] to 0.
+				if mVector[0] = 0 and mVector[1] = 0 and mVector[2] = 0 {
+					set dv to dv / 10.
+					set mVector to LIST(1, 1, 1).
+				}
+			}
+		}
+		set i to MOD(i + 1, 3).
 		set priorDiff to newDiff.
 	}
+	printLine("  OK").
 }
 
 function clearNodes {
