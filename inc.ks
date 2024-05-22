@@ -1,6 +1,6 @@
 RUNONCEPATH("common.ks").
 
-parameter debugMode is true.
+parameter debugMode is false.
 
 matchTargetInc().
 
@@ -87,7 +87,6 @@ function tuneNode {
 			set deltas[i] to calcDelta:CALL().
 			 // Undo the thrust application for now.
 			incrementNodeVector(burnDirections[getOppositeDirectionIndex(i)]).
-			//printLine("  " + burnDirections[i] + " : " + round(deltas[i], 3)).
 		}
 		// Find the best possible thrust direction from among the 6 available options.
 		local minDelta is -1.
@@ -106,15 +105,18 @@ function tuneNode {
 			// Remove the opposite direction from the available directions, until we decrement dV.
 			// There's no benefit to burning two opposite directions, and trying to do so may get us stuck in an infinate loop.
 			removeValue(availableBurnDirections, getOppositeDirectionIndex(minDeltaIndex)).
-			printLine("Best vector was " + burnDirections[minDeltaIndex] + " at dv " + dv).
-			printLine("change from " + round(priorDelta, 2) + " to " + round(minDelta, 2)).
+			if (debugMode) {
+				printLine("Best vector was " + burnDirections[minDeltaIndex] + " at dv " + dv).
+				printLine("change from " + round(priorDelta, 2) + " to " + round(minDelta, 2)).
+			}
 		} else {
 			// All options suck: try increasing by a smaller amount.
 			set dv to dv / 10.
 			set availableBurnDirections to LIST(0,1,2,3,4,5). // Reset burn directions
-			printLine("Decreasing dv to " + dv).
+			if (debugMode) {
+				printLine("Decreasing dv to " + dv).
+			}
 		}
-		//wait 5.
 	}
 	printLine("  OK").
 
