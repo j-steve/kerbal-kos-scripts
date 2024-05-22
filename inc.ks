@@ -43,24 +43,28 @@ function createIncTransferNode {
 	clearNodes().
 	local incNode is NODE(TIME:SECONDS + nodeEta, 0, 0, 0).
 	add incNode.
-	local dv is 10.
-	if SHIP:ORBIT:INCLINATION > targetInclination {
-		set dv to -10.
-	}
 	local targetPlane is calcOrbitalPlaneNormal(TARGET:ORBIT).
-	local shipPlane is calcOrbitalPlaneNormal(incNode:ORBIT).
-	local lastDiff is ABS((targetPlane - shipPlane):MAG).
 	// Start with a high dV increment.  When we "overshoot" the target plane, 
 	// go back and check again in the other direction (make it negative)
 	// but with a more granular value (divide it by 10).
 	// Stop when we reach a reasonably small dV increment.
-	until ABS(dv) < 0.00001 {
-		set lastDiff to ABS((targetPlane - shipPlane):MAG).
-		set incNode:NORMAL to incNode:NORMAL + dv.
-		set shipPlane to calcOrbitalPlaneNormal(incNode:ORBIT).
-		if ABS((targetPlane - shipPlane):MAG) > lastDiff {
+	tuneNode(incNode, {return ABS((targetPlane - calcOrbitalPlaneNormal(incNode:ORBIT)):MAG).}).
+}
+
+function tuneNode {
+	parameter tnode, evaluationFunc, minDeltaVIncrement is 0.00001.
+	local dv is 10.
+	local thrustVector is LIST(1, 1, 1).
+	local i is 0.
+	local priorDiff is evaluationFunc:CALL().
+	printLine("o ya").
+	until ABS(dv) < minDeltaVIncrement {
+		set tnode:NORMAL to tnode:NORMAL + dv.
+		local newDiff is evaluationFunc:CALL().
+		if newDiff > priorDiff {
 			set dv to -dv / 10.
 		} 
+		set priorDiff to newDiff.
 	}
 }
 
