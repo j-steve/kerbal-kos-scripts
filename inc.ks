@@ -33,7 +33,7 @@ function matchTargetInc {
 	
 	// Create and execute maneuver node.
 	createIncTransferNode(nodeEta, TARGET:ORBIT:INCLINATION).
-	RUNPATH("mnode.ks").
+	//RUNPATH("mnode.ks").
 	
 	startupData:END().
 }
@@ -52,24 +52,21 @@ function createIncTransferNode {
 }
 
 function tuneNode {
-	parameter tnode, evaluationFunc, minDeltaVIncrement is 0.00001.
-	local dv is 100.
+	parameter tnode, evaluationFunc, minDeltaVIncrement is 0.00001, minDeltaPerDv is .01.
+	local dv is 10.
 	local mVector is LIST(1, 1, 1).
 	local i is 0.
 	local priorDiff is evaluationFunc:CALL().
 	printLine("Tuning node...").
 	until ABS(dv) < minDeltaVIncrement {
-		if i = 0 {
-			set tnode:PROGRADE to tnode:PROGRADE + dv * mVector[i].
-		} else if i = 1 {
-			set tnode:NORMAL to tnode:NORMAL + dv * mVector[i].
-		} else if i = 2 {
-			set tnode:RADIALOUT to tnode:RADIALOUT + dv * mVector[i].
-		}
+		//printLine("Incrementing " + i + " by " + dv * mVector[i]).
+		incrementNodeVector().
 		local newDiff is evaluationFunc:CALL().
-		if newDiff >= priorDiff {
+		if (priorDiff - newDiff) / dv < minDeltaPerDv {
 			if mVector[i] = 1 {
 				set mVector[i] to -1.
+				//printLine("   Undoing").
+				incrementNodeVector(). // Undo the prior increment since it didn't improve things.
 			} else if mVector[i] = -1 {
 				set mVector[i] to 0.
 				if mVector[0] = 0 and mVector[1] = 0 and mVector[2] = 0 {
@@ -80,8 +77,19 @@ function tuneNode {
 		}
 		set i to MOD(i + 1, 3).
 		set priorDiff to newDiff.
+		//wait 5.
 	}
 	printLine("  OK").
+
+	function incrementNodeVector {
+		if i = 0 {
+			set tnode:PROGRADE to tnode:PROGRADE + dv * mVector[i].
+		} else if i = 1 {
+			set tnode:NORMAL to tnode:NORMAL + dv * mVector[i].
+		} else if i = 2 {
+			set tnode:RADIALOUT to tnode:RADIALOUT + dv * mVector[i].
+		}
+	}
 }
 
 function clearNodes {
