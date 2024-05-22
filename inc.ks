@@ -32,13 +32,13 @@ function matchTargetInc {
 	}
 	
 	// Create and execute maneuver node.
-	crappyNode(nodeEta, TARGET:ORBIT:INCLINATION).
+	createIncTransferNode(nodeEta, TARGET:ORBIT:INCLINATION).
 	RUNPATH("mnode.ks").
 	
 	startupData:END().
 }
 
-function crappyNode {
+function createIncTransferNode {
 	parameter nodeEta, targetInclination.
 	clearNodes().
 	local incNode is NODE(TIME:SECONDS + nodeEta, 0, 0, 0).
@@ -119,7 +119,6 @@ function calcOrbitalPlaneNormal {
     parameter myOrbit.
 	local positionRelativeToShip is myOrbit:POSITION - myOrbit:BODY:POSITION.
 	return VECTORCROSSPRODUCT(myOrbit:VELOCITY:ORBIT, positionRelativeToShip):NORMALIZED.
-
 }
 
 // Gives the delta V required for the given inclination change, provided both orbits are near circular.
