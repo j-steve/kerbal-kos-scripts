@@ -15,7 +15,9 @@ function calcEtaToTrueAnomaly {
 	parameter myOrbit, targetDegrees.
 	local meanAnomalyCurrent is calcMeanAnomaly(myOrbit:ECCENTRICITY, myOrbit:TRUEANOMALY).
 	local meanAnomalyTarget is calcMeanAnomaly(myOrbit:ECCENTRICITY, targetDegrees).
-	return (meanAnomalyTarget - meanAnomalyCurrent) / 360 * myOrbit:PERIOD.
+	local myEta is (meanAnomalyTarget - meanAnomalyCurrent) / 360 * myOrbit:PERIOD.
+	//printLine("ETA to " + round(targetDegrees, 1) + " is "  + round(myEta / 60) + "m").
+	return myEta.
 }
 
 function calcMeanAnomaly {

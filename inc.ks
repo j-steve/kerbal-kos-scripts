@@ -1,6 +1,6 @@
 RUNONCEPATH("common.ks").
 
-parameter debugMode is false.
+parameter debugMode is true.
 
 matchTargetInc().
 
@@ -30,65 +30,115 @@ function matchTargetInc {
 		set nodeEta to nodeEta + SHIP:ORBIT:PERIOD.
 		printLine("Adding period").
 	}
+	printline("calcin").
+
+
+	set nodeEta to calcEtaToTrueAnomaly(SHIP:ORBIT, 53 ). // TODO: REMOVE THIS
 	
 	// Create and execute maneuver node.
-	createIncTransferNode(nodeEta, TARGET:ORBIT:INCLINATION).
+	createIncTransferNode(nodeEta).
 	//RUNPATH("mnode.ks").
 	
 	startupData:END().
 }
 
 function createIncTransferNode {
-	parameter nodeEta, targetInclination.
+	parameter nodeEta.
 	clearNodes().
 	local incNode is NODE(TIME:SECONDS + nodeEta, 0, 0, 0).
 	add incNode.
 	local targetPlane is calcOrbitalPlaneNormal(TARGET:ORBIT).
+	printLine("I GOTTA" + ARCCOS(VDOT(targetPlane, calcOrbitalPlaneNormal(SHIP:ORBIT)))).
 	// Start with a high dV increment.  When we "overshoot" the target plane, 
 	// go back and check again in the other direction (make it negative)
 	// but with a more granular value (divide it by 10).
 	// Stop when we reach a reasonably small dV increment.
-	tuneNode(incNode, {return ABS((targetPlane - calcOrbitalPlaneNormal(incNode:ORBIT)):MAG).}).
+	tuneNode(incNode, {
+		local nodePlane is calcOrbitalPlaneNormal(incNode:ORBIT).
+		//clearvecdraws().
+		//vecdraw(SHIP:POSITION,  targetPlane * 100000000, RGB(0, 1, 0), "normal", 0.15, true).
+		//vecdraw(SHIP:POSITION,  nodePlane * 100000000, RGB(0, 0, 1), "normal", 0.15, true).
+		local dotProduct is VDOT(nodePlane, targetPlane).
+		local magnitudesProduct is nodePlane:MAG * targetPlane:MAG.
+
+		local cosineOfAngle is dotProduct / magnitudesProduct.
+		local angleInRadians is ARCCOS(cosineOfAngle).
+		//printLine("Ang in rads: " + angleInRadians).
+		return abs(angleInRadians).
+		//return ARCCOS(VDOT(targetPlane, calcOrbitalPlaneNormal(incNode:ORBIT))).
+		}).
 }
 
 function tuneNode {
-	parameter tnode, evaluationFunc, minDeltaVIncrement is 0.00001, minDeltaPerDv is .01.
+	parameter tnode, calcDelta, minDeltaVIncrement is 0.001, minDeltaPerDv is .01.
 	local dv is 10.
-	local mVector is LIST(1, 1, 1).
-	local i is 0.
-	local priorDiff is evaluationFunc:CALL().
+	local burnDirections is LIST("prograde", "normal", "radialout", "retrograde", "antinormal", "radialin").
+	local availableBurnDirections is LIST(0,1,2,3,4,5).
+	local priorDelta is calcDelta:CALL().
 	printLine("Tuning node...").
 	until ABS(dv) < minDeltaVIncrement {
-		//printLine("Incrementing " + i + " by " + dv * mVector[i]).
-		incrementNodeVector().
-		local newDiff is evaluationFunc:CALL().
-		if (priorDiff - newDiff) / dv < minDeltaPerDv {
-			if mVector[i] = 1 {
-				set mVector[i] to -1.
-				//printLine("   Undoing").
-				incrementNodeVector(). // Undo the prior increment since it didn't improve things.
-			} else if mVector[i] = -1 {
-				set mVector[i] to 0.
-				if mVector[0] = 0 and mVector[1] = 0 and mVector[2] = 0 {
-					set dv to dv / 10.
-					set mVector to LIST(1, 1, 1).
-				}
+		local deltas is LIST(0, 0, 0, 0, 0, 0).
+		//printLine("Prior delta: " + round(priorDelta, 3)).
+		for i in availableBurnDirections {
+			// Apply the thrust in this direction as a test to see how effective it would be.
+			incrementNodeVector(burnDirections[i]).
+			set deltas[i] to calcDelta:CALL().
+			 // Undo the thrust application for now.
+			incrementNodeVector(burnDirections[getOppositeDirectionIndex(i)]).
+			//printLine("  " + burnDirections[i] + " : " + round(deltas[i], 3)).
+		}
+		// Find the best possible thrust direction from among the 6 available options.
+		local minDelta is -1.
+		local minDeltaIndex is -1.
+		for i in availableBurnDirections {
+			if minDeltaIndex = -1 or deltas[i] < minDelta {
+				set minDelta to deltas[i].
+				set minDeltaIndex to i.
 			}
 		}
-		set i to MOD(i + 1, 3).
-		set priorDiff to newDiff.
+		local deltaImprovement is priorDelta - minDelta.
+		if deltaImprovement / dv > minDeltaPerDv {
+			 // Re-apply the thrust in the best possible direction, for real this time.
+			incrementNodeVector(burnDirections[minDeltaIndex]).
+			set priorDelta to minDelta.
+			// Remove the opposite direction from the available directions, until we decrement dV.
+			// There's no benefit to burning two opposite directions, and trying to do so may get us stuck in an infinate loop.
+			removeValue(availableBurnDirections, getOppositeDirectionIndex(minDeltaIndex)).
+			printLine("Best vector was " + burnDirections[minDeltaIndex] + " at dv " + dv).
+			printLine("change from " + round(priorDelta, 2) + " to " + round(minDelta, 2)).
+		} else {
+			// All options suck: try increasing by a smaller amount.
+			set dv to dv / 10.
+			set availableBurnDirections to LIST(0,1,2,3,4,5). // Reset burn directions
+			printLine("Decreasing dv to " + dv).
+		}
 		//wait 5.
 	}
 	printLine("  OK").
 
 	function incrementNodeVector {
-		if i = 0 {
-			set tnode:PROGRADE to tnode:PROGRADE + dv * mVector[i].
-		} else if i = 1 {
-			set tnode:NORMAL to tnode:NORMAL + dv * mVector[i].
-		} else if i = 2 {
-			set tnode:RADIALOUT to tnode:RADIALOUT + dv * mVector[i].
+		parameter burnDirection.
+		local multiplier is choose 1 if burnDirection = "prograde" or burnDirection = "normal" or burnDirection = "radialout" else -1.
+		if burnDirection = "prograde" or burnDirection = "retrograde" {
+			set tnode:PROGRADE to tnode:PROGRADE + dv * multiplier.
+		} else if burnDirection = "normal" or burnDirection = "antinormal" {
+			set tnode:NORMAL to tnode:NORMAL + dv * multiplier.
+		} else {
+			set tnode:RADIALOUT to tnode:RADIALOUT + dv * multiplier.
 		}
+	}
+
+	function getOppositeDirectionIndex {
+		parameter directionIndex.
+		return MOD(directionIndex + burnDirections:LENGTH/2, burnDirections:LENGTH).
+	}
+}
+
+function removeValue {
+	parameter myList, valToRemove.
+	local valIndex is myList:FIND(valToRemove).
+	if valIndex > -1 {
+		myList:REMOVE(valIndex).
 	}
 }
 
@@ -116,23 +166,33 @@ function calcAscNodeTrueAnomaly {
 		vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
 		vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000, RGB(1, 1, 0), "asc node", 0.4, true).
 		printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
-		vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * SHIP:ORBIT:APOAPSIS + SHIP:ORBIT:BODY:RADIUS, RGB(1, 0, 1), "asc 3", 0.5, true).
 	}
 	// From an overhead view, the vector line will intersect the orbit at the point of the ascending node.
 	// To find the degree at which the intersection occurs, take the arctan of that vector line.
 	// (We ignore the y coordinate given that this is an overhead view. It's not needed since the orbital plane is 2D.)
 	local ascendingNodeAngle is ARCTAN2( ascNodeVector:Z, ascNodeVector:X).	
+	printLine("asc node vector is " + round(ascNodeVector:Z, 2) + " x " + round(ascNodeVector:X)).
+	printLine("ascendingNodeAngle " + round(ascendingNodeAngle, 2) + "°").
+	vecdraw(SHIP:BODY:POSITION,  V(1, 0, 0) * 100000000, RGB(0.5, 0.5, 0.5), "X", 0.4, true).
+	vecdraw(SHIP:BODY:POSITION,  V(0, 1, 0) * 100000000, RGB(0.75, 0.75, 0.75), "Y", 0.4, true).
+	vecdraw(SHIP:BODY:POSITION,  V(0, 0, 1) * 100000000, RGB(0.85, 0.85, 0.85), "Z", 0.4, true).
+	vecdraw(SHIP:BODY:POSITION,  V(ascNodeVector:X, 0, ascNodeVector:Z) * 100000000, RGB(0, 1, 1), "asc node v", 0.4, true).
 	
 	// This angle is correct based on some x axis.  To convert this to a useable true anomaly, use the ship's current position
 	// to determine the degree difference between reported trueanomaly, and degrees from 0 on the X axis.
 	// This gives us a number to add to the calculated degree position to get the "actual" true anomaly position to use.
 	local currentShipAngle is ARCTAN2(-SHIP:ORBIT:BODY:POSITION:Z, -SHIP:ORBIT:BODY:POSITION:X).
+	printLine("currentShipAngle " + round(currentShipAngle, 2) + "°").
+	printLine("SHIP:ORBIT:TRUEANOMALY " + round(SHIP:ORBIT:TRUEANOMALY, 2) + "°").
 	local trueAnomalyOffset is SHIP:ORBIT:TRUEANOMALY - currentShipAngle.
-	local descNode is ascendingNodeAngle + trueAnomalyOffset.
+	//local inclinationOffset is choose 1 if SHIP:ORBIT:INCLINATION <= 90 else -1.
+	set ascendingNodeAngle to ascendingNodeAngle .
+	printLine("trueAnomalyOffset " + round(trueAnomalyOffset, 2) + "°").
 	
+	printLine("Descending node true anomaly is " + round(ascendingNodeAngle, 2) + "°").
 	// Technically this logic has found us the descending node (because of the way we used the acsending vector).
 	// So add 180 to get the ascending node instead and return that on a 360-degree scale.
-	return MOD(descNode + 180, 360).
+	return MOD(ascendingNodeAngle + 180, 360).
 }
 
 function getPointString {
