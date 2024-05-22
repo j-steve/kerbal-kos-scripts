@@ -1,33 +1,6 @@
 RUNONCEPATH("orbitalMechanics.ks").
 
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
-global TWOPI is 2 * CONSTANT:PI.
-
-function executeBurn {
-	parameter deltaV.
-	
-	printLine("Starting burn...").
-	set burnTime to calcBurnTime(deltaV).
-	if (burnTime > 1) {
-		lock THROTTLE to 1.0.
-		if SHIP:DELTAV:CURRENT < deltaV {
-			printLine("Insufficient thrust in this stage, will have to stage mid-burn.").
-			set stageBurnTime to SHIP:DELTAV:CURRENT / acceleration.
-			wait until SHIP:DELTAV:CURRENT < 0.001.
-			printLine("Staging.").
-			stage.
-			set burnTime to burnTime - stageBurnTime.
-		}
-		wait until deltaV / acceleration < 2.
-	}
-	lock THROTTLE to 0.1.
-	wait until deltaV < 1.  // TODO: WONT WORK BECAUSE DeltaV is static.
-	lock THROTTLE to 0.01.
-	wait until deltaV < .1.
-	lock THROTTLE to 0.
-	unlock THROTTLE.
-	printLine("Burn complete.").
-}
 
 function calcBurnTime {
 	parameter deltaV.
@@ -91,18 +64,13 @@ function calcSemiMajorAxis {
 
 function calcVisViva {
     parameter rCurrent, aCurrent, rManeuver, aNew.
-    local mu is body:mu.
     // Calculate current orbital speed
     local vCurrent is sqrt(body:mu * (2 / rCurrent - 1 / aCurrent)).
-
     // Calculate required orbital speed at the point of maneuver
     local vNew is sqrt(body:mu * (2 / rManeuver - 1 / aNew)).
-
     // Calculate delta-v
     local deltaV is abs(vNew - vCurrent).
-
     return deltaV.
-
 }
 
 function startup {

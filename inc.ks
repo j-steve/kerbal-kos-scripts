@@ -1,23 +1,18 @@
 RUNONCEPATH("common.ks").
 
-local startupData is startup().
+parameter debugMode is false.
+
 matchTargetInc().
-startupData:END().
 
 function matchTargetInc {
-	local targt is SHIP.
 	if not HASTARGET {
-		printLine("targna").
-		//set TARGET to MINMUS.
-	} else {
-		printLine("taryaa").
-		set targt to TARGET.
+		printLine("Targeting MINMUS by default").
+		set TARGET to MINMUS.
 	}
-	printLine("Adjusting inclination to match " + targt:NAME + ".").
-	printLine("").
+	local startupData is startup("Adjusting inclination to match " + TARGET:NAME + ".").
 	
 	// Get the ascending node.
-	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(targt).
+	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(TARGET).
 	printLine("Angle of asc node: " + round(ascNodeTrueAnomaly,0)).
 	// Check angular difference to see if we've passed the ascending node within the last half rotation.
 	// If so it'll be faster to hit the descending node instead.
@@ -26,9 +21,9 @@ function matchTargetInc {
 	if angularDifference < 180 {
 		// TODO: re-enable.
 		// TODO: in elliptical orbits, it will take less delta v to burn at the point closer to apoapsis, so use that one instead.
-		//printLine("Using the other one: " + ascNodeTrueAnomaly).
-		//set ascNodeTrueAnomaly to mod(180 + ascNodeTrueAnomaly, 360).
-		//set ascBurnMultiplier to ascBurnMultiplier * -1.
+		// printLine("Using the other one: " + ascNodeTrueAnomaly).
+		// set ascNodeTrueAnomaly to mod(180 + ascNodeTrueAnomaly, 360).
+		// set ascBurnMultiplier to ascBurnMultiplier * -1.
 	}
 	local nodeEta is calcEtaToTrueAnomaly(SHIP:ORBIT, ascNodeTrueAnomaly ).
 	if ascNodeTrueAnomaly < SHIP:ORBIT:TRUEANOMALY {
@@ -36,44 +31,11 @@ function matchTargetInc {
 		printLine("Adding period").
 	}
 	
-	//RUNPATH("circ.ks")
-	
-	crappyNode(nodeEta, targt:ORBIT:INCLINATION).
+	// Create and execute maneuver node.
+	crappyNode(nodeEta, TARGET:ORBIT:INCLINATION).
 	RUNPATH("mnode.ks").
-	return.
 	
-	
-	//local inclDeltaV is calcInclinationDeltaV5(targt:ORBIT:INCLINATION, nodeEta):MAG.
-	local incChange is targt:ORBIT:INCLINATION - SHIP:ORBIT:INCLINATION.
-	local velocityAtNode IS VELOCITYAT(SHIP, TIME:SECONDS + nodeEta):ORBIT.
-	
-	if velocityAtNode:y > 0 {
-		set ascBurnMultiplier to ascBurnMultiplier * -1.
-	}
-	//printLine("Velocity at node is " + velocityAtNode:MAG).
-	//local inclDeltaV is calcInclinationDeltaV4(velocityAtNode:MAG, velocityAtNode:MAG, incChange).
-	//local inclDeltaV is -calcInclinationDeltaV(SHIP:ORBIT, incChange, ascNodeTrueAnomaly).
-	local inclDeltaV is calcInclinationDeltaV3(velocityAtNode:MAG, incChange).
-	printLine("asc node true anom: " + ascNodeTrueAnomaly).
-	printLine("inclDeltaV: " + round(inclDeltaV,0)).
-	
-	if hasnode {
-		until not hasnode {
-			remove nextnode.
-			wait 0.25.
-		}
-	}
-	local normalDeltaV is inclDeltaV * COS(SHIP:ORBIT:INCLINATION) * ascBurnMultiplier.
-	local progradeDeltaV is inclDeltaV * -SIN(SHIP:ORBIT:INCLINATION).
-	vecdraw(SHIP:POSITION,  V(0, 1, 0)  * 100000000, RGB(0.75, 0.75, 0.75), "up", 0.35, true).
-	vecdraw(SHIP:POSITION,  V(progradeDeltaV, normalDeltaV, 0)  * 100000000, RGB(0.75, 0, 1), "normal vector", 0.35, true).
-	printLine("Burning " + round(normalDeltaV) + " normal + " + round(progradeDeltaV) + "prograde").
-	//ADD NODE(TIME:SECONDS + nodeEta, progradeDeltaV, normalDeltaV, 0).
-	ADD NODE(TIME:SECONDS + nodeEta, 0, inclDeltaV * ascBurnMultiplier, 0).
-	//until false {
-//		printLine(round(SHIP:ORBIT:TRUEANOMALY), true).
-	//}
-	//RUNPATH("mnode.ks", 0.5).
+	startupData:END().
 }
 
 function crappyNode {
@@ -85,8 +47,8 @@ function crappyNode {
 	if SHIP:ORBIT:INCLINATION > targetInclination {
 		set dv to -10.
 	}
-	local targetPlane is calcOrbitalPlaneNormal2(TARGET:ORBIT).
-	local shipPlane is calcOrbitalPlaneNormal2(incNode:ORBIT).
+	local targetPlane is calcOrbitalPlaneNormal(TARGET:ORBIT).
+	local shipPlane is calcOrbitalPlaneNormal(incNode:ORBIT).
 	local lastDiff is ABS((targetPlane - shipPlane):MAG).
 	// Start with a high dV increment.  When we "overshoot" the target plane, 
 	// go back and check again in the other direction (make it negative)
@@ -95,7 +57,7 @@ function crappyNode {
 	until ABS(dv) < 0.00001 {
 		set lastDiff to ABS((targetPlane - shipPlane):MAG).
 		set incNode:NORMAL to incNode:NORMAL + dv.
-		set shipPlane to calcOrbitalPlaneNormal2(incNode:ORBIT).
+		set shipPlane to calcOrbitalPlaneNormal(incNode:ORBIT).
 		if ABS((targetPlane - shipPlane):MAG) > lastDiff {
 			set dv to -dv / 10.
 		} 
@@ -117,16 +79,17 @@ function calcAscNodeTrueAnomaly {
 	// then take the cross product of those two to find a new vector perpendicular to both.
 	// That vector will neccessarily be the line along which the two objects overlap,
 	// which is also the point at which me must burn to adjust our inclination to match.
-	local targetPlane is calcOrbitalPlaneNormal2(obj:ORBIT).
-	local shipPlane is calcOrbitalPlaneNormal2(SHIP:ORBIT).
+	local targetPlane is calcOrbitalPlaneNormal(obj:ORBIT).
+	local shipPlane is calcOrbitalPlaneNormal(SHIP:ORBIT).
 	local ascNodeVector is VECTORCROSSPRODUCT(targetPlane, shipPlane).
-	//clearvecdraws().
-	//vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
-	//vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
-	//vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000, RGB(1, 1, 0), "asc node", 0.4, true).
-	//printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
-	
-	//vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * SHIP:ORBIT:APOAPSIS + SHIP:ORBIT:BODY:RADIUS, RGB(1, 0, 1), "asc 3", 0.5, true).
+	if debugMode {
+		clearvecdraws().
+		vecdraw(obj:POSITION,  targetPlane * 100000000, RGB(1, 0, 0), "target normal", 0.15, true).
+		vecdraw(SHIP:POSITION,  shipPlane * 100000000, RGB(0, 0, 1), "ship normal", 0.15, true).
+		vecdraw(SHIP:BODY:POSITION,  ascNodeVector * 100000000, RGB(1, 1, 0), "asc node", 0.4, true).
+		printLine("Waiting for " + getPointString(ascNodeVector:NORMALIZED)).
+		vecdraw(calcOrbitCenter(SHIP:ORBIT),  ascNodeVector * SHIP:ORBIT:APOAPSIS + SHIP:ORBIT:BODY:RADIUS, RGB(1, 0, 1), "asc 3", 0.5, true).
+	}
 	// From an overhead view, the vector line will intersect the orbit at the point of the ascending node.
 	// To find the degree at which the intersection occurs, take the arctan of that vector line.
 	// (We ignore the y coordinate given that this is an overhead view. It's not needed since the orbital plane is 2D.)
@@ -152,7 +115,7 @@ function getPointString {
 // Returns the normal vector of the plane defined by the given orbit (relative to ship position).
 // This is, the vector pointing "directly up" from the plane, or technically, a vector "z" that is
 // exactly perpendicular to all four plane vectors (x, y, -x, -y).
-function calcOrbitalPlaneNormal2 {
+function calcOrbitalPlaneNormal {
     parameter myOrbit.
 	local positionRelativeToShip is myOrbit:POSITION - myOrbit:BODY:POSITION.
 	return VECTORCROSSPRODUCT(myOrbit:VELOCITY:ORBIT, positionRelativeToShip):NORMALIZED.
