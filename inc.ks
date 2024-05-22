@@ -11,7 +11,6 @@ function matchTargetInc {
 	}
 	local startupData is startup("Adjusting inclination to match " + TARGET:NAME + ".").
 	
-	clearNodes(). // TODO: remove this.
 	// Get the ascending node.
 	local ascNodeTrueAnomaly is calcAscNodeTrueAnomaly(TARGET).
 	printLine("Angle of asc node: " + round(ascNodeTrueAnomaly,0)).
@@ -50,7 +49,6 @@ function createIncTransferNode {
 	local incNode is NODE(TIME:SECONDS + nodeEta, 0, 0, 0).
 	add incNode.
 	local targetPlane is calcOrbitalPlaneNormal(TARGET:ORBIT).
-	printLine("I GOTTA" + ARCCOS(VDOT(targetPlane, calcOrbitalPlaneNormal(SHIP:ORBIT)))).
 	// Start with a high dV increment.  When we "overshoot" the target plane, 
 	// go back and check again in the other direction (make it negative)
 	// but with a more granular value (divide it by 10).
