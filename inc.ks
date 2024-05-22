@@ -57,7 +57,6 @@ function tuneNode {
 	local thrustVector is LIST(1, 1, 1).
 	local i is 0.
 	local priorDiff is evaluationFunc:CALL().
-	printLine("o ya").
 	until ABS(dv) < minDeltaVIncrement {
 		set tnode:NORMAL to tnode:NORMAL + dv.
 		local newDiff is evaluationFunc:CALL().
