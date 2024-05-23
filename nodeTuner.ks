@@ -1,10 +1,10 @@
-@lazyGlobal off.
+@lazyGlobal OFF.
 RUNONCEPATH("common.ks").
 
 parameter debugMode is false.
 
 function tuneNode {
-	parameter tnode, calcDelta, minDeltaVIncrement is 0.001, minDeltaPerDv is .001.
+	parameter tnode, calcDelta, minDeltaPerDv is .001, minDeltaVIncrement is 0.001.
 	local dv is 10.
 	local burnDirections is LIST("prograde", "normal", "radialout", "retrograde", "antinormal", "radialin").
 	local availableBurnDirections is LIST(0,1,2,3,4,5).
@@ -16,9 +16,12 @@ function tuneNode {
 		for i in availableBurnDirections {
 			// Apply the thrust in this direction as a test to see how effective it would be.
 			incrementNodeVector(burnDirections[i]).
-			set deltas[i] to calcDelta:CALL().
+			set deltas[i] to ABS(calcDelta:CALL()).
 			 // Undo the thrust application for now.
-			incrementNodeVector(burnDirections[getOppositeDirectionIndex(i)]).
+			incrementNodeVector(burnDirections[getOppositeDirectionIndex(i)]).            
+			if (debugMode) {
+                printLine("  " + burnDirections[i] + ": " + round(deltas[i], 2)).
+            }
 		}
 		// Find the best possible thrust direction from among the 6 available options.
 		local minDelta is -1.
@@ -30,6 +33,9 @@ function tuneNode {
 			}
 		}
 		local deltaImprovement is priorDelta - minDelta.
+        if (debugMode) {
+            printLine("best improvement: " + round(deltaImprovement, 5)).
+        }
 		if deltaImprovement / dv > minDeltaPerDv {
 			 // Re-apply the thrust in the best possible direction, for real this time.
 			incrementNodeVector(burnDirections[minDeltaIndex]).
@@ -49,6 +55,9 @@ function tuneNode {
 				printLine("Decreasing dv to " + dv).
 			}
 		}
+        if debugMode {
+            wait 5.
+        }
 	}
 	printLine("  OK").
 
@@ -67,5 +76,13 @@ function tuneNode {
 	function getOppositeDirectionIndex {
 		parameter directionIndex.
 		return MOD(directionIndex + burnDirections:LENGTH/2, burnDirections:LENGTH).
+	}
+}
+
+function removeValue {
+	parameter myList, valToRemove.
+	local valIndex is myList:FIND(valToRemove).
+	if valIndex > -1 {
+		myList:REMOVE(valIndex).
 	}
 }

@@ -24,6 +24,15 @@ function isFacingSurfaceRetrograde {
 	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 1.
 }
 
+function clearNodes {
+	if hasnode {
+		until not hasnode {
+			remove nextnode.
+			wait 0.25.
+		}
+	}
+}
+
 local currentPrintLine is -1.
 local priorLineOverwritable is false.
 local CLEAR_LINE is "                                                                                                  ".
