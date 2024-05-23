@@ -1,14 +1,21 @@
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
+parameter targetEntity is SHIP.
+
 local startupData is startup().
 clearNodes().
 
-if not HASTARGET {
-	printLine("No target, defaulting to minmus.").
-	set TARGET to MINMUS.
+if targetEntity = SHIP {
+	if HASTARGET {
+		SET targetEntity to TARGET.
+	} else {
+		printLine("No target, defaulting to Station II.").
+		SET targetEntity to VESSEL("Station II").
+	}
 }
-local targetSoi is TARGET.
+local targetSoi is choose TARGET if targetEntity:ISTYPE("BODY") else targetEntity:BODY.
+set TARGET to targetSoi.
 
 if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED"  or SHIP:STATUS = "SUB_ORBITAL" {
 	local launchInc is 90.
@@ -31,7 +38,7 @@ if findOrbitalPatchForSoi(SHIP:ORBIT, TARGET):BODY <> targetSoi {
 }
 
 local soiPatch is findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
-if abs(soiPatch:periapsis - 100000)  > 1000 {
+if SHIP:BODY <> targetSoi and abs(soiPatch:periapsis - 100000)  > 1000 {
 	RUNPATH("finetune.ks").
 	clearNodes().
 }
@@ -43,16 +50,32 @@ until SHIP:ORBIT:BODY = targetSoi {
 	WAIT 10.
 }
 
-if SHIP:STATUS = "ESCAPING" {
-	printLine("Burning to stay in SOI.").
-	local orbitNode is NODE(TIME:SECONDS + ETA:PERIAPSIS, 0, 0, 0).
-	ADD orbitNode.
-	tuneNode(orbitNode, {
-			local newApoapsis is orbitNode:ORBIT:APOAPSIS.
-			return choose 0 if newApoapsis > 0 and newApoapsis < targetSoi:SOIRADIUS else VELOCITYAT(SHIP, TIME:SECONDS + ETA:PERIAPSIS):ORBIT:MAG.
-		}).
-	RUNPATH("mnode.ks", 1).
+// Burn retrograde to eliminate escape velocity.
+preventEscape().
+if apoapsis > 2 * 100000 {
+	RUNPATH("circ", true).
+}
+
+// Target station and match its orbit.
+if targetEntity <> targetSoi {
+	set TARGET to targetEntity.
+	until abs(SHIP:ORBIT:INCLINATION - targetEntity:ORBIT:INCLINATION) < 2 {
+		RUNPATH("inc.ks").
+		preventEscape().
+	}
 }
 
 startupData:END().
 
+function preventEscape {
+	if SHIP:STATUS = "ESCAPING" {
+		printLine("Burning to stay in SOI.").
+		local orbitNode is NODE(TIME:SECONDS + ETA:PERIAPSIS, 0, 0, 0).
+		ADD orbitNode.
+		tuneNode(orbitNode, {
+				local newApoapsis is orbitNode:ORBIT:APOAPSIS.
+				return choose 0 if newApoapsis > 0 and newApoapsis < targetSoi:SOIRADIUS else VELOCITYAT(SHIP, TIME:SECONDS + ETA:PERIAPSIS):ORBIT:MAG.
+			}).
+		RUNPATH("mnode.ks", 1).
+	}
+}
