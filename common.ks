@@ -64,22 +64,13 @@ function printLine {
 	set priorLineOverwritable to overwriteLast.
 }
 
-// Given two orbit radiuses, calculates the semi-major axis between them, which is the straight-line distance between the them
-// (assuming both orbits are circular and on the same plane).
-function calcSemiMajorAxis {
-	parameter radius1, radius2.
-	return (radius1 + radius2) / 2.
-}
-
-function calcVisViva {
-    parameter rCurrent, aCurrent, rManeuver, aNew.
-    // Calculate current orbital speed
-    local vCurrent is sqrt(body:mu * (2 / rCurrent - 1 / aCurrent)).
-    // Calculate required orbital speed at the point of maneuver
-    local vNew is sqrt(body:mu * (2 / rManeuver - 1 / aNew)).
-    // Calculate delta-v
-    local deltaV is abs(vNew - vCurrent).
-    return deltaV.
+// Returns the orbital patch for the given SOI, if possible.
+function findOrbitalPatchForSoi {
+    parameter orbitPatch, targetSoi.
+    until orbitPatch:BODY = targetSoi or not orbitPatch:HASNEXTPATCH {
+        set orbitPatch to orbitPatch:NEXTPATCH.
+    }
+    return orbitPatch.
 }
 
 function startup {
@@ -97,6 +88,5 @@ function startup {
 		}
 		unlock THROTTLE.
 		unlock STEERING.
-		SAS on.
 	}).
 }

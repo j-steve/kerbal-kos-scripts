@@ -19,11 +19,13 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED"  or SHIP:STATUS = "SUB_OR
 	clearNodes().
 }
 
-RUNPATH("inc.ks").
-clearNodes().
+if findOrbitalPatchForSoi(SHIP:ORBIT, TARGET):BODY <> TARGET {
+	RUNPATH("inc.ks").
+	clearNodes().
 
-RUNPATH("txfr.ks").
-clearNodes().
+	RUNPATH("txfr.ks").
+	clearNodes().
+}
 
 RUNPATH("finetune.ks").
 clearNodes().

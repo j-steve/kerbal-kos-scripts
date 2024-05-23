@@ -9,7 +9,7 @@ function executeFineTune {
     local startupData is startup("Fine-tuning approach for " + targetApproachDistance + "m of " + TARGET:NAME + "...").
 
     // Find the patch where we enter the target's SOI.
-    local orbitPatch is findTargetPatch(SHIP:ORBIT).
+    local orbitPatch is findOrbitalPatchForSoi(SHIP:ORBIT, TARGET).
     if orbitPatch:BODY <> TARGET{
         // TODO: We could still fine-tune such situations by finding the closest approach.
 		printLine("--------------------------------------------").
@@ -28,7 +28,7 @@ function executeFineTune {
     local initialDeviation is abs(targetApproachDistance -  orbitPatch:PERIAPSIS).
     printLine("Intial deviation is " + round(initialDeviation)).
     tuneNode(burnNode, {
-            local targetPatch is findTargetPatch(burnNode:ORBIT).
+            local targetPatch is findOrbitalPatchForSoi(burnNode:ORBIT, TARGET).
             
             if targetPatch:BODY <> TARGET {
                 // After this adjustment we no longer even enter the SOI of the target.
@@ -40,13 +40,8 @@ function executeFineTune {
             return  newDeviation.
         }).
 
-    startupData:END().
-}
+    //Run the node.
+    RUNPATH("mnode.ks.").
 
-function findTargetPatch {
-    parameter orbitPatch.
-    until orbitPatch:BODY = TARGET or not orbitPatch:HASNEXTPATCH {
-        set orbitPatch to orbitPatch:NEXTPATCH.
-    }
-    return orbitPatch.
+    startupData:END().
 }
