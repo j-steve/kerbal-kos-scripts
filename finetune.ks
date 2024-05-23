@@ -1,11 +1,12 @@
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
+parameter targetApproachDistance is 100000.
+
 executeFineTune().
 
 function executeFineTune { 
-    parameter targetApproachDistance is 100000.
-    local startupData is startup("Fine-tuning approach.").
+    local startupData is startup("Fine-tuning approach for " + targetApproachDistance + "m of " + TARGET:NAME + "...").
 
     // Find the patch where we enter the target's SOI.
     local orbitPatch is findTargetPatch(SHIP:ORBIT).

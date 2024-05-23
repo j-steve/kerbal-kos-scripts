@@ -39,7 +39,7 @@ function matchTargetInc {
 	
 	// Create and execute maneuver node.
 	createIncTransferNode(nodeEta).
-	//RUNPATH("mnode.ks").
+	RUNPATH("mnode.ks").
 	
 	startupData:END().
 }
@@ -68,23 +68,6 @@ function createIncTransferNode {
 		return abs(angleInRadians).
 		//return ARCCOS(VDOT(targetPlane, calcOrbitalPlaneNormal(incNode:ORBIT))).
 		}).
-}
-
-function removeValue {
-	parameter myList, valToRemove.
-	local valIndex is myList:FIND(valToRemove).
-	if valIndex > -1 {
-		myList:REMOVE(valIndex).
-	}
-}
-
-function clearNodes {
-	if hasnode {
-		until not hasnode {
-			remove nextnode.
-			wait 0.25.
-		}
-	}
 }
 
 function calcAscNodeTrueAnomaly {

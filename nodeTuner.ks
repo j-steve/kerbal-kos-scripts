@@ -58,6 +58,7 @@ function tuneNode {
         if debugMode {
             wait 5.
         }
+        wait 0.0001.
 	}
 	printLine("  OK").
 
