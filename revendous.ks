@@ -66,14 +66,15 @@ until distanceBetween(SHIP:POSITION, _target:POSITION) < 500  {
         WAIT 15.
     }
 }
-killRelativeVelocity(0.001).
+
+// Come to a final stop.
+killRelativeVelocity(0.002).
 
 // Returns the distance between the two positions, in M.
 function distanceBetween {
     parameter pos1, pos2.
     return ABS((pos1 - pos2):MAG).
 }
-
 
 function findClosestApproach {
 	parameter _orbit.
@@ -114,6 +115,7 @@ function killRelativeVelocity {
         local facingAccuracyPercent is 1 - facingDeviation / 360.
         local throttleVal is choose MIN(maxThrottle, SQRT(facingAccuracyPercent)) if facingAccuracyPercent > 0.95 else 0.
         lock THROTTLE to throttleVal.
+        printLine("Facing accuracy is " + round(facingAccuracyPercent * 100, 2) + "%, throttling to " + round(throttleVal, 5), true).
         //printLine("facingDeviation " + (1 - facingDeviation / 360), true).
         //printLine("Relative velocity is " + round(relativeVelocity:MAG), true).
         //lock throttle to (1 - facingDeviation / 360).
@@ -123,5 +125,5 @@ function killRelativeVelocity {
     printLine("  done").
 }
 
-
+UNLOCK STEERING.
 startupData:END().

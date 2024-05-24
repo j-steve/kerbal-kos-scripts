@@ -78,6 +78,8 @@ if targetEntity <> targetSoi {
 	printLine("Will approach to within " + minApproach:DISTANCE).
 
 	RUNPATH("revendous.ks").
+
+	RUNPATH("dock.ks", targetEntity).
 }
 
 startupData:END().

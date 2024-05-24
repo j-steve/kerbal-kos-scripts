@@ -1,3 +1,4 @@
+@lazyGlobal OFF.
 RUNONCEPATH("orbitalMechanics.ks").
 
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
@@ -81,6 +82,7 @@ function startup {
 	local sasWasOn is false.
 	if SAS {
 		set sasWasOn to true.
+		set SAS to false.
 	}
 	return Lexicon("END", {
 		if sasWasOn {
