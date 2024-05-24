@@ -76,6 +76,8 @@ if targetEntity <> targetSoi {
 	// }
 	local minApproach is findClosestApproach(SHIP:ORBIT, targetEntity).
 	printLine("Will approach to within " + minApproach:DISTANCE).
+
+	RUNPATH("revendous.ks").
 }
 
 startupData:END().
