@@ -13,6 +13,8 @@ if targetEntity = SHIP {
 		printLine("No target, defaulting to Station II.").
 		SET targetEntity to VESSEL("Station II").
 	}
+} else {
+	set TARGET to targetEntity.
 }
 local targetSoi is choose TARGET if targetEntity:ISTYPE("BODY") else targetEntity:BODY.
 set TARGET to targetSoi.
