@@ -32,8 +32,8 @@ function prepareDock {
     until abs(dockingPortAlignment) < 2.5 {
         //lock STEERING to -shipPort:FACING:FOREVECTOR.
         //clearVecDraws().
-        local port2port is stationPort:POSITION - shipPort:POSITION.
-        local node2node is stationPort:NODEPOSITION - shipPort:NODEPOSITION.
+        // local port2port is stationPort:POSITION - shipPort:POSITION.
+        // local node2node is stationPort:NODEPOSITION - shipPort:NODEPOSITION.
 	    //vecdraw(stationPort:NODEPOSITION,  node2node * -1000, RGB(1, 0, 0), "node", 0.15, true).
 	    //vecdraw(stationPort:POSITION,  port2port * -1000, RGB(1, 0, 1), "port", 0.15, true).
         printLine(dockingPortAlignment, true).
@@ -46,7 +46,7 @@ function prepareDock {
     // local currentFacing is stationPort:FACING:FOREVECTOR.
     // lock STEERING to currentFacing.
     printLine("Waiting for docking...").
-    wait until  :PARTNER <> "None".
+    wait until shipPort:PARTNER <> "None".
     printLine("Docking complete.").
 }
 
