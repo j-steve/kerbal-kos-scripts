@@ -77,6 +77,8 @@ function dock {
         local dockDist is (myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION):MAG.
         printLine(round(dockingPortAlignment, 2) + "° | Distance: " + round(dockDist, 1), true).
     }
+    // TODO: If this doesn't work, instead of waiting for docking, wait to get within 50 m, then kill speed and align again, THEN dock.
+
     set portHighlight:ENABLED to false.
     set stationHighlight:ENABLED to false.
 }
