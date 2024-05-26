@@ -69,17 +69,6 @@ local executeGoto is {
 			RUNPATH("inc.ks").
 			_preventEscape().
 		}
-		printLine("Approaching target.").
-		// if findClosestApproach(SHIP:ORBIT, targetEntity):distance > 5 {
-		// 	printLine("Tuning node").
-		// 	local approachNode is NODE(TIME:SECONDS, 0, 0, 0).
-		// 	ADD approachNode.
-		// 	tuneNode(approachNode, {return findClosestApproach(approachNode:ORBIT, targetEntity):distance.}).
-		// 	//RUNPATH("mnode.ks", 1).
-		// 	//clearNodes().
-		// }
-		local minApproach is _findClosestApproach(SHIP:ORBIT, targetEntity).
-		printLine("Will approach to within " + minApproach:DISTANCE).
 
 		RUNPATH("revendous.ks").
 
@@ -100,24 +89,6 @@ local executeGoto is {
 			RUNPATH("mnode.ks", 1).
 			clearNodes().
 		}
-	}
-
-	function _findClosestApproach {
-		parameter _orbit, _target.
-		local minDist is VANG(SHIP:POSITION, _target:POSITION).
-		local minEta is 0.
-		from {local t is TIME:SECONDS.} until t >= TIME:SECONDS + _orbit:PERIOD step {set t to t + 1.} do {
-			local shipPos is POSITIONAT(SHIP, t).
-			local targetPos is POSITIONAT(_target, t).
-			local dist is abs((shipPos - targetPos):MAG).
-			IF dist < minDist {
-				SET minDist TO dist.
-				SET minEta TO t.
-			} else {
-				return Lexicon("distance", minDist, "eta", minEta).
-			}
-		}
-		return Lexicon("distance", minDist, "eta", minEta).
 	}
 }.
 
