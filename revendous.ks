@@ -62,8 +62,10 @@ until distanceBetween(SHIP:POSITION, _target:POSITION) < 500  {
         wait 2.
         lock THROTTLE to 0.
         local newApproach is findClosestApproach(SHIP:ORBIT).
+        lock STEERING to RETROGRADE.
+        wait 5. // TODO: Instead, wait until heading alings with retrograde?
         WARPTO(newApproach:SECONDS - 20).
-        WAIT 15.
+        wait until TIME:SECONDS >= newApproach:SECONDS - 15.
     }
 }
 
@@ -115,7 +117,7 @@ function killRelativeVelocity {
         local facingAccuracyPercent is 1 - facingDeviation / 360.
         local throttleVal is choose MIN(maxThrottle, SQRT(facingAccuracyPercent)) if facingAccuracyPercent > 0.95 else 0.
         lock THROTTLE to throttleVal.
-        printLine("Facing accuracy is " + round(facingAccuracyPercent * 100, 2) + "%, throttling to " + round(throttleVal, 5), true).
+        printLine("Heading: " + round(facingAccuracyPercent * 100, 2) + "%  | Throttle: " + round(throttleVal, 5) + "%", true).
         //printLine("facingDeviation " + (1 - facingDeviation / 360), true).
         //printLine("Relative velocity is " + round(relativeVelocity:MAG), true).
         //lock throttle to (1 - facingDeviation / 360).
