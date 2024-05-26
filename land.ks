@@ -49,7 +49,7 @@ if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 				setThrottle(0.2).
 			}
 			// Prevent getting stuck forever making small changes.
-			if lateralMotion < 5 {
+			if lateralMotion < 15 {
 				if closeEnoughTimeout = 0 {
 					set closeEnoughTimeout to time:seconds + 30.
 				} else if time:seconds >= closeEnoughTimeout {
