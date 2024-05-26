@@ -9,6 +9,8 @@ local startupData is startup("Revendousing with " + _target:NAME + ".").
 // printLine("Closest dist is " + round(closestApproach:DISTANCE, 2)).
 // printLine("Closest dist eta is " + round(closestApproach:ETA, 2)).
 
+if _target:ISTYPE("Part") {set _target to _target:SHIP.}
+
 if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
     local revNode is NODE(TIME:SECONDS + 60 * 10, 0,0,0).
     ADD revNode.

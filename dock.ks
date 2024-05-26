@@ -27,9 +27,20 @@ function dock {
     if kuniverse:activevessel = SHIP {
         set TARGET to stationPorts[0].
     }
+
+    printLine("Waiting for station rotation...").
+    wait until not SHIP:MESSAGES:EMPTY.
+    until SHIP:MESSAGES:EMPTY {SHIP:MESSAGES:POP.}
+    printLine("  done").
+
+     // Warp for a sec to "freeze" the station.
+    SET warp to 2.
+    wait 2.
+    set warp to 0.
+
     //lock dockingPortAlignment to VANG(stationPorts[0]:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
     lock dockingPortAlignment to VANG(myPort:FACING:FOREVECTOR, stationPorts[0]:NODEPOSITION - myPort:NODEPOSITION).
-    until abs(180 - dockingPortAlignment) <= 0.05 {
+    until abs(dockingPortAlignment) <= 0.05 {
         lock STEERING to stationPorts[0]:NODEPOSITION.
         printLine("Alignment: " + round(180 - dockingPortAlignment, 3), true).
         // clearvecdraws().
@@ -42,6 +53,8 @@ function dock {
         // vecdraw(myPort:POSITION, myPort:portfacing:upvector * 1000000, RGB(1, 0, 0), "up", 0.15, true).
         wait 0.1.
     }
+    
+     // Warp for a sec to "freeze" the ship.
     set warp to 2.
     wait 2.
     set warp to 0.
@@ -53,11 +66,13 @@ function dock {
     // }
     // local currentFacing is myPort:FACING:FOREVECTOR.
     // lock STEERING to currentFacing.
-    printLine("Locked on, waiting for docking...").
-    lock THROTTLE to 0.05.
-    wait 0.5.
+    printLine("Hiting throttle, throttling up...").
+    lock THROTTLE to 0.005.
+    wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 0.2.
     lock THROTTLE to 0.
-    lock STEERING To -stationPorts[0]:PORTFACING:VECTOR.
+    
+    printLine("Waiting for docking...").
+    lock STEERING To stationPorts[0]:NODEPOSITION.
     until myPort:PARTNER <> "None" {
         local dockDist is (myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION):MAG.
         printLine(round(dockingPortAlignment, 2) + "° | Distance: " + round(dockDist, 1), true).

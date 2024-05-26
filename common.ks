@@ -34,7 +34,7 @@ function clearNodes {
 	}
 }
 
-local currentPrintLine is -1.
+local currentPrintLine is 0.
 local priorLineOverwritable is false.
 local CLEAR_LINE is "                                                                                                  ".
 local isFirstPrint is true.
@@ -58,9 +58,9 @@ function printLine {
 			// Clear the text from the prior line.
 			//print CLEAR_LINE at (0, currentPrintLine).
 		} else {
-			set currentPrintLine to currentPrintLine + 1.
 		}
 		print text.
+		set currentPrintLine to currentPrintLine + 1.
 	}
 	set priorLineOverwritable to overwriteLast.
 }
