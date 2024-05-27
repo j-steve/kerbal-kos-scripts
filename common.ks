@@ -96,14 +96,15 @@ function startup {
 // Given an orbit and a target, returns the closest distance that will be reached to the target.
 // Returned object contains ":DISTANCE" and ":SECONDS" fields.
 function findClosestApproach {
-	parameter _orbit, _target, _orbitSteps is 1000.
+	parameter _orbit, _target, _startTime is TIME:SECONDS, _endTime is -1, _orbitSteps is 1000.
 	local minDist is distanceBetween(SHIP:POSITION, _target:POSITION).
 	local minTime is TIME:SECONDS.
     local maxPeriod is choose _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else _orbit:PERIOD.
-	local stepAmount is _orbit:PERIOD / _orbitSteps.
+	if _endTime = -1 {set _endTime to TIME:SECONDS + maxPeriod.}
+	local stepAmount is maxPeriod / _orbitSteps.
 	local stepsCompleted is 0.
-	from {local t is TIME:SECONDS.} until t >=  TIME:SECONDS + maxPeriod step {set t to t + stepAmount.} do {
-		printLine("Calculating closest approach...  " + round(stepsCompleted / _orbitSteps * 100, 1) + "%", true).
+	from {local t is _startTime.} until t >= _endTime step {set t to t + stepAmount.} do {
+		//printLine("Calculating closest approach...  " + round(stepsCompleted / _orbitSteps * 100, 1) + "%", true).
 		local shipPos is POSITIONAT(SHIP,   t).
 		local targetPos is POSITIONAT(_target,   t).
         local dist is distanceBetween(shipPos, targetPos).

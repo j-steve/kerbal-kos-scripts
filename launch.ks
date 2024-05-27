@@ -170,4 +170,5 @@ function deploySolarPanels {
 			}
 		}
     }
+	PANELS on.
 }

@@ -20,11 +20,12 @@ function executeFineTune {
 
         // Create burn node, positioned where 25% of the way through this orbit
         // (because ~50% is probably where we will roughly hit the target).
-        local burnNode is NODE(TIME:SECONDS + SHIP:ORBIT:PERIOD * 0.25, 0, 0, 0).
+        local burnTime is TIME:SECONDS + SHIP:ORBIT:PERIOD * 0.25.
+        local burnNode is NODE(burnTime, 0, 0, 0).
         add burnNode.
         
         // Execute fine tuning.
-        tuneNode(burnNode, {return abs(targetApproachDistance - findClosestApproach(burnNode:ORBIT, TARGET):DISTANCE).}).
+        tuneNode(burnNode, {return abs(targetApproachDistance - findClosestApproach(burnNode:ORBIT, TARGET, burnTime, burnTime + SHIP:ORBIT:PERIOD * 0.5):DISTANCE).}).
         
     } else {
 
