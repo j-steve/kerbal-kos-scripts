@@ -12,15 +12,33 @@ local startupData is startup("Revendousing with " + _target:NAME + ".").
 if _target:ISTYPE("Part") {set _target to _target:SHIP.}
 
 if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
-    local revNode is NODE(TIME:SECONDS + 60 * 10, 0,0,0).
+    // Start at a point 10 minutes in the future, 
+    // mainly to enusre that the position is STILL in the future
+    // once we've finished these calculations.
+    // TODO: We should be able to use a hoffman transfer here instead.
+    local revNode is NODE(TIME:SECONDS + 10 * 60, 0,0,0).
     ADD revNode.
-    printLine("Tuning node...").
-    tuneNode(revNode, {return abs(findClosestApproach(revNode:ORBIT, _target, 100):DISTANCE).}, .001, .1).
-    local closeApproachTime is findClosestApproach(SHIP:ORBIT, _target):SECONDS - 120.
-    printLine("  done").
+    local minApproach is -1.
+    local orbitCountI is 1.
+    until minApproach <> -1 and minApproach:DISTANCE < 5000 {
+        if orbitCountI > 1 {
+            // Reset node and increment to next orbit.
+            set revNode:ETA to revNode:ETA + SHIP:ORBIT:PERIOD.
+            set revNode:radialout to 0.
+            set revNode:PROGRADE to 0.
+            set revNode:NORMAL to 0.
+        }
+        printLine("Finding closest approach in orbit #" + orbitCountI + "...").
+        local fineCloseApproachNode is findClosestApproach@:BIND(revNode:ORBIT, _target, TIME:SECONDS + revNode:ETA, -1, 100).
+        tuneNode(revNode, {return abs(fineCloseApproachNode:CALL():DISTANCE).}, .01, .1).
+        set minApproach to fineCloseApproachNode:CALL().
+        printLine("  Min approach: " + round(minApproach: DISTANCE)).
+        set orbitCountI to orbitCountI + 1.
+    }
     RUNPATH("mnode.ks").
 
     printLine("Warping to close approach...").
+    local closeApproachTime is minApproach:SECONDS - 120.
     WARPTO(closeApproachTime).
     WAIT UNTIL TIME:SECONDS >= closeApproachTime.
     printLine("  done").
@@ -31,45 +49,47 @@ if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
 //     WARPTO(TIME:SECONDS + closestApproach:ETA - 15).
 // }
 
-// printLine("Steeing to target...").
-// until distanceBetween(SHIP:POSITION, _target:POSITION) < 500 {
-//     if SHIP:availablethrust = 0 {
-//         STAGE.
-//         wait until STAGE:READY.
-//     }
-//     lock STEERING to _target:POSITION.
-//     wait until  VANG(SHIP:FACING:FOREVECTOR, _target:POSITION) < 1.5.
-//     LOCK THROTTLE TO 1.
-//     //wait until VANG(PROGRADE:VECTOR, _target:POSITION) < 180.
-//     wait 2.
-//     LOCK THROTTLE TO 0.
-//     local newClosestApproach is findClosestApproach(SHIP:ORBIT, _target).
-//     if newClosestApproach:ETA > 10 {
-//         WARPTO(TIME:SECONDS + newClosestApproach:ETA - 10).
-//         WAIT 10.
-//     } else {
-//         WAIT 2.
-//     }
-// }
-// printLine("  done").
-
-until distanceBetween(SHIP:POSITION, _target:POSITION) < 500  {
-    killRelativeVelocity().
-    if distanceBetween(SHIP:POSITION, _target:POSITION) >= 500 {
-        printLine("Closing in on target.").
-        lock STEERING to _target:POSITION.
-        printLine("Aligning header to target...").
-        wait until VANG(SHIP:FACING:FOREVECTOR, _target:POSITION) <= 1.
-        lock THROTTLE to 0.1.
-        wait 2.
-        lock THROTTLE to 0.
-        local newApproach is findClosestApproach(SHIP:ORBIT, _target).
-        lock STEERING to RETROGRADE.
-        wait 5. // TODO: Instead, wait until heading alings with retrograde?
-        WARPTO(newApproach:SECONDS - 20).
-        wait until TIME:SECONDS >= newApproach:SECONDS - 15.
+printLine("Closing in on target...").
+until distanceBetween(SHIP:POSITION, _target:POSITION) < 500 {
+    if SHIP:availablethrust = 0 {
+        STAGE.
+        wait until STAGE:READY.
+    }
+    printLine("   Aligning header to target...").
+    lock STEERING to _target:POSITION.
+    wait until  VANG(SHIP:FACING:FOREVECTOR, _target:POSITION) < 1.5.
+    printLine("   Engaging throggle...").
+    LOCK THROTTLE TO 0.1.
+    wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 1.
+    LOCK THROTTLE TO 0.
+    printLine("   Waiting to close in...").
+    local newClosestApproach is findClosestApproach(SHIP:ORBIT, _target).
+    if newClosestApproach:SECONDS - TIME:SECONDS > 10 {
+        WARPTO(newClosestApproach:SECONDS - 10).
+        WAIT 10.
+    } else {
+        WAIT 2.
     }
 }
+printLine("  done").
+
+// until distanceBetween(SHIP:POSITION, _target:POSITION) < 500  {
+//     killRelativeVelocity().
+//     if distanceBetween(SHIP:POSITION, _target:POSITION) >= 500 {
+//         printLine("Closing in on target.").
+//         lock STEERING to _target:POSITION.
+//         printLine("Aligning header to target...").
+//         wait until VANG(SHIP:FACING:FOREVECTOR, _target:POSITION) <= 1.
+//         lock THROTTLE to 0.1.
+//         wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 0.5.
+//         lock THROTTLE to 0.
+//         local newApproach is findClosestApproach(SHIP:ORBIT, _target).
+//         lock STEERING to RETROGRADE.
+//         wait 5. // TODO: Instead, wait until heading alings with retrograde?
+//         WARPTO(newApproach:SECONDS - 20).
+//         wait until TIME:SECONDS >= newApproach:SECONDS - 15.
+//     }
+// }
 
 // Come to a final stop.
 killRelativeVelocity(0.002).
