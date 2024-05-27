@@ -1,7 +1,7 @@
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
-parameter targetEntity is SHIP.
+parameter targetEntity is SHIP, targetAltitude is 100000, targetObjective is "dock".
 
 local executeGoto is {
 	local startupData is startup().
@@ -42,7 +42,7 @@ local executeGoto is {
 
 	local soiPatch is findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
 	if SHIP:BODY <> targetSoi and abs(soiPatch:periapsis - 100000)  > 1000 {
-		RUNPATH("finetune.ks").
+		RUNPATH("finetune.ks", targetAltitude).
 		clearNodes().
 	}
 
@@ -52,6 +52,11 @@ local executeGoto is {
 		local warpToTime is TIME:SECONDS + SHIP:ORBIT:ETA:TRANSITION + 10.
 		WARPTO(warpToTime).
 		wait until TIME:SECONDS >= warpToTime.
+	}
+
+	if targetObjective = "flyby" {
+		printLine("Flyby complete.").
+		return.
 	}
 
 	// Burn retrograde to eliminate escape velocity.
