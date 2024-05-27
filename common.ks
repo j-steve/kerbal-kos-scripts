@@ -92,3 +92,32 @@ function startup {
 		unlock STEERING.
 	}).
 }
+
+// Given an orbit and a target, returns the closest distance that will be reached to the target.
+// Returned object contains ":DISTANCE" and ":SECONDS" fields.
+function findClosestApproach {
+	parameter _orbit, _target, _orbitSteps is 1000.
+	local minDist is distanceBetween(SHIP:POSITION, _target:POSITION).
+	local minTime is TIME:SECONDS.
+    local maxPeriod is choose _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else _orbit:PERIOD.
+	local stepAmount is _orbit:PERIOD / _orbitSteps.
+	local stepsCompleted is 0.
+	from {local t is TIME:SECONDS.} until t >=  TIME:SECONDS + maxPeriod step {set t to t + stepAmount.} do {
+		printLine("Calculating closest approach...  " + round(stepsCompleted / _orbitSteps * 100, 1) + "%", true).
+		local shipPos is POSITIONAT(SHIP,   t).
+		local targetPos is POSITIONAT(_target,   t).
+        local dist is distanceBetween(shipPos, targetPos).
+        IF dist <= minDist {
+            SET minDist TO dist.
+            SET minTime TO t.
+		}
+		set stepsCompleted to stepsCompleted + 1.
+    }
+	return Lexicon("distance", minDist, "seconds", minTime).
+}
+
+// Returns the distance between the two positions, in meters.
+function distanceBetween {
+    parameter pos1, pos2.
+    return ABS((pos1 - pos2):MAG).
+}

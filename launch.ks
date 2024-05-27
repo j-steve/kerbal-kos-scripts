@@ -4,8 +4,7 @@ declare parameter launchHeading is 90.
 
 local startupData is startup("Executing launch.").
 
-local TARGET_ORBIT_RADIUS is 90000.
-local TARGET_APOAPSIS_ETA is 30.
+local TARGET_ORBIT_RADIUS is 100000.
 local initialDeltaV is SHIP:DELTAV:VACUUM.
 local targetHeading is UP.
 lock STEERING to targetHeading.

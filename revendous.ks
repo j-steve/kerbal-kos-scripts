@@ -4,7 +4,7 @@ RUNONCEPATH("nodeTuner.ks").
 local _target is TARGET.  // In case taget becomes unset.
 
 local startupData is startup("Revendousing with " + _target:NAME + ".").
-// local closestApproach is findClosestApproach(SHIP:ORBIT).
+// local closestApproach is findClosestApproach(SHIP:ORBIT, _target).
 // printLine("Current dist is " + round(distanceBetween(SHIP:POSITION, _target:POSITION), 2)).
 // printLine("Closest dist is " + round(closestApproach:DISTANCE, 2)).
 // printLine("Closest dist eta is " + round(closestApproach:ETA, 2)).
@@ -15,12 +15,12 @@ if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
     local revNode is NODE(TIME:SECONDS + 60 * 10, 0,0,0).
     ADD revNode.
     printLine("Tuning node...").
-    tuneNode(revNode, {return findClosestApproach(revNode:ORBIT):DISTANCE.}, .001, .1).
+    tuneNode(revNode, {return findClosestApproach(revNode:ORBIT, _target):DISTANCE.}, .001, .1).
     printLine("  done").
     RUNPATH("mnode.ks").
 
     printLine("Warping to close approach...").
-    local closeApproachTime is findClosestApproach(SHIP:ORBIT):SECONDS - 120.
+    local closeApproachTime is findClosestApproach(SHIP:ORBIT, _target):SECONDS - 120.
     WARPTO(closeApproachTime).
     WAIT UNTIL TIME:SECONDS >= closeApproachTime.
     printLine("  done").
@@ -43,7 +43,7 @@ if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
 //     //wait until VANG(PROGRADE:VECTOR, _target:POSITION) < 180.
 //     wait 2.
 //     LOCK THROTTLE TO 0.
-//     local newClosestApproach is findClosestApproach(SHIP:ORBIT).
+//     local newClosestApproach is findClosestApproach(SHIP:ORBIT, _target).
 //     if newClosestApproach:ETA > 10 {
 //         WARPTO(TIME:SECONDS + newClosestApproach:ETA - 10).
 //         WAIT 10.
@@ -63,7 +63,7 @@ until distanceBetween(SHIP:POSITION, _target:POSITION) < 500  {
         lock THROTTLE to 0.1.
         wait 2.
         lock THROTTLE to 0.
-        local newApproach is findClosestApproach(SHIP:ORBIT).
+        local newApproach is findClosestApproach(SHIP:ORBIT, _target).
         lock STEERING to RETROGRADE.
         wait 5. // TODO: Instead, wait until heading alings with retrograde?
         WARPTO(newApproach:SECONDS - 20).
@@ -78,25 +78,6 @@ killRelativeVelocity(0.002).
 function distanceBetween {
     parameter pos1, pos2.
     return ABS((pos1 - pos2):MAG).
-}
-
-function findClosestApproach {
-	parameter _orbit.
-    printLine("Calculating closest approach... ").
-	local minDist is distanceBetween(SHIP:POSITION, _target:POSITION).
-	local minTime is TIME:SECONDS.
-    local maxPeriod is choose _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else _orbit:PERIOD.
-	from {local t is TIME:SECONDS.} until t >=  TIME:SECONDS + maxPeriod step {set t to t + 20.} do {
-		local shipPos is POSITIONAT(SHIP,   t).
-		local targetPos is POSITIONAT(_target,   t).
-        local dist is distanceBetween(shipPos, targetPos).
-        IF dist <= minDist {
-            SET minDist TO dist.
-            SET minTime TO t.
-		}
-    }
-    printLine("  done").
-	return Lexicon("distance", minDist, "seconds", minTime).
 }
 
 function killRelativeVelocity {
