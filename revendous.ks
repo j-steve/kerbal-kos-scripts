@@ -15,12 +15,12 @@ if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
     local revNode is NODE(TIME:SECONDS + 60 * 10, 0,0,0).
     ADD revNode.
     printLine("Tuning node...").
-    tuneNode(revNode, {return findClosestApproach(revNode:ORBIT, _target):DISTANCE.}, .001, .1).
+    tuneNode(revNode, {return abs(findClosestApproach(revNode:ORBIT, _target, 100):DISTANCE).}, .001, .1).
+    local closeApproachTime is findClosestApproach(SHIP:ORBIT, _target):SECONDS - 120.
     printLine("  done").
     RUNPATH("mnode.ks").
 
     printLine("Warping to close approach...").
-    local closeApproachTime is findClosestApproach(SHIP:ORBIT, _target):SECONDS - 120.
     WARPTO(closeApproachTime).
     WAIT UNTIL TIME:SECONDS >= closeApproachTime.
     printLine("  done").
@@ -73,12 +73,6 @@ until distanceBetween(SHIP:POSITION, _target:POSITION) < 500  {
 
 // Come to a final stop.
 killRelativeVelocity(0.002).
-
-// Returns the distance between the two positions, in M.
-function distanceBetween {
-    parameter pos1, pos2.
-    return ABS((pos1 - pos2):MAG).
-}
 
 function killRelativeVelocity {
     parameter maxRelativeVelocity is 0.05.

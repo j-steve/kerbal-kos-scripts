@@ -25,7 +25,11 @@ function executeFineTune {
         add burnNode.
         
         // Execute fine tuning.
-        tuneNode(burnNode, {return abs(targetApproachDistance - findClosestApproach(burnNode:ORBIT, TARGET, burnTime, burnTime + SHIP:ORBIT:PERIOD * 0.5):DISTANCE).}).
+        local findClosestApprachEndTime is  burnTime + SHIP:ORBIT:PERIOD * 0.5. // Check half the orbit, starting from burnNode.
+        tuneNode(burnNode, {
+                local closestApproach is findClosestApproach(burnNode:ORBIT, TARGET, burnTime, findClosestApprachEndTime).
+                return abs(targetApproachDistance - closestApproach:DISTANCE).
+            }).
         
     } else {
 

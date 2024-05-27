@@ -101,7 +101,7 @@ function findClosestApproach {
 	local minTime is TIME:SECONDS.
     local maxPeriod is choose _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else _orbit:PERIOD.
 	if _endTime = -1 {set _endTime to TIME:SECONDS + maxPeriod.}
-	local stepAmount is maxPeriod / _orbitSteps.
+	local stepAmount is (_endTime - _startTime) / _orbitSteps.
 	local stepsCompleted is 0.
 	from {local t is _startTime.} until t >= _endTime step {set t to t + stepAmount.} do {
 		//printLine("Calculating closest approach...  " + round(stepsCompleted / _orbitSteps * 100, 1) + "%", true).
