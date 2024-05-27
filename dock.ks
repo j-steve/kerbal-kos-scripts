@@ -15,13 +15,14 @@ function dock {
     //     _target:CONNECTION:SENDMESSAGE("Sup dawn").
     // }
     local myPort is findShipDockingPort().
+    local portHighlight is HIGHLIGHT(myPort, BLUE).
+    printLine("Best port: " + myPort:NAME + " (" + myPort:NODETYPE + ")").
     local stationPorts is listOpenDockingPorts(_target, myPort:NODETYPE).
     if stationPorts:LENGTH = 0 {
         printLine("ERROR: no compatible docking ports on station!").
         return.
     }
     _target:CONNECTION:SENDMESSAGE(myPort:UID + "|" + stationPorts[0]:UID).
-    local portHighlight is HIGHLIGHT(myPort, BLUE).
     local stationHighlight is HIGHLIGHT(stationPorts[0], BLUE).
     myPort:CONTROLFROM().
     if kuniverse:activevessel = SHIP {
