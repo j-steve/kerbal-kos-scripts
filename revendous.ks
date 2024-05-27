@@ -51,6 +51,7 @@ if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
 
 printLine("Closing in on target...").
 until distanceBetween(SHIP:POSITION, _target:POSITION) < 500 {
+    killRelativeVelocity(0.1).
     if SHIP:availablethrust = 0 {
         STAGE.
         wait until STAGE:READY.
