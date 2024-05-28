@@ -34,7 +34,18 @@ function executeFineTune {
         
     } else {
         // Create burn node, positioned where 10% of the orbit period remains til closest approach to target.
-        local burnStartTime is choose SHIP:ORBIT:NEXTPATCHETA/2 if orbitPatch:HASNEXTPATCH else orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
+        local burnStartTime is -1.
+        if not orbitPatch:HASNEXTPATCH {
+            // We're in a stable orbit around the target.
+            set burnStartTime to orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
+        } else if SHIP:ORBIT:BODY = TARGET  {
+            // We're in an escape orbit that is already around the target.  Burn NOW.
+            set burnStartTime to 60.
+        } else {
+            // We're in an escape orbit that will hit the target.  Burn halfway until we hit the next transition.
+            
+            set burnStartTime to SHIP:ORBIT:NEXTPATCHETA / 2.
+        }
         local burnNode is NODE(TIME:SECONDS + MAX(burnStartTime, 0), 0, 0, 0).
         add burnNode.
 
