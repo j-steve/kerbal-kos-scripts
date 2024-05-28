@@ -11,7 +11,7 @@ function executeFineTune {
 
     // Find the patch where we enter the target's SOI.
     local orbitPatch is findOrbitalPatchForSoi(SHIP:ORBIT, TARGET).
-    if orbitPatch:BODY <> TARGET{
+    if orbitPatch:BODY <> TARGET  {
 		printLine("--------------------------------------------").
 		printLine("WARNING: Not entering SOI of target,").
         printLine("  fine-tune calc will be more expensive.").
@@ -20,21 +20,21 @@ function executeFineTune {
 
         // Create burn node, positioned where 25% of the way through this orbit
         // (because ~50% is probably where we will roughly hit the target).
-        local burnTime is TIME:SECONDS + SHIP:ORBIT:PERIOD * 0.25.
+        local burnTime is choose TIME:SECONDS + 10*60 if SHIP:ORBIT:HASNEXTPATCH else TIME:SECONDS + SHIP:ORBIT:PERIOD * 0.25.
         local burnNode is NODE(burnTime, 0, 0, 0).
         add burnNode.
         
         // Execute fine tuning.
-        local findClosestApprachEndTime is  burnTime + SHIP:ORBIT:PERIOD * 0.5. // Check half the orbit, starting from burnNode.
+        // Check half the orbit, starting from burnNode:
+        local findClosestApprachEndTime is choose TIME:SECONDS +SHIP:ORBIT:NEXTPATCHETA if SHIP:ORBIT:HASNEXTPATCH else burnTime + SHIP:ORBIT:PERIOD * 0.5.
         tuneNode(burnNode, {
                 local closestApproach is findClosestApproach(burnNode:ORBIT, TARGET, burnTime, findClosestApprachEndTime).
                 return abs(targetApproachDistance - closestApproach:DISTANCE).
             }).
         
     } else {
-
         // Create burn node, positioned where 10% of the orbit period remains til closest approach to target.
-        local burnStartTime is orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
+        local burnStartTime is choose SHIP:ORBIT:NEXTPATCHETA if orbitPatch:HASNEXTPATCH else orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
         local burnNode is NODE(TIME:SECONDS + MAX(burnStartTime, 0), 0, 0, 0).
         add burnNode.
 
