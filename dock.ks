@@ -36,7 +36,7 @@ function dock {
 
      // Warp for a sec to "freeze" the station.
     SET warp to 2.
-    wait 2.
+    wait 5.
     set warp to 0.
 
     //lock dockingPortAlignment to VANG(stationPorts[0]:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
@@ -57,7 +57,7 @@ function dock {
     
      // Warp for a sec to "freeze" the ship.
     set warp to 2.
-    wait 2.
+    wait 5.
     set warp to 0.
 
     // lock dockingPortAlignment to VANG(stationPorts[0]:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).

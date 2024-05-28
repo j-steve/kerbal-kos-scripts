@@ -25,7 +25,7 @@ function prepareDock {
     stationPort:CONTROLFROM().
     printLine("Locked onto ship, aligning...").
     // lock dockingPortAlignment to VANG(stationPort:FACING:FOREVECTOR, shipPort:FACING:FOREVECTOR).
-    lock dockingPortAlignment to VANG(stationPort:FACING:FOREVECTOR, shipPort:NODEPOSITION - stationPort:NODEPOSITION).
+    lock dockingPortAlignment to VANG(stationPort:FACING:FOREVECTOR, shipPort:NODEPOSITION).
     //until abs(180 - dockingPortAlignment) < 1 {
     set SHIP:CONTROL:ROLL to 0.
         lock STEERING to shipPort:NODEPOSITION.
