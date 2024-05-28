@@ -34,7 +34,7 @@ function executeFineTune {
         
     } else {
         // Create burn node, positioned where 10% of the orbit period remains til closest approach to target.
-        local burnStartTime is choose SHIP:ORBIT:NEXTPATCHETA if orbitPatch:HASNEXTPATCH else orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
+        local burnStartTime is choose SHIP:ORBIT:NEXTPATCHETA/2 if orbitPatch:HASNEXTPATCH else orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
         local burnNode is NODE(TIME:SECONDS + MAX(burnStartTime, 0), 0, 0, 0).
         add burnNode.
 
