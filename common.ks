@@ -38,9 +38,11 @@ local currentPrintLine is 0.
 local priorLineOverwritable is false.
 local CLEAR_LINE is "                                                                                                  ".
 local isFirstPrint is true.
+local printPrefix is "".
 
 function printLine {
 	parameter text, overwriteLast is false.
+	set text to printPrefix + text.
 	if isFirstPrint {
 		CLEARSCREEN.
 		set isFirstPrint to false.
@@ -65,6 +67,17 @@ function printLine {
 	set priorLineOverwritable to overwriteLast.
 }
 
+function printSectionStart {
+	parameter text.
+	printLine(text).
+	set printPrefix to printPrefix + "  ".
+	return Lexicon("END", {
+		parameter endText is "".
+		if endText <> "" {printLine(endText).}
+		set printPrefix to printPrefix:REMOVE(0,2).
+	}).
+}
+
 // Returns the orbital patch for the given SOI, if possible.
 function findOrbitalPatchForSoi {
     parameter orbitPatch, targetSoi.
@@ -76,8 +89,9 @@ function findOrbitalPatchForSoi {
 
 function startup {
 	parameter message is "".
+	local printSection is -1.
 	if message <> "" {
-		printLine(message).
+		set printSection to printSectionStart(message).
 	}
 	local sasWasOn is false.
 	if SAS {
@@ -90,6 +104,9 @@ function startup {
 		}
 		unlock THROTTLE.
 		unlock STEERING.
+		if printSection <> -1 {
+			printSection:END().
+		}
 	}).
 }
 

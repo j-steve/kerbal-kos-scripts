@@ -6,9 +6,9 @@ parameter targetEntity is SHIP, targetObjective is "dock", targetAltitude is -1.
 local targetSoi is _getEntityBody(targetEntity).
 if targetAltitude = -1 {
 	if (targetSoi = MUN) {
-		set targetAltitude to 100000.
+		set targetAltitude to 40000.
 	} else if (targetSoi = MINMUS) {
-		set targetAltitude to 30000.
+		set targetAltitude to 20000.
 	} else if targetSoi:ATM:EXISTS {
 		set targetAltitude to targetSoi:ATM:HEIGHT + 10000.
 	} else {
@@ -61,14 +61,48 @@ local executeGoto is {
 	}
 
 	// Warp to new SOI.
-	until SHIP:ORBIT:BODY = targetSoi {
-		printLine("Warping to next SOI...").
-		local warpToTime is TIME:SECONDS + SHIP:ORBIT:ETA:TRANSITION + 10.
-		WARPTO(warpToTime).
-		wait until TIME:SECONDS >= warpToTime.
-	}
+	until SHIP:ORBIT:BODY = targetSoi {warpToSoiTransfer().}
 
 	if targetObjective = "flyby" {
+		printLine("Warping to periapsis...").
+		local warpToTime is TIME:SECONDS + SHIP:ORBIT:ETA:PERIAPSIS.
+		WARPTO(warpToTime).
+		wait until TIME:SECONDS >= warpToTime.
+		
+		printLine("At periapsis!  Confirm mission complete").
+		printLine("Warping home in 10 seconds.").
+		wait 10.
+		warpToSoiTransfer().
+		WAIT UNTIL SHIP:ORBIT:BODY = KERBIN.
+
+		local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
+		ADD returnNode.
+		tuneNode(returnNode, {
+				local periapsDelta is ABS(50000 - returnNode:ORBIT:PERIAPSIS).
+				return choose 0 if periapsDelta < 5000 else periapsDelta.
+			}).
+		RUNPATH("mnode.ks", 1).
+		clearNodes().
+
+		printLine("Warping to periapsis...").
+		_warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:PERIAPSIS - 2 * 60).
+		lock STEERING to RETROGRADE.
+		alignRetrograde().
+		lock THROTTLE to 1.
+		PANELS off.
+		until STAGE:NUMBER = 0 or SHIP:ALTITUDE - SHIP:GEOPOSITION:TERRAINHEIGHT < 10000{
+			if SHIP:AVAILABLETHRUST = 0 {
+				printLine("No throttle, staging.").
+				stage.
+				wait until stage:ready.
+			}
+			wait 0.5.
+		}
+		until STAGE:NUMBER = 0 {
+			stage.
+			wait until stage:ready.
+		}
+
 		printLine("Flyby complete.").
 		return.
 	}
@@ -126,4 +160,15 @@ function _getEntityBody {
 		printLine("ERROR: Cannot get entity body for " + _entity).
 		return _entity:THROW_ERROR. // Access a non-existant property to throw an exception.
 	}
+}
+
+function warpToSoiTransfer {
+	printLine("Warping to next SOI...").
+	_warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:TRANSITION + 10).
+}
+
+function _warpTo {
+	parameter warpToTime.
+	WARPTO(warpToTime).
+	wait until TIME:SECONDS >= warpToTime.
 }

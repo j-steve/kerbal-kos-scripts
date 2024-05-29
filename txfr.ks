@@ -9,12 +9,14 @@ function executeTransfer {
 		printLine("Please select transfer target first.").
 		return.
 	}
-	printLine("Performing Hohmann transfer to " + TARGET:NAME + "...").
+	
+	local startupData is startup("Performing Hohmann transfer to " + TARGET:NAME + "...").
 	if not skipCirc {
 		run circ.ks. // Orbit must be circularized for subsequent calculations.
 	}
 	createHoffmanTxfrNode(SHIP:OBT, TARGET:OBT).
 	run mnode.ks.
+	startupData:END().
 }
 
 function createHoffmanTxfrNode {

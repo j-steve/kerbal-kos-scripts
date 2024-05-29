@@ -42,7 +42,7 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 
 // Adjust heading as we climb.
 if ALTITUDE < 6500 {
-	printLine("Pitching slightly towards " + launchHeading + "°, waiting to 6.5k...").
+	printLine("Tilting 80° towards" + launchHeading + "°, waiting to 6.5k...").
 	until ALTITUDE > 6500 or APOAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(80).}
 }
 
@@ -103,7 +103,7 @@ wait NEXTNODE:ETA - burnTime / 2 + 5. // Start burning so that total burn will b
 
 printLine("Rasing periapsis...").
 // TODO: slow thrust at end, when burnTime is approaching 0, to prevent adding too much deltaV (raising pariapsis more than needed).
-until PERIAPSIS >= TARGET_ORBIT_RADIUS {maintainHeading(PROGRADE:VECTOR).}
+until PERIAPSIS > 80000 {maintainHeading(PROGRADE:VECTOR).}
 lock THROTTLE to 0.
 set RCS to false.
 if HASNODE {remove NEXTNODE.}
