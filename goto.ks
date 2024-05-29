@@ -1,7 +1,20 @@
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
-parameter targetEntity is SHIP, targetObjective is "dock", targetAltitude is 100000.
+parameter targetEntity is SHIP, targetObjective is "dock", targetAltitude is -1.
+
+local targetSoi is _getEntityBody(targetEntity).
+if targetAltitude = -1 {
+	if (targetSoi = MUN) {
+		set targetAltitude to 100000.
+	} else if (targetSoi = MINMUS) {
+		set targetAltitude to 30000.
+	} else if targetSoi:ATM:EXISTS {
+		set targetAltitude to targetSoi:ATM:HEIGHT + 10000.
+	} else {
+		set targetAltitude to 50000.
+	}
+}
 
 local executeGoto is {
 	local startupData is startup().
@@ -17,10 +30,9 @@ local executeGoto is {
 	} else {
 		set TARGET to targetEntity.
 	}
-	local targetSoi is choose TARGET if targetEntity:ISTYPE("BODY") else targetEntity:BODY.
 	set TARGET to targetSoi.
 
-	if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED"  or SHIP:STATUS = "SUB_ORBITAL" {
+	if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 		local launchInc is 90.
 		if targetSoi = MINMUS {
 			// TODO: if uncrewed, wait until minmus is overhead.
@@ -98,3 +110,18 @@ local executeGoto is {
 }.
 
 executeGoto().
+
+// Returns the "Body" associated with the given entity.
+// If the entity is a body, it will just return that entity.
+// If it's a ship, it'll return the body it is orbiting.
+function _getEntityBody {
+	parameter _entity.
+	if _entity:ISTYPE("Body") {
+		return _entity.
+	} else if _entity:ISTYPE("Vessel") {
+		return _entity:ORBIT:BODY.
+	} else {
+		printLine("ERROR: Cannot get entity body for " + _entity).
+		return _entity:THROW_ERROR. // Access a non-existant property to throw an exception.
+	}
+}
