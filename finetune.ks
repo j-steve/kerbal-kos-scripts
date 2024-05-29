@@ -18,9 +18,8 @@ function executeFineTune {
 		printLine("--------------------------------------------").
         set orbitPatch to SHIP:ORBIT. // Reset to the current orbit by default.
 
-        // Create burn node, positioned where 25% of the way through this orbit
-        // (because ~50% is probably where we will roughly hit the target).
-        local burnTime is choose TIME:SECONDS + 10*60 if SHIP:ORBIT:HASNEXTPATCH else TIME:SECONDS + SHIP:ORBIT:PERIOD * 0.25.
+        // Create burn node 10 minutes from now (mainly just to ensure it's still in the future once the calcs complete.)
+        local burnTime is TIME:SECONDS + 10*60.
         local burnNode is NODE(burnTime, 0, 0, 0).
         add burnNode.
         
