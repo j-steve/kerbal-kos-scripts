@@ -1,7 +1,7 @@
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
-parameter targetEntity is SHIP, targetAltitude is 100000, targetObjective is "dock".
+parameter targetEntity is SHIP, targetObjective is "dock", targetAltitude is 100000.
 
 local executeGoto is {
 	local startupData is startup().
