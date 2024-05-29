@@ -32,6 +32,7 @@ local executeGoto is {
 	}
 	set TARGET to targetSoi.
 
+	local wasLaunched is false.
 	if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 		local launchInc is 90.
 		if targetSoi = MINMUS {
@@ -42,9 +43,10 @@ local executeGoto is {
 		}
 		RUNPATH("launch.ks", launchInc).
 		clearNodes().
+		set wasLaunched to true.
 	}
 
-	if findOrbitalPatchForSoi(SHIP:ORBIT, TARGET):BODY <> targetSoi {
+	if wasLaunched or findClosestApproach(SHIP:ORBIT, targetSoi):DISTANCE > SHIP:APOAPSIS  {
 		RUNPATH("inc.ks").
 		clearNodes().
 
@@ -101,7 +103,7 @@ local executeGoto is {
 			ADD orbitNode.
 			tuneNode(orbitNode, {
 					local newApoapsis is orbitNode:ORBIT:APOAPSIS.
-					return choose 0 if newApoapsis > 0 and newApoapsis < targetSoi:SOIRADIUS else VELOCITYAT(SHIP, TIME:SECONDS + ETA:PERIAPSIS):ORBIT:MAG.
+					return choose 0 if newApoapsis > 0 and newApoapsis < (targetSoi:SOIRADIUS - 1000) else VELOCITYAT(SHIP, TIME:SECONDS + ETA:PERIAPSIS):ORBIT:MAG.
 				}).
 			RUNPATH("mnode.ks", 1).
 			clearNodes().
