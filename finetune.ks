@@ -2,6 +2,7 @@ RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
 parameter targetApproachDistance is 100000.
+local targetBody is choose TARGET if Target:ISTYPE("Body") else TARGET:BODY.
 
 executeFineTune().
 
@@ -10,6 +11,7 @@ function executeFineTune {
     clearNodes().
 
     // Find the patch where we enter the target's SOI.
+    // If we don't, execute a preliminary correction burn to do so.
     local orbitPatch is findOrbitalPatchForSoi(SHIP:ORBIT, TARGET).
     if orbitPatch:BODY <> TARGET  {
 		printLine("--------------------------------------------").
@@ -18,8 +20,8 @@ function executeFineTune {
 		printLine("--------------------------------------------").
         set orbitPatch to SHIP:ORBIT. // Reset to the current orbit by default.
 
-        // Create burn node 10 minutes from now (mainly just to ensure it's still in the future once the calcs complete.)
-        local burnTime is TIME:SECONDS + 10*60.
+        // Create burn node for the near future (but far enough in the future that the tuneNode calcs will have completed).
+        local burnTime is TIME:SECONDS + 2*60.
         local burnNode is NODE(burnTime, 0, 0, 0).
         add burnNode.
         
@@ -28,42 +30,45 @@ function executeFineTune {
         local findClosestApprachEndTime is choose TIME:SECONDS +SHIP:ORBIT:NEXTPATCHETA if SHIP:ORBIT:HASNEXTPATCH else burnTime + SHIP:ORBIT:PERIOD * 0.5.
         tuneNode(burnNode, {
                 local closestApproach is findClosestApproach(burnNode:ORBIT, TARGET, burnTime, findClosestApprachEndTime).
-                return abs(targetApproachDistance - closestApproach:DISTANCE).
+                return choose 0 if closestApproach:DISTANCE < TARGET:SOIRADIUS else abs(targetApproachDistance - closestApproach:DISTANCE).
             }).
-        
-    } else {
-        // Create burn node, positioned where 10% of the orbit period remains til closest approach to target.
-        local burnStartTime is -1.
-        if not orbitPatch:HASNEXTPATCH {
-            // We're in a stable orbit around the target.
-            set burnStartTime to orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
-        } else if SHIP:ORBIT:BODY = TARGET  {
-            // We're in an escape orbit that is already around the target.  Burn NOW.
-            set burnStartTime to 60.
-        } else {
-            // We're in an escape orbit that will hit the target.  Burn halfway until we hit the next transition.
-            
-            set burnStartTime to SHIP:ORBIT:NEXTPATCHETA / 2.
-        }
-        local burnNode is NODE(TIME:SECONDS + MAX(burnStartTime, 0), 0, 0, 0).
-        add burnNode.
 
-        // Execute fine tuning.
-        local initialDeviation is abs(targetApproachDistance -  orbitPatch:PERIAPSIS).
-        printLine("Intial deviation is " + round(initialDeviation)).
-        tuneNode(burnNode, {
-                local targetPatch is findOrbitalPatchForSoi(burnNode:ORBIT, TARGET).
-                
-                if targetPatch:BODY <> TARGET {
-                    // After this adjustment we no longer even enter the SOI of the target.
-                    // This is worse than the inial deviation, whatever value that was.
-                    // Return some arbitrary larger value to ensure we do not use this result.
-                    return initialDeviation * 2.
-                }
-                local newDeviation is abs(targetApproachDistance -  targetPatch:PERIAPSIS).
-                return newDeviation.
-            }).
+        // Execute the burn, then find the updated current orbital patch.
+        RUNPATH("mnode.ks.").
+        set orbitPatch to findOrbitalPatchForSoi(SHIP:ORBIT, TARGET).
     }
+
+    // Create burn node, positioned where 10% of the orbit period remains til closest approach to target.
+    local burnStartTime is -1.
+    if not orbitPatch:HASNEXTPATCH {
+        // We're in a stable orbit around the target.
+        set burnStartTime to orbitPatch:ETA:PERIAPSIS - (SHIP:ORBIT:PERIOD * 0.25).
+    } else if SHIP:ORBIT:BODY = TARGET  {
+        // We're in an escape orbit that is already around the target.  Burn NOW.
+        set burnStartTime to 60.
+    } else {
+        // We're in an escape orbit that will hit the target.  Burn halfway until we hit the next transition.
+        
+        set burnStartTime to SHIP:ORBIT:NEXTPATCHETA / 2.
+    }
+    local burnNode is NODE(TIME:SECONDS + MAX(burnStartTime, 0), 0, 0, 0).
+    add burnNode.
+
+    // Execute fine tuning.
+    local initialDeviation is abs(targetApproachDistance -  orbitPatch:PERIAPSIS).
+    printLine("Intial deviation is " + round(initialDeviation)).
+    tuneNode(burnNode, {
+            local targetPatch is findOrbitalPatchForSoi(burnNode:ORBIT, TARGET).
+            
+            if targetPatch:BODY <> TARGET {
+                // After this adjustment we no longer even enter the SOI of the target.
+                // This is worse than the inial deviation, whatever value that was.
+                // Return some arbitrary larger value to ensure we do not use this result.
+                return initialDeviation * 2.
+            }
+            local newDeviation is abs(targetApproachDistance -  targetPatch:PERIAPSIS).
+            return newDeviation.
+        }).
 
     //Run the node.
     RUNPATH("mnode.ks.").

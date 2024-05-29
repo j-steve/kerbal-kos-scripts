@@ -17,6 +17,11 @@ function tuneNode {
 			// Apply the thrust in this direction as a test to see how effective it would be.
 			incrementNodeVector(burnDirections[i]).
 			set deltas[i] to ABS(calcDelta:CALL()).
+			if deltas[i] = 0 {
+				// We can't beat 0, we can stop here and return early!
+				printLine("  OK").
+				return.
+			}
 			 // Undo the thrust application for now.
 			incrementNodeVector(burnDirections[getOppositeDirectionIndex(i)]).            
 			if (debugMode) {
