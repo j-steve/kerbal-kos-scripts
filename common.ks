@@ -100,13 +100,14 @@ function startup {
 		set SAS to false.
 	}
 	return Lexicon("END", {
+		parameter _endMessage is "".
 		if sasWasOn {
 			set SAS to true.
 		}
 		unlock THROTTLE.
 		unlock STEERING.
 		if printSection <> -1 {
-			printSection:END().
+			printSection:END(_endMessage).
 		}
 	}).
 }
