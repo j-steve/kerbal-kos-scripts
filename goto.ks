@@ -102,8 +102,12 @@ local executeGoto is {
 			stage.
 			wait until stage:ready.
 		}
-
-		printLine("Flyby complete.").
+		printLine("Waiting to land")...
+		set WARPMODE to "PHYSICS".
+		set WARP to 4.
+		wait until SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
+		
+		printLine("Mission complete!")
 		return.
 	}
 
