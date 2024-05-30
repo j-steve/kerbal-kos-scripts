@@ -14,6 +14,7 @@ until false {
     local messageParts is message:CONTENT:SPLIT("|").
     local startupData is startup().
 	PANELS off.
+    RCS off.
     prepareDock(message:SENDER, messageParts[0], messageParts[1]).
 	PANELS on.
     startupData:END().

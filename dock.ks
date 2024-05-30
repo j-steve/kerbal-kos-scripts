@@ -22,6 +22,7 @@ function dock {
         printLine("ERROR: no compatible docking ports on station!").
         return.
     }
+    _warpFreeze(). // Ensure there's no initial motion in ship/station.
     _target:CONNECTION:SENDMESSAGE(myPort:UID + "|" + stationPorts[0]:UID).
     local stationHighlight is HIGHLIGHT(stationPorts[0], BLUE).
     myPort:CONTROLFROM().
@@ -34,10 +35,7 @@ function dock {
     until SHIP:MESSAGES:EMPTY {SHIP:MESSAGES:POP.}
     printLine("  done").
 
-     // Warp for a sec to "freeze" the station.
-    SET warp to 2.
-    wait 5.
-    set warp to 0.
+    _warpFreeze(). // Freeze the station.
 
     //lock dockingPortAlignment to VANG(stationPorts[0]:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
     lock dockingPortAlignment to VANG(myPort:FACING:FOREVECTOR, stationPorts[0]:NODEPOSITION - myPort:NODEPOSITION).
@@ -54,11 +52,7 @@ function dock {
         // vecdraw(myPort:POSITION, myPort:portfacing:upvector * 1000000, RGB(1, 0, 0), "up", 0.15, true).
         wait 0.1.
     }
-    
-     // Warp for a sec to "freeze" the ship.
-    set warp to 2.
-    wait 5.
-    set warp to 0.
+    _warpFreeze().  // Freeze the ship.
 
     // lock dockingPortAlignment to VANG(stationPorts[0]:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
     // until abs(180 - dockingPortAlignment) < 1 {
@@ -96,4 +90,11 @@ function findShipDockingPort {
         }
     }
     return bestPort.
+}
+
+// Warp for a sec to "freeze" momentum.
+function _warpFreeze {
+    SET warp to 2.
+    wait 5.
+    set warp to 0.
 }
