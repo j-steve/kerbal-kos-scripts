@@ -97,28 +97,7 @@ local executeGoto is {
 		RUNPATH("mnode.ks", 1).
 		clearNodes().
 
-		printLine("Warping to periapsis...").
-		_warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:PERIAPSIS - 2 * 60).
-		lock STEERING to RETROGRADE.
-		alignRetrograde().
-		lock THROTTLE to 1.
-		PANELS off.
-		until STAGE:NUMBER = 0 or SHIP:ALTITUDE - SHIP:GEOPOSITION:TERRAINHEIGHT < 10000{
-			if SHIP:AVAILABLETHRUST = 0 {
-				printLine("No throttle, staging.").
-				stage.
-				wait until stage:ready.
-			}
-			wait 0.5.
-		}
-		until STAGE:NUMBER = 0 {
-			stage.
-			wait until stage:ready.
-		}
-		printLine("Waiting to land")...
-		set WARPMODE to "PHYSICS".
-		set WARP to 4.
-		wait until SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
+		RUNPATH("return.ks").
 		
 		set WARP to 0.
 		printLine("Mission complete!").
