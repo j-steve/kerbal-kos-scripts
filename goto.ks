@@ -47,8 +47,10 @@ local executeGoto is {
 	}
 
 	if wasLaunched or findClosestApproach(SHIP:ORBIT, targetSoi):DISTANCE > SHIP:APOAPSIS  {
-		RUNPATH("inc.ks").
-		clearNodes().
+		if ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION) > 1 {
+			RUNPATH("inc.ks").
+			clearNodes().
+		}
 
 		RUNPATH("txfr.ks").
 		clearNodes().
