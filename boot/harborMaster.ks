@@ -13,7 +13,9 @@ until false {
     printLine("    from " + message:SENDER:NAME).
     local messageParts is message:CONTENT:SPLIT("|").
     local startupData is startup().
+	PANELS off.
     prepareDock(message:SENDER, messageParts[0], messageParts[1]).
+	PANELS on.
     startupData:END().
 }
 
