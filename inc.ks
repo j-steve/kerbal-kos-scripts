@@ -67,7 +67,7 @@ function createIncTransferNode {
 		//printLine("Ang in rads: " + angleInRadians).
 		return abs(angleInRadians).
 		//return ARCCOS(VDOT(targetPlane, calcOrbitalPlaneNormal(incNode:ORBIT))).
-		}).
+		}, 0.01, 0.1).
 }
 
 function calcAscNodeTrueAnomaly {
