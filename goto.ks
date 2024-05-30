@@ -1,8 +1,16 @@
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
-parameter targetEntity is SHIP, targetObjective is "dock", targetAltitude is -1.
+parameter targetEntity is -1, targetObjective is "dock", targetAltitude is -1.
 
+if targetEntity = -1 {
+	if HASTARGET {
+		SET targetEntity to TARGET.
+	} else {
+		printLine("No target, defaulting to Station II.").
+		SET targetEntity to VESSEL("Station II").
+	}
+}
 local targetSoi is _getEntityBody(targetEntity).
 if targetAltitude = -1 {
 	if (targetSoi = MUN) {
@@ -48,6 +56,8 @@ local executeGoto is {
 
 	if wasLaunched or findClosestApproach(SHIP:ORBIT, targetSoi):DISTANCE > SHIP:APOAPSIS  {
 		if ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION) > 1 {
+			printLine("target: " + targetSoi:NAME).
+			printLine("Updating inc" + ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION)).
 			RUNPATH("inc.ks").
 			clearNodes().
 		}
