@@ -115,7 +115,11 @@ function startup {
 function findClosestApproach {
 	parameter _orbit, _target, _startTime is TIME:SECONDS, _endTime is -1, _orbitSteps is 1000.
 	if _endTime = -1 {
-		set _endTime to choose _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else (_startTime + _orbit:PERIOD).
+		set _endTime to choose TIME:SECONDS + _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else (_startTime + _orbit:PERIOD).
+	}
+	if _orbit:PERIAPSIS < 0 {
+		// If this "orbit" involves crashing into the body, ignore any positions after the collision time.
+		set _endTime to MIN(_endTime, TIME:SECONDS + _orbit:ETA:PERIAPSIS).
 	}
 	local minDist is distanceBetween(SHIP:POSITION, _target:POSITION).
 	local minTime is TIME:SECONDS.
