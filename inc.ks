@@ -55,6 +55,10 @@ function createIncTransferNode {
 	// but with a more granular value (divide it by 10).
 	// Stop when we reach a reasonably small dV increment.
 	tuneNode(incNode, {
+		if incNode:ORBIT:hasnextpatch or incNode:ORBIT:PERIAPSIS < 0 {
+			// Ignore nodes if they involve crashing or leaving orbit.
+			return 999999999999999999999.
+		}
 		local nodePlane is calcOrbitalPlaneNormal(incNode:ORBIT).
 		//clearvecdraws().
 		//vecdraw(SHIP:POSITION,  targetPlane * 100000000, RGB(0, 1, 0), "normal", 0.15, true).
