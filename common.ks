@@ -43,6 +43,7 @@ local printPrefix is "".
 function printLine {
 	parameter text, overwriteLast is false.
 	set text to printPrefix + text.
+	log (round(TIME:SECONDS) + ": " + text) to "log.txt".
 	set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH)).
 	if isFirstPrint {
 		CLEARSCREEN.
