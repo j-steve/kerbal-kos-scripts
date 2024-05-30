@@ -43,6 +43,7 @@ local printPrefix is "".
 function printLine {
 	parameter text, overwriteLast is false.
 	set text to printPrefix + text.
+	set text to text:SUBSTRING(0, Terminal:WIDTH).
 	if isFirstPrint {
 		CLEARSCREEN.
 		set isFirstPrint to false.
