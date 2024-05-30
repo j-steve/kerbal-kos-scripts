@@ -103,7 +103,7 @@ wait NEXTNODE:ETA - burnTime / 2 + 5. // Start burning so that total burn will b
 
 printLine("Rasing periapsis...").
 // TODO: slow thrust at end, when burnTime is approaching 0, to prevent adding too much deltaV (raising pariapsis more than needed).
-until PERIAPSIS > 80000 {maintainHeading(PROGRADE:VECTOR).}
+until PERIAPSIS > 90000 {maintainHeading(PROGRADE:VECTOR).}
 lock THROTTLE to 0.
 set RCS to false.
 if HASNODE {remove NEXTNODE.}
