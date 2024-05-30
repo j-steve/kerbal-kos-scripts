@@ -107,7 +107,7 @@ local executeGoto is {
 		set WARP to 4.
 		wait until SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
 		
-		printLine("Mission complete!")
+		printLine("Mission complete!").
 		return.
 	}
 
