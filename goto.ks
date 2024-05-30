@@ -54,7 +54,8 @@ local executeGoto is {
 		set wasLaunched to true.
 	}
 
-	if wasLaunched or findClosestApproach(SHIP:ORBIT, targetSoi):DISTANCE > SHIP:APOAPSIS  {
+	local soiPatch is findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
+	if wasLaunched or (soiPatch:BODY <> targetSoi and findClosestApproach(SHIP:ORBIT, targetSoi):DISTANCE > SHIP:APOAPSIS)  {
 		if ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION) > 1 {
 			printLine("target: " + targetSoi:NAME).
 			printLine("Updating inc" + ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION)).
@@ -64,9 +65,9 @@ local executeGoto is {
 
 		RUNPATH("txfr.ks").
 		clearNodes().
+		set soiPatch to findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
 	}
 
-	local soiPatch is findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
 	if SHIP:BODY <> targetSoi and abs(soiPatch:periapsis - 100000)  > 1000 {
 		RUNPATH("finetune.ks", targetAltitude).
 		clearNodes().
@@ -125,8 +126,7 @@ local executeGoto is {
 	}
 
 	// Burn retrograde to eliminate escape velocity.
-	_preventEscape().
-	if apoapsis > 3 * 100000 {
+	if SHIP:ORBIT:TRANSITION = "ESCAPE" or SHIP:ORBIT:APOAPSIS > 3 * 100000 {
 		printLine("Reducing apoapsis").
 		RUNPATH("circ", false).
 	}
