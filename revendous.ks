@@ -66,24 +66,26 @@ WARPTO(closeApproachTime).
 WAIT UNTIL TIME:SECONDS >= closeApproachTime.
 
 
-printLine("Closing in on target...").
-printLine("Waiting to get within 2km...").
+local closingInSection is printSectionStart("Closing in on target.").
+local within1kmSection is printSectionStart("Waiting to get within 1km...").
 lock STEERING to RETROGRADE.
 wait until distanceBetween(SHIP:POSITION, _target:POSITION) < 1000.
+within1kmSection:END("done").
 until distanceBetween(SHIP:POSITION, _target:POSITION) < 500 {
     killRelativeVelocity(0.1).
     if SHIP:availablethrust = 0 {
+        printLine("Staging").
         STAGE.
         wait until STAGE:READY.
     }
-    printLine("   Aligning header to target...").
+    printLine("Aligning header to target...").
     lock STEERING to _target:POSITION.
     wait until  VANG(SHIP:FACING:FOREVECTOR, _target:POSITION) < 1.5.
-    printLine("   Engaging throggle...").
+    printLine("Engaging throggle...").
     LOCK THROTTLE TO 0.1.
     wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 1.
     LOCK THROTTLE TO 0.
-    printLine("   Waiting to close in...").
+    printLine("Waiting to close in...").
     local newClosestApproach is findClosestApproach(SHIP:ORBIT, _target).
     if newClosestApproach:SECONDS - TIME:SECONDS > 10 {
         WARPTO(newClosestApproach:SECONDS - 10).
@@ -92,7 +94,7 @@ until distanceBetween(SHIP:POSITION, _target:POSITION) < 500 {
         WAIT 2.
     }
 }
-printLine("  done").
+closingInSection:END("done").
 
 // until distanceBetween(SHIP:POSITION, _target:POSITION) < 500  {
 //     killRelativeVelocity().
@@ -120,7 +122,7 @@ function killRelativeVelocity {
     lock relativeVelocity to SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT.
     lock retrogradeDirection to -relativeVelocity:NORMALIZED.
     lock STEERING to retrogradeDirection.
-    printLine("Killing relative velocity...").
+    local killVeloSection is printSectionStart("Killing relative velocity...").
     until relativeVelocity:MAG < maxRelativeVelocity {
         if SHIP:AVAILABLETHRUST = 0 {
             lock THROTTLE to 0.
@@ -142,7 +144,7 @@ function killRelativeVelocity {
         wait 0.0001.
     }
     unlock STEERING.
-    printLine("  done").
+    killVeloSection:END("done").
 }
 
 UNLOCK STEERING.
