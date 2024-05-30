@@ -11,15 +11,18 @@ local startupData is startup("Revendousing with " + _target:NAME + ".").
 
 if _target:ISTYPE("Part") {set _target to _target:SHIP.}
 
-if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
+local updatedMinApproach to findClosestApproach(SHIP:ORBIT, _target, TIME:SECONDS, -1, 500).
+if updatedMinApproach:DISTANCE > 5000 {
     // Start at a point 10 minutes in the future, 
     // mainly to enusre that the position is STILL in the future
     // once we've finished these calculations.
     // TODO: We should be able to use a hoffman transfer here instead.
-    local revNode is NODE(TIME:SECONDS + 10 * 60, 0,0,0).
+    //local burnStartTime is 10 * 60.
+    local burnStartTime is choose ETA:PERIAPSIS if _target:APOAPSIS > SHIP:APOAPSIS else ETA:APOAPSIS.
+    local revNode is NODE(TIME:SECONDS + burnStartTime, 0,0,0).
     ADD revNode.
-    local minApproach is -1.
     local orbitCountI is 1.
+    local minApproach is -1.
     until minApproach <> -1 and minApproach:DISTANCE < 5000 {
         if orbitCountI > 1 {
             // Reset node and increment to next orbit.
@@ -29,27 +32,44 @@ if distanceBetween(SHIP:POSITION, _target:POSITION) > 5000 {
             set revNode:NORMAL to 0.
         }
         printLine("Finding closest approach in orbit #" + orbitCountI + "...").
-        local fineCloseApproachNode is findClosestApproach@:BIND(revNode:ORBIT, _target, TIME:SECONDS + revNode:ETA, -1, 100).
-        tuneNode(revNode, {return abs(fineCloseApproachNode:CALL():DISTANCE).}, .01, .1).
-        set minApproach to fineCloseApproachNode:CALL().
+        tuneNode(revNode, {
+                local closeApproach is findClosestApproach(revNode:ORBIT, _target, revNode:TIME, -1, 500).
+                return abs(closeApproach:DISTANCE).
+            }, .01, .5).
+        set minApproach to findClosestApproach(revNode:ORBIT, _target, revNode:TIME, -1, 500).
         printLine("  Min approach: " + round(minApproach: DISTANCE)).
         set orbitCountI to orbitCountI + 1.
     }
     RUNPATH("mnode.ks").
 
-    printLine("Warping to close approach...").
-    local closeApproachTime is minApproach:SECONDS - 120.
-    WARPTO(closeApproachTime).
-    WAIT UNTIL TIME:SECONDS >= closeApproachTime.
     printLine("  done").
+    set updatedMinApproach to findClosestApproach(SHIP:ORBIT, _target, TIME:SECONDS, -1, 500).
 }
 
-// if closestApproach:ETA > 15 {
-//     printLine("Warping to closest approach...").
-//     WARPTO(TIME:SECONDS + closestApproach:ETA - 15).
-// }
+until updatedMinApproach:DISTANCE < 1000 {
+    printLine("Fine-tuning approach").
+    local fineTuneNode is NODE((TIME:SECONDS + updatedMinApproach:SECONDS)/2, 0, 0, 0).
+    //local searchEndTime is (fineTuneNode:ETA) * 2.
+    local searchEndTime is -1.
+    ADD fineTuneNode.
+    tuneNode(fineTuneNode, {
+                    local closeApproach is findClosestApproach(SHIP:ORBIT, _target, fineTuneNode:TIME, searchEndTime, 500).
+                    return choose 0 if closeApproach:DISTANCE < 250 else closeApproach:DISTANCE.
+                }, .001, .01).
+    RUNPATH("mnode.ks").
+    set updatedMinApproach to findClosestApproach(SHIP:ORBIT, _target, TIME:SECONDS, -1, 500).
+}
+
+printLine("Warping to close approach time...").
+local closeApproachTime is findClosestApproach(SHIP:ORBIT, _target, TIME:SECONDS, -1, 500):SECONDS - 120.
+WARPTO(closeApproachTime).
+WAIT UNTIL TIME:SECONDS >= closeApproachTime.
+
 
 printLine("Closing in on target...").
+printLine("Waiting to get within 2km...").
+lock STEERING to RETROGRADE.
+wait until distanceBetween(SHIP:POSITION, _target:POSITION) < 1000.
 until distanceBetween(SHIP:POSITION, _target:POSITION) < 500 {
     killRelativeVelocity(0.1).
     if SHIP:availablethrust = 0 {
