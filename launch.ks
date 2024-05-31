@@ -99,7 +99,9 @@ add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
 lock steering to NEXTNODE:BURNVECTOR.
 local acceleration is MAX(SHIP:AVAILABLETHRUST / SHIP:MASS, 0.001).
 local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
-wait NEXTNODE:ETA - burnTime / 2 + 5. // Start burning so that total burn will be around apoapsis, with 5-second buffer
+local periapsisRaiseBurnStart is TIME:SECONDS + NEXTNODE:ETA - burnTime / 2 + 5.
+WARPTO(periapsisRaiseBurnStart).
+wait until TIME:SECONDS >= periapsisRaiseBurnStart.
 
 printLine("Rasing periapsis...").
 // TODO: slow thrust at end, when burnTime is approaching 0, to prevent adding too much deltaV (raising pariapsis more than needed).
