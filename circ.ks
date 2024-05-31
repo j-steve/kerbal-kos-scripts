@@ -23,7 +23,7 @@ function circularizeOrbit {
 
 	local burnPointRadius is burnPointAltitude + BODY:RADIUS. // Assuming at current altitude
 	local txfrDeltaV is calcVisViva(burnPointRadius, SHIP:ORBIT:SEMIMAJORAXIS, burnPointRadius, burnPointRadius).
-	add node(TimeSpan(burnPointEta), 0, 0, txfrDeltaV * progradeModifier).
+	add node(TIME:SECONDS + burnPointEta, 0, 0, txfrDeltaV * progradeModifier).
 	run mnode.ks.
 
 	
