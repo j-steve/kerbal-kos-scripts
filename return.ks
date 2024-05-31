@@ -4,6 +4,40 @@ RUNONCEPATH("nodeTuner.ks").
 
 local startupData is startup("Returning to Kerbin.").
 
+if SHIP:ORBIT:BODY <> KERBIN and not SHIP:ORBIT:hasnextpatch {
+    local escapeNode is NODE(TIME:SECONDS + ETA:PERIAPSIS, 0, 0, 0).
+    ADD escapeNode.
+    until escapeNode:ORBIT:hasnextpatch {
+        set escapeNode:prograde to escapeNode:prograde + 1.
+        wait 0.0001.
+    }
+    set escapeNode:prograde to escapeNode:prograde * 1.1. // Add 10% extra as a buffer.
+    RUNPATH("mnode.ks", 1).
+    clearNodes().
+}
+
+if SHIP:ORBIT:BODY <> KERBIN {
+    local warpToTime is TIME:SECONDS + SHIP:ORBIT:nextpatcheta + 60.
+    WARPTO(warpToTime).
+    wait until TIME:SECONDS >= warpToTime.
+}
+
+if ABS(50000-PERIAPSIS) > 100000 {
+    local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
+    ADD returnNode.
+    tuneNode(returnNode, {
+            if returnNode:ORBIT:HASNEXTPATCH {return 99999999999999999.}
+            local periapsDelta is ABS(50000 - returnNode:ORBIT:PERIAPSIS).
+            return choose 0 if periapsDelta < 5000 else periapsDelta.
+        }).
+    RUNPATH("mnode.ks", 1).
+    clearNodes().
+}
+
+until ABS(50000-PERIAPSIS) < 2500 {
+    RUNPATH("finetune.ks", 50000, KERBIN).
+}
+
 printLine("Warping to periapsis...").
 _warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:PERIAPSIS - 2 * 60).
 lock STEERING to RETROGRADE.
