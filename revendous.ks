@@ -78,7 +78,7 @@ if not _isWithin(1000) {
 within1kmSection:END("done").
 
 // Close in real close.
-closeInOnTarget(150).
+closeInOnTarget(125).
 
 // Come to a final stop.
 local finalStopSection is printSectionStart("Coming to a final stop...").
