@@ -56,16 +56,22 @@ function lockSteering {
     parameter _steeringLock.
     if _steeringLock = "retrograde" {
         lock STEERING to RETROGRADE.
+        SAS OFF.
     } else if _steeringLock = "srfretrograde" {
         lock STEERING to SRFRETROGRADE.
+        SAS OFF.
     }  else if _steeringLock = "target" {
         lock STEERING to TARGET:POSITION.
+        SAS OFF.
     } else if _steeringLock = "antitarget" {
         lock STEERING to TARGET:POSITION.
+        SAS OFF.
     } else if _steeringLock = "up" {
         lock STEERING to UP.
+        SAS OFF.
     } else if _steeringLock = "unlock" {
         unlock STEERING.
+        SAS ON.
     } else {
         print "ERROR: Unknown steering lock value: " + _steeringLock.
         exitGui().
