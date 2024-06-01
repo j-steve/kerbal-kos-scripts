@@ -45,12 +45,13 @@ until ABS(50000-PERIAPSIS) < 2500 {
     RUNPATH("finetune.ks", 50000, KERBIN).
 }
 
-printLine("Warping to periapsis...").
-_warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:PERIAPSIS - 2 * 60).
+local periapsisWarpSection is printSectionStart("Warping to periapsis...").
+_warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:PERIAPSIS - 3 * 60).
 lock STEERING to RETROGRADE.
-alignRetrograde().
 lock THROTTLE to 1.
 PANELS off.
+alignRetrograde().
+periapsisWarpSection:END().
 
 local burnSlowSection is printSectionStart("Burning to slow down...").
 until STAGE:NUMBER = 0 or SHIP:ALTITUDE - SHIP:GEOPOSITION:TERRAINHEIGHT < 10000{
