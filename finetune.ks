@@ -28,9 +28,10 @@ function executeFineTune {
         
         // Execute fine tuning.
         // Check half the orbit, starting from burnNode:
-        local findClosestApprachEndTime is choose TIME:SECONDS +SHIP:ORBIT:NEXTPATCHETA if SHIP:ORBIT:HASNEXTPATCH else burnTime + SHIP:ORBIT:PERIOD * 0.5.
+        printLine("End time is " + (findClosestApproachCalcEndTime(SHIP:ORBIT, burnTime) - TIME:SECONDS) / 60/60). 
         tuneNode(burnNode, {
-                local closestApproach is findClosestApproach(burnNode:ORBIT, _target, burnTime, findClosestApprachEndTime).
+                local calcEndTime is findClosestApproachCalcEndTime(burnNode:ORBIT, burnTime).
+                local closestApproach is findClosestApproach(burnNode:ORBIT, _target, burnTime, calcEndTime, 100).
                 return choose 0 if closestApproach:DISTANCE < _target:SOIRADIUS else abs(targetApproachDistance - closestApproach:DISTANCE).
             }).
 
@@ -76,4 +77,27 @@ function executeFineTune {
 
     startupData:END().
     
+}
+
+// Returns the latest, in seconds, at which we should stop checking, during "closest approach" calculation
+// to try to enter the target SOI.  
+// 1. If the orbit is a standard (non-parabolic) orbit, then we can just take the node burn time + half the orbit period, since we will presumably hit the target at some point during that loop.
+//      In other words this presumes the target is roughly "in front" of us, not "behind" us, since we wouldn't fine tune after flying past an entity but before hitting it.
+// 2. If it ends in an escape, e.g. kerbin > kerbol, it'll be the time until we hit that next patch.
+// 3. If it ends in a child orbit and doesn't return, e.g. kerbin > mun orbit, it'll be the time until we hit that next patch.
+// 4. If it involves temporarily entering another SOI and then returning, e.g. kerbin > mun > kerbin, then it'll be the end time of the SECOND kerbit patch (third patch total).
+// 5. If the orbit crashes, it'll be the time we crash. (This logic is already included in the `findClosestApproach` function itself.)
+function findClosestApproachCalcEndTime {
+    parameter _orbit, _nodeBurnTime.
+    if not _orbit:HASNEXTPATCH {
+        return _nodeBurnTime + _orbit:PERIOD * 0.5.
+    } else if _orbit:TRANSITION = "ESCAPE" { // e.g. Kerbin > Kerbol
+        return TIME:SECONDS + _orbit:NEXTPATCHETA.
+    } else if _orbit:TRANSITION = "ENCOUNTER" { // e.g., Kerbin > Mun
+        if _orbit:NEXTPATCH:TRANSITION = "ESCAPE" { // e.g. Kerbin > Mun > Kerbin
+            return findClosestApproachCalcEndTime(_orbit:NEXTPATCH:NEXTPATCH, _nodeBurnTime).
+        } else { // e.g. Kerbin > Munar orbit
+            return TIME:SECONDS + _orbit:NEXTPATCHETA.
+        }
+    }
 }
