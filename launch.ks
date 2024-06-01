@@ -103,7 +103,7 @@ if ETA:apoapsis < ETA:periapsis {
 	local acceleration is MAX(SHIP:AVAILABLETHRUST / SHIP:MASS, 0.001).
 	local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
 	local periapsisRaiseBurnStart is TIME:SECONDS + NEXTNODE:ETA - burnTime / 2 + 5.
-	WARPTO(periapsisRaiseBurnStart).
+	WARPTO(periapsisRaiseBurnStart). // TODO: This WARPTO doesn't seem to be working, maybe because we're in atmo?
 	wait until TIME:SECONDS >= periapsisRaiseBurnStart.
 }
 
