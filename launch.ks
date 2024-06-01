@@ -102,9 +102,11 @@ if ETA:apoapsis < ETA:periapsis {
 	lock steering to NEXTNODE:BURNVECTOR.
 	local acceleration is MAX(SHIP:AVAILABLETHRUST / SHIP:MASS, 0.001).
 	local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
-	local periapsisRaiseBurnStart is TIME:SECONDS + NEXTNODE:ETA - burnTime / 2 + 5.
-	WARPTO(periapsisRaiseBurnStart). // TODO: This WARPTO doesn't seem to be working, maybe because we're in atmo?
+	local periapsisRaiseBurnStart is TIME:SECONDS + NEXTNODE:ETA - burnTime / 2 - 10. // 10 seconds buffer time
+	wait 0.5. // Wait so it registers throttle as being 0, otherwise it'll block the warp.
+	WARPTO(periapsisRaiseBurnStart).
 	wait until TIME:SECONDS >= periapsisRaiseBurnStart.
+	set WARP to 0.
 }
 
 printLine("Rasing periapsis...").
