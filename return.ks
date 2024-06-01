@@ -17,21 +17,28 @@ if SHIP:ORBIT:BODY <> KERBIN and not SHIP:ORBIT:hasnextpatch {
 }
 
 if SHIP:ORBIT:BODY <> KERBIN {
+    printLine("Warpint to Kerbin SOI....").
+    wait 1. // Ensure burn is 0 so we can warp.
     local warpToTime is TIME:SECONDS + SHIP:ORBIT:nextpatcheta + 60.
     WARPTO(warpToTime).
     wait until TIME:SECONDS >= warpToTime.
 }
 
 if ABS(50000-PERIAPSIS) > 100000 {
+    local periapsisSection is printSectionStart("Reducing periapsis...").
     local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
     ADD returnNode.
-    tuneNode(returnNode, {
-            if returnNode:ORBIT:HASNEXTPATCH {return 99999999999999999.}
-            local periapsDelta is ABS(50000 - returnNode:ORBIT:PERIAPSIS).
-            return choose 0 if periapsDelta < 5000 else periapsDelta.
-        }).
-    RUNPATH("mnode.ks", 1).
-    clearNodes().
+    until ABS(50000-PERIAPSIS) < 100000 {
+        set returnNode:prograde to returnNode:prograde - .1.
+    }
+    // tuneNode(returnNode, {
+    //         if returnNode:ORBIT:HASNEXTPATCH {return 99999999999999999.}
+    //         local periapsDelta is ABS(50000 - returnNode:ORBIT:PERIAPSIS).
+    //         return choose 0 if periapsDelta < 5000 else periapsDelta.
+    //     }, .001, 1).
+    // RUNPATH("mnode.ks", 1).
+    // clearNodes().
+    periapsisSection:END().
 }
 
 until ABS(50000-PERIAPSIS) < 2500 {
