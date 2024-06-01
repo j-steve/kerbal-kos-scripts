@@ -86,22 +86,26 @@ printLine("Out of atmo, fixing apoapsis if needed.").
 until APOAPSIS > TARGET_ORBIT_RADIUS + 500 {.
 	maintainHeading(PROGRADE:VECTOR).
 }
-lock THROTTLE to 0.
-set RCS to false.
 
-// Create maneuver node at apoapsis with the calculated deltaV as the prograde component
-// Compute dV to complete orbit..
-printLine("Creating periapsis adjustment node and waiting for node start...").
-local currentV is VELOCITYAT(SHIP, TIME:SECONDS + ETA:APOAPSIS).
-local requiredV is calcRequiredVelocityAtApoapsis(TARGET_ORBIT_RADIUS).
-local deltaV is (requiredV - currentV:ORBIT:MAG).
-add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
-lock steering to NEXTNODE:BURNVECTOR.
-local acceleration is MAX(SHIP:AVAILABLETHRUST / SHIP:MASS, 0.001).
-local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
-local periapsisRaiseBurnStart is TIME:SECONDS + NEXTNODE:ETA - burnTime / 2 + 5.
-WARPTO(periapsisRaiseBurnStart).
-wait until TIME:SECONDS >= periapsisRaiseBurnStart.
+// In a standard launch, we''ll create a node to burn at apoapsis.
+// If it's not going well and we've already passed the apoapsis, then skip and just burn.
+if ETA:apoapsis < ETA:periapsis {
+	// Create maneuver node at apoapsis with the calculated deltaV as the prograde component
+	// Compute dV to complete orbit..
+	lock THROTTLE to 0.
+	set RCS to false.
+	printLine("Creating periapsis adjustment node and waiting for node start...").
+	local currentV is VELOCITYAT(SHIP, TIME:SECONDS + ETA:APOAPSIS).
+	local requiredV is calcRequiredVelocityAtApoapsis(TARGET_ORBIT_RADIUS).
+	local deltaV is (requiredV - currentV:ORBIT:MAG).
+	add node(TIME:SECONDS + ETA:APOAPSIS, 0, 0, deltaV).
+	lock steering to NEXTNODE:BURNVECTOR.
+	local acceleration is MAX(SHIP:AVAILABLETHRUST / SHIP:MASS, 0.001).
+	local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
+	local periapsisRaiseBurnStart is TIME:SECONDS + NEXTNODE:ETA - burnTime / 2 + 5.
+	WARPTO(periapsisRaiseBurnStart).
+	wait until TIME:SECONDS >= periapsisRaiseBurnStart.
+}
 
 printLine("Rasing periapsis...").
 // TODO: slow thrust at end, when burnTime is approaching 0, to prevent adding too much deltaV (raising pariapsis more than needed).
