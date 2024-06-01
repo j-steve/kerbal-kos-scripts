@@ -43,7 +43,7 @@ if updatedMinApproach:DISTANCE > 5000 {
 }
 
 until updatedMinApproach:DISTANCE < 1000 {
-    printLine("Fine-tuning approach").
+    local closeApproachSection is printSectionStart("Tuning node to get close approach...").
     local fineTuneBurnTime is MAX((TIME:SECONDS + updatedMinApproach:SECONDS) / 2, TIME:SECONDS + 2 * 60).
     local fineTuneNode is NODE(fineTuneBurnTime, 0, 0, 0).
     //local searchEndTime is (fineTuneNode:ETA) * 2.
@@ -55,6 +55,7 @@ until updatedMinApproach:DISTANCE < 1000 {
                 }, .001, .01).
     RUNPATH("mnode.ks").
     set updatedMinApproach to findClosestApproach(SHIP:ORBIT, _target, TIME:SECONDS, -1, 500).
+    closeApproachSection:END().
 }
 
 local closeApproachTime is findClosestApproach(SHIP:ORBIT, _target, TIME:SECONDS, -1, 500):SECONDS - 120.
