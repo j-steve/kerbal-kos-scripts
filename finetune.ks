@@ -31,13 +31,17 @@ function executeFineTune {
         // Sometimes (?) only 3 patches are visible, so if the last patch ends in a transition (e.g. is not "FINAL", yet has no "NEXTPATCH",
         // then run this logic to skip through the intermediary patches so we can see futher ahead.
         if orbitPatch:TRANSITION <> "FINAL" {    
-            printLine("Warping past transitional encounter.").
+            local warpPastSection is printSectionStart("Warping past transitional encounter.").
             local penultimatePatch is SHIP:ORBIT.
             until not penultimatePatch:NEXTPATCH:HASNEXTPATCH {
                 set penultimatePatch to penultimatePatch:NEXTPATCH.
+                wait 0.001. // TODO: is this needed? it shouldn't be?
             }
+            local transitionBypassTime is TIME:SECONDS + penultimatePatch:NEXTPATCHETA + 10.
+            printLine("Warping ahead " + round((transitionBypassTime - TIME:SECONDS) / 60) + " minutes")..
             WARPTO(TIME:SECONDS + penultimatePatch:NEXTPATCHETA + 10).
             wait until TIME:SECONDS >= TIME:SECONDS + penultimatePatch:NEXTPATCHETA + 10.
+            warpPastSection:END().
         }
 
         if _target:ISTYPE("BODY") {
