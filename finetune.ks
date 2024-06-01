@@ -1,3 +1,14 @@
+// This script is a bit complex because it tries to do 2 things:
+// fine-tune a SOI encounter from the current SOI to a new child SOI, e.g. Kerbin>Minmus,
+// and (kinda) to allow fine-tuning an encounter with a vessel etc within the current SOI.
+// This involves executing 2 maneuvers: first, maneuver NOW to find an intercept with the target SOI 
+// (unless we're already on an intercept course with it); second, maneuver later when we get near the SOI transition,
+// to adjust the close approach distance.
+//
+// TODO: Seperate this into 2 scripts (or at least 2-3 different public functions),
+// one for hitting a target periapsis around a body,
+// and another for reaching a target distance around a vessel.
+
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
