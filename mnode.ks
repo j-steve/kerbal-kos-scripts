@@ -107,8 +107,15 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	set burnTime to burnTime - stageBurnTime.
     wait 0.001.
 }
+if NEXTNODE:DELTAV:MAG / acceleration > 10 {
+	set WARPMODE to "PHYSICS".
+	set WARP to 2.
+}
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	local newThrottle is safeThrottle.
+	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
+		set WARP to 0.
+	}
 	if NEXTNODE:DELTAV:MAG / acceleration < 1.5 { // last 1.5 seconds of burn
 		set newThrottle to newThrottle * 0.2.
 	}
