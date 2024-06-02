@@ -44,7 +44,8 @@ if updatedMinApproach:DISTANCE > 5000 {
 
 until updatedMinApproach:DISTANCE < 1000 {
     local closeApproachSection is printSectionStart("Tuning node to get close approach...").
-    local fineTuneBurnTime is MAX((TIME:SECONDS + updatedMinApproach:SECONDS) / 2, TIME:SECONDS + 2 * 60).
+    // Fine-tune at 75% of the way to the target, but make sure it's at least 2 minutes out.
+    local fineTuneBurnTime is MAX((TIME:SECONDS + updatedMinApproach:SECONDS) * 0.75, TIME:SECONDS + 2 * 60). 
     local fineTuneNode is NODE(fineTuneBurnTime, 0, 0, 0).
     //local searchEndTime is (fineTuneNode:ETA) * 2.
     local searchEndTime is -1.
