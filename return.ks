@@ -19,9 +19,7 @@ if SHIP:ORBIT:BODY <> KERBIN and not SHIP:ORBIT:hasnextpatch {
 if SHIP:ORBIT:BODY <> KERBIN {
     printLine("Warpint to Kerbin SOI....").
     wait 1. // Ensure burn is 0 so we can warp.
-    local warpToTime is TIME:SECONDS + SHIP:ORBIT:nextpatcheta + 60.
-    WARPTO(warpToTime).
-    wait until TIME:SECONDS >= warpToTime.
+    warpToEta( SHIP:ORBIT:nextpatcheta + 60).
 }
 
 if ABS(50000-PERIAPSIS) > 100000 {

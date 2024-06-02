@@ -128,8 +128,7 @@ function closeInOnTarget {
         local ratherCloseApproachSeconds is newClosestApproach:SECONDS - 90.
         if TIME:SECONDS < ratherCloseApproachSeconds or _isWithin(_distance) {
             // If it's a long wait, use WARPTO to get close.
-            WARPTO(ratherCloseApproachSeconds).
-            wait until TIME:SECONDS >= ratherCloseApproachSeconds.
+            warpToTime(ratherCloseApproachSeconds).
         }
         if TIME:SECONDS >= newClosestApproach:SECONDS - 10 and _isWithin(_distance) {
             set WARP to 2.
@@ -147,6 +146,7 @@ function killRelativeVelocity {
     lock STEERING to retrogradeDirection.
     local maxEndTime is TIME:SECONDS + timeoutSeconds.
     local killVeloSection is printSectionStart("Killing relative velocity...").
+    // TODO: until the very end of the burn, set physics warp to 4.
     until relativeVelocity:MAG < maxRelativeVelocity or (relativeVelocity:MAG < maxRelativeVelocity * 2 and TIME:SECONDS >= maxEndTime) {
         if SHIP:AVAILABLETHRUST = 0 {
             lock THROTTLE to 0.

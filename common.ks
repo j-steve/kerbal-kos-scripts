@@ -150,11 +150,17 @@ function distanceBetween {
 }
 
 // Executes a warp to the given ETA, and waits until we are there.
-function warpAndWait {
+function warpToEta {
 	parameter _warpToEta.
-	printLine("Warping " + round(_warpToEta / 60) + "minutes.").
-	local _warpToTime is TIME:SECONDS + _warpToEta.
+	warpToTime(TIME:SECONDS + _warpToEta).
+}
+
+// Executes a warp to the given Time, and waits until we are there.
+function warpToTime {
+	parameter _warpToTime.
+	printLine("Warping " + round(_warpToTime - TIME:SECONDS / 60) + "minutes.").
 	wait 0. // Wait 1 frame just in case we recently set the throttle to 0.
 	WARPTO(_warpToTime).
 	wait until TIME:SECONDS >= _warpToTime.
+	KUNIVERSE:TIMEWARP:CANCELWARP(). // Ensure warp is set to 0.
 }
