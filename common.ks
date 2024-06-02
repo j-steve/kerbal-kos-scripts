@@ -22,7 +22,7 @@ function isFacingRetrograde {
 }
 
 function isFacingSurfaceRetrograde {
-	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 1.
+	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 2.5.
 }
 
 function clearNodes {
