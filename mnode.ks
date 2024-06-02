@@ -41,6 +41,7 @@ local halfBurnTime is burnTime / 2.
 
 lock warpTime to NEXTNODE:ETA - halfBurnTime.
 printLine("  Warping " + round(warpTime) + " seconds.").
+set WARPMODE to "RAILS".
 if warpTime > 36000 { // 10 hours
 	printLine("    Warping speed 6").
 	set WARP to 7.
