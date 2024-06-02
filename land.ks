@@ -1,3 +1,12 @@
+// -------------------------------------------------------------------------------------------------
+// This program lands on a body with no atmosphere by plotting an intercept course
+// and firing thrusters in such a way as to set down gently on the surface.
+//
+// For landing on a body with an atmosphere, see `return.ks`.
+//
+// TODO: This script may not work well for vessels with a low TWR?  More testing needed to confirm.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 
 clearscreen.

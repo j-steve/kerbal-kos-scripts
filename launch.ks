@@ -1,3 +1,7 @@
+// -------------------------------------------------------------------------------------------------
+// This program launches a craft into orbit, staging as needed along the way.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 
 declare parameter launchHeading is 90.

@@ -1,3 +1,11 @@
+// -------------------------------------------------------------------------------------------------
+// This program matches the inclination of the ship to that of the given target,
+// by burning (typically normal or antinormal) along the ascending or descending node.
+// 
+// It is less precise if the current orbit is highly polar, and may require several iterations
+// to precisely match the target inclination in such cases.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 

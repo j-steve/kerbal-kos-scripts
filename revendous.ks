@@ -1,3 +1,18 @@
+// -------------------------------------------------------------------------------------------------
+// This program will try to bring the ship very close to a target and then come to a complete stop.
+// It assumes the target is within the same SOI already.
+//
+// The program will first plot a node that gets somewhat close to the target, then add additional 
+// fine-tuning burns as needed to get within a KM or so.
+//
+// Once within a KM or so, it'll get REALLY close by killing relative momentum, pointing at the target, 
+// burning slowly, and waiting until we drift as close as possible, then repeating as neccessary.
+//
+// It may have trouble matching orbits with very different inclinations, so consider running `inc.ks`
+// first before this script.  If docking, run this program prior to `dock.ks` to ensure we are
+// close by and stopped so docking can proceed from that state.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 

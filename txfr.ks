@@ -1,3 +1,11 @@
+// -------------------------------------------------------------------------------------------------
+// This program calculates and executes a Hohmann transfer to the given target.
+// Its logic only works with orbits on the same plane that are roughly circular.
+// 
+// TODO: Currently this code does not work with transfering from outer orbits to inner ones
+//       (e.g. it can plot a course from Eve to Jool, but not from Jool to Eve).
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 
 parameter skipCirc is false.
@@ -14,12 +22,12 @@ function executeTransfer {
 	if not skipCirc {
 		run circ.ks. // Orbit must be circularized for subsequent calculations.
 	}
-	createHoffmanTxfrNode(SHIP:OBT, TARGET:OBT).
+	createHohmannTxfrNode(SHIP:OBT, TARGET:OBT).
 	run mnode.ks.
 	startupData:END().
 }
 
-function createHoffmanTxfrNode {
+function createHohmannTxfrNode {
 	parameter startingOrbit, targetOrbit.
 	local progradeModifier is 1.
 	if targetOrbit:APOAPSIS < startingOrbit:APOAPSIS {

@@ -1,3 +1,10 @@
+// -------------------------------------------------------------------------------------------------
+// This program fine-tunes an approach to an SOI.
+// It assumes that the ship is on course to either intercept the target body's SOI,
+// or at least, to get relatively close to it.  (If not, the calculation may take a long time
+// and require a large amount of deltaV.)
+// -------------------------------------------------------------------------------------------------
+
 // This script is a bit complex because it tries to do 2 things:
 // fine-tune a SOI encounter from the current SOI to a new child SOI, e.g. Kerbin>Minmus,
 // and (kinda) to allow fine-tuning an encounter with a vessel etc within the current SOI.

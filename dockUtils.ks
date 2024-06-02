@@ -1,4 +1,7 @@
-// Functions shared by dock and harborMaster.
+// -------------------------------------------------------------------------------------------------
+// This program contains functions shared by `dock.ks` and `harborMaster.ks`,
+// but still specific to docking (so not a good candidate for `common.ks`).
+// -------------------------------------------------------------------------------------------------
 
 function listOpenDockingPorts {
     parameter _vessel is SHIP, portSize is -1.

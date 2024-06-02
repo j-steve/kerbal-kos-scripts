@@ -1,3 +1,12 @@
+// -------------------------------------------------------------------------------------------------
+// This program is a "master controller" that can run a complete mission from launch to return,
+// by chaining together the other sub-programs as needed.
+// 
+// EXAMPLE USAGE:
+//   goto.ks().             : Launch, intercept Minmus, and dock at Station II in its orbit.
+//   goto.ks(mun, "flyby", 30000). : Launch, flyby the mun at 30km, and return & land at Kerbin.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 

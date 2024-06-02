@@ -1,3 +1,9 @@
+// -------------------------------------------------------------------------------------------------
+// Assuming the active ship is stopped (relative motion ~0) within ~1km of near another target ship, 
+// this script will align their docking ports and bring them together to dock.
+// The other ship must be running `boot/harborMaster.ks`.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 RUNONCEPATH("dockUtils.ks").
 

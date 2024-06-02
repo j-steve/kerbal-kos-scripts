@@ -1,3 +1,10 @@
+// -------------------------------------------------------------------------------------------------
+// This program executes the next maneuver node by aligning the header, then warping to the node,
+// then burning for the necessary amount of deltaV, staging as needed in the process.
+// 
+// Its warp is fast and precise on my PC but may overly agressive on less powerful machines.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 
 // The minimum deviation between the expected node and the actual node.

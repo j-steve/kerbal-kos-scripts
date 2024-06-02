@@ -1,8 +1,31 @@
+// -------------------------------------------------------------------------------------------------
+// This program exposes `tuneNode()`, a powerful function which can optimize a given maneuver node
+// for any purpose.
+// -------------------------------------------------------------------------------------------------
+
 @lazyGlobal OFF.
 RUNONCEPATH("common.ks").
 
 parameter debugMode is false.
 
+// Given a maneuver node and a delta calculation function,
+// this function will optimize the node to get as close as possible to the expected result.
+// PARAMS:
+//   tnode: a maneuver node.  It should have been added to the ship orbit already at the desired burn time,
+//     but its normal/prograde/radialout values can be set to 0.  Whatever they are set to will be the
+//     starting point for our tuning.
+//   calcDelta: a function which returns a scalar value.  The absolute value of this number shoule indicate
+//     how "good" the current tuning is: lower numbers are better, and 0 means perfect.  
+//     We will stop looking for better options if it ever reaches 0.
+//   minDeltaPerDv: the minimum improvement to our calcDelta function result we need to get in order to 
+//     "justify" the delta V on the burn.  A lower number here may lead to a node that gets us closer 
+//      to our ideal outcome, but the deltaV cost may be so high that it may not be worth it.
+//   minDeltaVIncrement: the smallest amount of deltaV that's worth bothering to set on a node.
+//      For example, if set to 1, then we will only tune our node to the nearest 1 deltaV increment,
+//      and the final burn deltaV would be a whole number.
+//      Smaller numbers here could lead to more percision in the final outcome, but will also increase
+//      the `tuneNode` calculation time (and may have little or no impact on the final result anyways
+//      if we can't actually burn that precisely).
 function tuneNode {
 	parameter tnode, calcDelta, minDeltaPerDv is .001, minDeltaVIncrement is 0.001.
 	local dv is 10.

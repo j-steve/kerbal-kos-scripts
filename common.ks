@@ -1,3 +1,8 @@
+// -------------------------------------------------------------------------------------------------
+// This program contains shared, general-purpose utility methods
+// which  are used accross multiple programs.
+// -------------------------------------------------------------------------------------------------
+
 @lazyGlobal OFF.
 RUNONCEPATH("orbitalMechanics.ks").
 
@@ -18,7 +23,7 @@ function alignRetrograde {
 }
 
 function isFacingRetrograde {
-	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 1.
+	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 2.5.
 }
 
 function isFacingSurfaceRetrograde {
