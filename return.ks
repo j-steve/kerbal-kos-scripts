@@ -27,30 +27,30 @@ if SHIP:ORBIT:BODY <> KERBIN {
     warpToEta( SHIP:ORBIT:nextpatcheta + 60).
 }
 
-if ABS(50000-PERIAPSIS) > 100000 {
-    until SHIP:ORBIT:TRANSITION <> "ESCAPE" {
-        local cancelEscapeSection is printSectionStart("Preventing escape...").
-        alignRetrograde().
-        lock THROTTLE to 1.
-        wait until SHIP:ORBIT:TRANSITION <> "ESCAPE".
-        lock THROTTLE to 0.
-        cancelEscapeSection:END().
-    }
+until SHIP:ORBIT:TRANSITION <> "ESCAPE" {
+    local cancelEscapeSection is printSectionStart("Preventing escape...").
+    alignRetrograde().
+    lock THROTTLE to 1.
+    wait until SHIP:ORBIT:TRANSITION <> "ESCAPE".
+    lock THROTTLE to 0.
+    cancelEscapeSection:END().
+}
 
-
+until PERIAPSIS < 500000 {
     local periapsisSection is printSectionStart("Reducing periapsis...").
-    local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
-    ADD returnNode.
-    // until ABS(50000-PERIAPSIS) < 100000 {
-    //     set returnNode:prograde to returnNode:prograde - .1.
-    // }
-    tuneNode(returnNode, {
-            if returnNode:ORBIT:HASNEXTPATCH {return 99999999999999999.}
-            local periapsDelta is ABS(50000 - returnNode:ORBIT:PERIAPSIS).
-            return choose 0 if periapsDelta < 5000 else periapsDelta.
-        }, .001, 1).
-    RUNPATH("mnode.ks", 1).
-    clearNodes().
+    alignRetrograde().
+    lock THROTTLE to 1.
+    wait until PERIAPSIS < 500000.
+    lock THROTTLE to 0.
+    // local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
+    // ADD returnNode.
+    // tuneNode(returnNode, {
+    //         if returnNode:ORBIT:HASNEXTPATCH {return 99999999999999999.}
+    //         local periapsDelta is ABS(50000 - returnNode:ORBIT:PERIAPSIS).
+    //         return choose 0 if periapsDelta < 5000 else periapsDelta.
+    //     }, .001, 1).
+    // RUNPATH("mnode.ks", 1).
+    // clearNodes().
     periapsisSection:END().
 }
 
@@ -59,11 +59,13 @@ until ABS(50000-PERIAPSIS) < 2500 {
 }
 
 local periapsisWarpSection is printSectionStart("Warping to periapsis...").
-_warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:PERIAPSIS - 3 * 60).
+warpToEta(SHIP:ORBIT:ETA:PERIAPSIS - 5 * 60).
+RCS on.
 lock STEERING to RETROGRADE.
+wait 60. // Wait for heading alignment if possible.
 lock THROTTLE to 1.
 PANELS off.
-alignRetrograde().
+
 periapsisWarpSection:END().
 
 local burnSlowSection is printSectionStart("Burning to slow down...").
@@ -88,9 +90,3 @@ wait until SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
 set WARP to 0.
 
 startupData:END("Welcome to " + SHIP:BODY:NAME + "!").
-
-function _warpTo {
-	parameter warpToTime.
-	WARPTO(warpToTime).
-	wait until TIME:SECONDS >= warpToTime.
-}
