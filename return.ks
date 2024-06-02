@@ -103,8 +103,12 @@ printLine("Waiting to land")...
 wait until SHIP:ALTITUDE < 750 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
 set WARP to 0.
 if SHIP:ALTITUDE > 25 and SHIP:STATUS <> "LANDED" and SHIP:STATUS <> "SPLASHED" {
-    wait 10. // Wait for chutes
+    wait 5. // Wait for chutes
     set WARP to 4.
+    wait until SHIP:ALTITUDE < 200 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
+    set WARP to 2.
+    wait until SHIP:ALTITUDE < 50 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
+    set WARP to 1.
     wait until SHIP:ALTITUDE < 25 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
     set WARP to 0.
 }
