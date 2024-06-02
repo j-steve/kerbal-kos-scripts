@@ -28,6 +28,16 @@ if SHIP:ORBIT:BODY <> KERBIN {
 }
 
 if ABS(50000-PERIAPSIS) > 100000 {
+    until SHIP:ORBIT:TRANSITION <> "ESCAPE" {
+        local cancelEscapeSection is printSectionStart("Preventing escape...").
+        alignRetrograde().
+        lock THROTTLE to 1.
+        wait until SHIP:ORBIT:TRANSITION <> "ESCAPE".
+        lock THROTTLE to 0.
+        cancelEscapeSection:END().
+    }
+
+
     local periapsisSection is printSectionStart("Reducing periapsis...").
     local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
     ADD returnNode.
