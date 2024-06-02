@@ -3,9 +3,13 @@ RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
 local startupData is startup("Returning to Kerbin.").
+clearNodes().
 
 if SHIP:ORBIT:BODY <> KERBIN and not SHIP:ORBIT:hasnextpatch {
-    local escapeNode is NODE(TIME:SECONDS + ETA:PERIAPSIS, 0, 0, 0).
+    local escapeSection is printSectionStart("Burning to escape " + SHIP:ORBIT:BODY:NAME + " SOI...").
+    local nodeStartEta is ETA:PERIAPSIS.
+    if PERIAPSIS <= 0 {set nodeStartEta to ETA:apoapsis.}
+    local escapeNode is NODE(TIME:SECONDS + nodeStartEta, 0, 0, 0).
     ADD escapeNode.
     until escapeNode:ORBIT:hasnextpatch {
         set escapeNode:prograde to escapeNode:prograde + 1.
@@ -14,6 +18,7 @@ if SHIP:ORBIT:BODY <> KERBIN and not SHIP:ORBIT:hasnextpatch {
     set escapeNode:prograde to escapeNode:prograde * 1.1. // Add 10% extra as a buffer.
     RUNPATH("mnode.ks", 1).
     clearNodes().
+    escapeSection:END().
 }
 
 if SHIP:ORBIT:BODY <> KERBIN {
