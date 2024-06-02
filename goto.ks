@@ -79,7 +79,7 @@ local executeGoto is {
 				set returnNode:PROGRADE to returnNode:PROGRADE - 10. // Add a buffer to make sure we return.
 				RUNPATH("mnode.ks", 1).
 				warpToSoiTransfer().
-				RUNPATH("return.ks", 1).
+				RUNPATH("return.ks").
 			}
 		}
 		return.
