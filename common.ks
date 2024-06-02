@@ -148,3 +148,13 @@ function distanceBetween {
     parameter pos1, pos2.
     return ABS((pos1 - pos2):MAG).
 }
+
+// Executes a warp to the given ETA, and waits until we are there.
+function warpAndWait {
+	parameter _warpToEta.
+	printLine("Warping " + round(_warpToEta / 60) + "minutes.").
+	local _warpToTime is TIME:SECONDS + _warpToEta.
+	wait 0. // Wait 1 frame just in case we recently set the throttle to 0.
+	WARPTO(_warpToTime).
+	wait until TIME:SECONDS >= _warpToTime.
+}
