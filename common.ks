@@ -162,7 +162,7 @@ function warpToEta {
 // Executes a warp to the given Time, and waits until we are there.
 function warpToTime {
 	parameter _warpToTime.
-	printLine("Warping " + round(_warpToTime - TIME:SECONDS / 60) + "minutes.").
+	printLine("Warping " + round((_warpToTime - TIME:SECONDS) / 60) + " minutes.").
 	wait 0. // Wait 1 frame just in case we recently set the throttle to 0.
 	WARPTO(_warpToTime).
 	wait until TIME:SECONDS >= _warpToTime.
