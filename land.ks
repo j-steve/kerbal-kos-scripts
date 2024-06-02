@@ -34,20 +34,23 @@ if PERIAPSIS > 0 {
 	retrogradeSection:END().
 }
 
-if ALT:RADAR > 50000 {
+if ALT:RADAR > 25000 {
 	printLine("Warping to get close...").
 	set WARP to 4.
-	wait until ALT:RADAR < 50000.
+	wait until ALT:RADAR < 25000.
 }
 
 // Burn to 0 so we are falling straight down.
 set WARP to 0.
-lock lateralMotion to abs(SHIP:VELOCITY:ORBIT:MAG - abs(fallSpeed)).
+lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
 set closeEnoughTimeout to 0.
+lock STEERING to SRFRETROGRADE.
 if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
-	alignRetrograde().
+	printLine("Aligning surface retrograde...").
+	local alignmentTimeout is TIME:SECONDS + 60.
+	wait until isFacingSurfaceRetrograde() or TIME:SECONDS >= alignmentTimeout.
 	printLine("Burning retrograde to kill lateral motion...").
-	until lateralMotion < 0.1 or (collisionEta > 0 and collisionEta < 60) {
+	until lateralMotion < 0.01 or (collisionEta > 0 and collisionEta < 60) {
 		if isFacingRetrograde() {
 			lock orbitBurnTime to SHIP:VELOCITY:ORBIT:MAG / acceleration.
 			if orbitBurnTime > MIN_BURN_TIME {
