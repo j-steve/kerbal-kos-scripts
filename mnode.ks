@@ -94,6 +94,10 @@ if (burnTime > 1) {
 	lock THROTTLE to 0.1.
 }
 lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
+if NEXTNODE:DELTAV:MAG / acceleration > 10 {
+	set WARPMODE to "PHYSICS".
+	set WARP to 2.
+}
 until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	printLine("  Will have to stage mid-burn.").
 	set stageBurnTime to stageDeltaV / acceleration.
@@ -106,10 +110,6 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	printLine("    done").
 	set burnTime to burnTime - stageBurnTime.
     wait 0.001.
-}
-if NEXTNODE:DELTAV:MAG / acceleration > 10 {
-	set WARPMODE to "PHYSICS".
-	set WARP to 2.
 }
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	local newThrottle is safeThrottle.
