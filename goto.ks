@@ -88,18 +88,8 @@ local executeGoto is {
 		warpToSoiTransfer().
 		WAIT UNTIL SHIP:ORBIT:BODY = KERBIN.
 
-		local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
-		ADD returnNode.
-		tuneNode(returnNode, {
-				local periapsDelta is ABS(50000 - returnNode:ORBIT:PERIAPSIS).
-				return choose 0 if periapsDelta < 5000 else periapsDelta.
-			}).
-		RUNPATH("mnode.ks", 1).
-		clearNodes().
-
 		RUNPATH("return.ks").
 		
-		set WARP to 0.
 		printLine("Mission complete!").
 		return.
 	}
@@ -113,7 +103,7 @@ local executeGoto is {
 	// Target station and match its orbit.
 	if targetEntity <> targetSoi {
 		set TARGET to targetEntity.
-		until abs(SHIP:ORBIT:INCLINATION - targetEntity:ORBIT:INCLINATION) < 1 {
+		until abs(SHIP:ORBIT:INCLINATION - targetEntity:ORBIT:INCLINATION) < 2.5 {
 			printLine("Matching target inclination").
 			RUNPATH("inc.ks").
 			_preventEscape().
