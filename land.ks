@@ -24,6 +24,16 @@ lock collisionEta to (ALT:RADAR - shipHeightOffset - RADAR_HEIGHT_OFFSET) / fall
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 lock surfaceBurnTime to SHIP:VELOCITY:SURFACE:MAG / acceleration.
 
+if PERIAPSIS > 0 {
+	local retrogradeSection is printSectionStart("Burning retrograde to intercept planet...").
+	alignRetrograde().
+	lock THROTTLE to 1.
+	wait until PERIAPSIS <= 0.
+	lock THROTTLE to 0.
+	wait 0.
+	retrogradeSection:END().
+}
+
 if ALT:RADAR > 50000 {
 	printLine("Warping to get close...").
 	set WARP to 4.
@@ -32,7 +42,7 @@ if ALT:RADAR > 50000 {
 
 // Burn to 0 so we are falling straight down.
 set WARP to 0.
-lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
+lock lateralMotion to abs(SHIP:VELOCITY:ORBIT:MAG - abs(fallSpeed)).
 set closeEnoughTimeout to 0.
 if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 	alignRetrograde().
