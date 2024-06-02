@@ -36,7 +36,9 @@ if SHIP:ORBIT:BODY <> KERBIN {
     warpToEta( SHIP:ORBIT:nextpatcheta + 60).
 }
 
-until SHIP:ORBIT:TRANSITION <> "ESCAPE" {
+until PERIAPSIS < 500000 or SHIP:ORBIT:TRANSITION <> "ESCAPE" {
+    // TODO: what if periapsis is behind us, will this still work?
+    // Note: the fact that we'r'e escaping doesn't matter if we're currently plummeting towards Kerbin.
     local cancelEscapeSection is printSectionStart("Preventing escape...").
     alignRetrograde().
     lock THROTTLE to 1.

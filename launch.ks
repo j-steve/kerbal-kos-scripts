@@ -39,6 +39,8 @@ if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 
 // Takeoff (assuming we are on the ground).
 if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
+	set WARPMODE to "PHYSICS".
+	set WARP to 2.
 	lock THROTTLE to 1.
 	stage.
 	until SHIP:VELOCITY:SURFACE:MAG > 75 and ALTITUDE > 100 {maintainHeading(90).}
