@@ -116,10 +116,10 @@ function startup {
 // Given an orbit and a target, returns the closest distance that will be reached to the target.
 // Returned object contains ":DISTANCE" and ":SECONDS" fields.
 function findClosestApproach {
-	parameter _orbit, _target, _startTime is TIME:SECONDS, _endTime is -1, _orbitSteps is 1000.
-	if _endTime = -1 {
-		set _endTime to choose TIME:SECONDS + _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else (_startTime + _orbit:PERIOD).
-	}
+	parameter _orbit, _target, _startTime is -1, _endTime is -1, _orbitSteps is -1, _earlyReturnOnDistIncrease is false.
+	if _startTime = -1 {set _startTime to TIME:SECONDS.}
+	if _endTime = -1 {set _endTime to choose TIME:SECONDS + _orbit:NEXTPATCHETA if _orbit:HASNEXTPATCH else (_startTime + _orbit:PERIOD).}
+	if _orbitSteps = -1 {set _orbitSteps to 1000.}
 	if _orbit:PERIAPSIS < 0 {
 		// If this "orbit" involves crashing into the body, ignore any positions after the collision time.
 		set _endTime to MIN(_endTime, TIME:SECONDS + _orbit:ETA:PERIAPSIS).
@@ -137,15 +137,19 @@ function findClosestApproach {
         IF dist <= minDist {
             SET minDist TO dist.
             SET minTime TO t.
+		} else if _earlyReturnOnDistIncrease {
+			return Lexicon("distance", minDist, "seconds", minTime, "eta", {return minTime - TIME:SECONDS.}).
 		}
 		set stepsCompleted to stepsCompleted + 1.
     }
-	return Lexicon("distance", minDist, "seconds", minTime).
+	return Lexicon("distance", minDist, "seconds", minTime, "eta", {return minTime - TIME:SECONDS.}).
 }
 
 // Returns the distance between the two positions, in meters.
 function distanceBetween {
     parameter pos1, pos2.
+	if pos1:HASSUFFIX("Position") {set pos1 to pos1:POSITION.}
+	if pos2:HASSUFFIX("Position") {set pos2 to pos2:POSITION.}
     return ABS((pos1 - pos2):MAG).
 }
 
@@ -163,4 +167,19 @@ function warpToTime {
 	WARPTO(_warpToTime).
 	wait until TIME:SECONDS >= _warpToTime.
 	KUNIVERSE:TIMEWARP:CANCELWARP(). // Ensure warp is set to 0.
+}
+
+// Adds a navigation node with the given ETA (seconds in the future).
+function addNodeAtEta {
+	parameter _eta is 0, _prograde is 0, _normal is 0, _radialIn is 0.
+	return addNodeAtTime(TIME:SECONDS + _eta, _prograde, _normal, _radialIn).
+}
+	
+// Adds a navigation node with the given Time.
+function addNodeAtTime {
+	parameter _timeSeconds is 0, _prograde is 0, _normal is 0, _radialIn is 0.
+	printLine("Adding nav node with ETA of " + round((_timeSeconds - TIME:SECONDS) / 60) + " minutes.").
+	local _node is NODE(_timeSeconds, _prograde, _normal, _radialIn).
+    ADD _node.
+	return _node.
 }
