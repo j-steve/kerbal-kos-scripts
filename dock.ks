@@ -2,6 +2,11 @@ RUNONCEPATH("common.ks").
 RUNONCEPATH("dockUtils.ks").
 
 parameter _target is VESSEL("Station II").
+parameter enableRcsLastMile is -1.
+if enableRcsLastMile = -1 {
+    list RCS in myRcsParts.
+    set enableRcsLastMile to myRcsParts:LENGTH > 0.
+}
 
 
 local startupData is startup("Docking to " + _target:NAME + "...").
@@ -22,7 +27,15 @@ function dock {
         printLine("ERROR: no compatible docking ports on station!").
         return.
     }
+
+    // Point at station.
     _warpFreeze(). // Ensure there's no initial motion in ship/station.
+    lock STEERING to _target:POSITION.
+    wait until VANG(myPort:FACING:FOREVECTOR, _target:POSITION) < 1.
+    lock steering to "kill".
+    wait 1.
+    _warpFreeze(). // Freeze the ship.
+
     _target:CONNECTION:SENDMESSAGE(myPort:UID + "|" + stationPorts[0]:UID).
     local stationHighlight is HIGHLIGHT(stationPorts[0], BLUE).
     myPort:CONTROLFROM().
@@ -67,11 +80,38 @@ function dock {
     lock THROTTLE to 0.
     
     printLine("Waiting for docking...").
-    lock STEERING To stationPorts[0]:NODEPOSITION.
-    until myPort:PARTNER <> "None" {
-        local dockDist is (myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION):MAG.
-        printLine(round(dockingPortAlignment, 2) + "° | Distance: " + round(dockDist, 1), true).
+    lock STEERING to "kill".
+	set WARPMODE to "PHYSICS".
+	set WARP to 4.
+    wait until (myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION):MAG < 15.
+	set WARP to 0.
+    
+    if enableRcsLastMile {
+        RCS on.
+        set SHIP:CONTROL:FORE to -0.25.
+        wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG < 0.05 or myPort:PARTNER <> "None".
+        set SHIP:CONTROL:FORE to 0.
+        RCS off.
+
+        if myPort:PARTNER = "None" {
+            lock steering to stationPorts[0]:NODEPOSITION.
+            wait 5.
+            RCS on.
+            set SHIP:CONTROL:FORE to 0.1.
+            wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 0.15 or myPort:PARTNER <> "None".
+            set SHIP:CONTROL:FORE to 0.
+            RCS off.
+        }
+    } else {
+        lock steering to stationPorts[0]:NODEPOSITION.
     }
+
+    // until myPort:PARTNER <> "None" {
+    //     local dockDist is (myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION):MAG.
+    //     printLine(round(dockingPortAlignment, 2) + "° | Distance: " + round(dockDist, 1), true).
+    // }
+    // lock steering to "kill".
+    wait until myPort:STATE:CONTAINS("Docked").
     // TODO: If this doesn't work, instead of waiting for docking, wait to get within 50 m, then kill speed and align again, THEN dock.
 
     set portHighlight:ENABLED to false.
