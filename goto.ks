@@ -192,11 +192,5 @@ function _getEntityBody {
 
 function warpToSoiTransfer {
 	printLine("Warping to next SOI...").
-	_warpTo(TIME:SECONDS + SHIP:ORBIT:ETA:TRANSITION + 10).
-}
-
-function _warpTo {
-	parameter warpToTime.
-	WARPTO(warpToTime).
-	wait until TIME:SECONDS >= warpToTime.
+	warpToEta(SHIP:ORBIT:ETA:TRANSITION + 10).
 }
