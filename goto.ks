@@ -3,8 +3,9 @@
 // by chaining together the other sub-programs as needed.
 // 
 // EXAMPLE USAGE:
-//   goto.ks().             : Launch, intercept Minmus, and dock at Station II in its orbit.
+//   goto.ks().                    : Launch, intercept Minmus, and dock at Station II in its orbit.
 //   goto.ks(mun, "flyby", 30000). : Launch, flyby the mun at 30km, and return & land at Kerbin.
+//   goto.ks(sun, "flyby").        : Launch, escape to Kerbol (the sun) orbit, and return to Kerbin.
 // -------------------------------------------------------------------------------------------------
 
 RUNONCEPATH("common.ks").
@@ -61,6 +62,27 @@ local executeGoto is {
 		RUNPATH("launch.ks", launchInc).
 		clearNodes().
 		set wasLaunched to true.
+	}
+
+	if targetEntity = SUN {
+		if SHIP:ORBIT:BODY <> SUN {
+			_execEscape().
+		}
+		if SHIP:ORBIT:BODY = SUN {
+			printLine("Reached Kerbol (Sun) orbit.").
+			if targetObjective = "flyby" {
+				local returnNode is addNodeAtEta(60).
+				until returnNode:ORBIT:HASNEXTPATCH and returnNode:ORBIT:NEXTPATCHETA < 60 * 60 * 5 {
+					// Wait for patch to be <= 5 hours into the future.  We don't want to wait to intercept Kerbin next year or something.
+					set returnNode:PROGRADE to returnNode:PROGRADE - 1.
+				}
+				set returnNode:PROGRADE to returnNode:PROGRADE - 10. // Add a buffer to make sure we return.
+				RUNPATH("mnode.ks", 1).
+				warpToSoiTransfer().
+				RUNPATH("return.ks", 1).
+			}
+		}
+		return.
 	}
 
 	local soiPatch is findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
@@ -128,8 +150,7 @@ local executeGoto is {
 	function _preventEscape {
 		if SHIP:STATUS = "ESCAPING" {
 			printLine("Burning to stay in SOI.").
-			local orbitNode is NODE(TIME:SECONDS + ETA:PERIAPSIS, 0, 0, 0).
-			ADD orbitNode.
+			local orbitNode is addNodeAtEta(ETA:PERIAPSIS).
 			tuneNode(orbitNode, {
 					local newApoapsis is orbitNode:ORBIT:APOAPSIS.
 					return choose 0 if newApoapsis > 0 and newApoapsis < (targetSoi:SOIRADIUS - 1000) else VELOCITYAT(SHIP, TIME:SECONDS + ETA:PERIAPSIS):ORBIT:MAG.
@@ -137,6 +158,18 @@ local executeGoto is {
 			RUNPATH("mnode.ks", 1).
 			clearNodes().
 		}
+	}
+
+	function _execEscape {
+		local escapeSection is printSectionStart("Escaping to Kerbol...").
+		local orbitNode is addNodeAtEta(ETA:PERIAPSIS).
+		until orbitNode:ORBIT:TRANSITION = "ESCAPE" {
+			set orbitNode:PROGRADE to orbitNode:PROGRADE + 1.
+		}
+		set orbitNode:PROGRADE to orbitNode:PROGRADE + 10. // Add a buffer to ensure we really do escape.
+		RUNPATH("mnode.ks", 1).
+		warpToSoiTransfer().
+		escapeSection:END().
 	}
 }.
 
