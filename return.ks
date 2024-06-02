@@ -1,4 +1,13 @@
-// Returns to Kerbin from orbit and parachutes to landing.
+// -------------------------------------------------------------------------------------------------
+// This program plots a return path to Kerbin from one of its moons, 
+// performs an aerobraking movement, and lands.
+//
+// For a similar program designed for landing on atmosphere-less bodies, see `land.ks.`.
+//
+// TODO: This could be made more generic to land on any body with an atmosphere,
+//       but currently it does have some Kerbin-specific logic.
+// -------------------------------------------------------------------------------------------------
+
 RUNONCEPATH("common.ks").
 RUNONCEPATH("nodeTuner.ks").
 
@@ -59,19 +68,26 @@ until ABS(50000-PERIAPSIS) < 2500 {
 }
 
 local periapsisWarpSection is printSectionStart("Warping to periapsis...").
-warpToEta(SHIP:ORBIT:ETA:PERIAPSIS - 5 * 60).
+warpToEta(ETA:PERIAPSIS - 5 * 15).
 RCS on.
-lock STEERING to RETROGRADE.
-wait 60. // Wait for heading alignment if possible.
-lock THROTTLE to 1.
 PANELS off.
+lock STEERING to RETROGRADE.
+local facingRetrogradeTimeout is TIME:SECONDS + 60.
+wait until isFacingRetrograde() or TIME:SECONDS >= facingRetrogradeTimeout. // Wait for heading alignment if possible.
+if ETA:PERIAPSIS < ETA:APOAPSIS {warpToEta(ETA:PERIAPSIS - 60).}
+lock THROTTLE to 1.
 
 periapsisWarpSection:END().
 
+// WARNING: During this section it is likely we'll lose connection to volume 0,
+// so avoid running anything from `common.ks` or other fils until we've passed through the plasma.
+// Otherwise we may face a "Volume 0 is inaccessible" error message during execution.
 local burnSlowSection is printSectionStart("Burning to slow down...").
-until STAGE:NUMBER = 0 or SHIP:ALTITUDE - SHIP:GEOPOSITION:TERRAINHEIGHT < 10000{
+set WARPMODE to "PHYSICS".
+set WARP to 4.
+until STAGE:NUMBER = 0 or SHIP:ALTITUDE - SHIP:GEOPOSITION:TERRAINHEIGHT < 15000{
     if SHIP:AVAILABLETHRUST = 0 {
-        printLine("No throttle, staging.").
+        //printLine("No throttle, staging.").
         stage.
         wait until stage:ready.
     }
@@ -84,9 +100,13 @@ until STAGE:NUMBER = 0 {
 burnSlowSection:END("All stages completed.").
 
 printLine("Waiting to land")...
-set WARPMODE to "PHYSICS".
-set WARP to 4.
-wait until SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
+wait until SHIP:ALTITUDE < 750 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
 set WARP to 0.
+if SHIP:ALTITUDE > 25 and SHIP:STATUS <> "LANDED" and SHIP:STATUS <> "SPLASHED" {
+    wait 10. // Wait for chutes
+    set WARP to 4.
+    wait until SHIP:ALTITUDE < 25 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
+    set WARP to 0.
+}
 
 startupData:END("Welcome to " + SHIP:BODY:NAME + "!").
