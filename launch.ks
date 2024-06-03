@@ -81,9 +81,9 @@ if ALTITUDE < BODY:ATM:HEIGHT {
 	printLine("Waiting to exit atmo..."). // Subsequent calcuations will be innacurate if we're still losing momentum due to atmo.
 	lock THROTTLE to 0.
 	set targetHeading to PROGRADE.
-	set WARP to 2.
-	wait until ALTITUDE > BODY:ATM:HEIGHT * .9.
-	set WARP to 0.
+	// set WARP to 2.
+	// wait until ALTITUDE > BODY:ATM:HEIGHT * .9.
+	// set WARP to 0.
 	wait until ALTITUDE > BODY:ATM:HEIGHT.
 }
 
@@ -115,9 +115,12 @@ if ETA:apoapsis < ETA:periapsis {
 	set WARP to 0.
 }
 
-printLine("Rasing periapsis...").
+printLine("Raising periapsis...").
 // TODO: slow thrust at end, when burnTime is approaching 0, to prevent adding too much deltaV (raising pariapsis more than needed).
+set WARPMODE to "PHYSICS".
+set WARP to 1.
 until PERIAPSIS > 90000 {maintainHeading(PROGRADE:VECTOR).}
+set WARP to 0.
 lock THROTTLE to 0.
 set RCS to false.
 if HASNODE {remove NEXTNODE.}

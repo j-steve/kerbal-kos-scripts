@@ -163,6 +163,8 @@ function execRendezvous {
         local maxEndTime is TIME:SECONDS + timeoutSeconds.
         local killVeloSection is printSectionStart("Killing relative velocity...").
         // TODO: until the very end of the burn, set physics warp to 4.
+        set WARPMODE to "PHYSICS".
+        set WARP to 1.
         until relativeVelocity:MAG < maxRelativeVelocity or (relativeVelocity:MAG < maxRelativeVelocity * 2 and TIME:SECONDS >= maxEndTime) {
             if SHIP:AVAILABLETHRUST = 0 {
                 lock THROTTLE to 0.
@@ -187,6 +189,7 @@ function execRendezvous {
         if (relativeVelocity:MAG > maxRelativeVelocity) {
             printLine("Timed out, pretty close though: " + round(relativeVelocity:MAG, 5)).
         }
+        set WARP to 0.
         unlock STEERING.
         killVeloSection:END("done").
     }

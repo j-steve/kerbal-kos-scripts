@@ -21,8 +21,11 @@ local startupData is startup("Executing next maneuver node.").
 printLine("Aligning header...").
 set WARP to 0.
 SAS off.
+set WARPMODE to "PHYSICS".
+set WARP to 3.
 lock STEERING to NEXTNODE:BURNVECTOR.
 wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < maxFacingDeviation / 2.
+KUNIVERSE:TIMEWARP:CANCELWARP().
 
 // Pre-stage, if needed
 until SHIP:AVAILABLETHRUST > 0 {
@@ -41,7 +44,9 @@ local halfBurnTime is burnTime / 2.
 
 lock warpTime to NEXTNODE:ETA - halfBurnTime.
 printLine("  Warping " + round(warpTime) + " seconds.").
+set WARP to 0.
 set WARPMODE to "RAILS".
+wait 0.5. // Ensure throttle is 0 before we warp.
 if warpTime > 36000 { // 10 hours
 	printLine("    Warping speed 6").
 	set WARP to 7.
@@ -86,7 +91,7 @@ if WARP > 0 {
 
 printLine("Starting burn...").
 
-lock facingError to VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR).
+lock facingError to ABS(VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR)).
 lock safeThrottle to 1 - sqrt(facingError / maxFacingDeviation). // Full stop at an error of maxFacingDeviation.
 		
 if (burnTime > 1) {
@@ -101,6 +106,13 @@ if NEXTNODE:DELTAV:MAG / acceleration > 10 {
 }
 until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	printLine("  Will have to stage mid-burn.").
+	if facingError > maxFacingDeviation * .5 {
+		set WARPMODE to "PHYSICS".
+		set WARP to 0.
+	} else {
+		set WARPMODE to "PHYSICS".
+		set WARP to 2.
+	}
 	set stageBurnTime to stageDeltaV / acceleration.
 	until stageDeltaV <= 0 {
 		lock throttle to safeThrottle.
@@ -113,6 +125,13 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
     wait 0.001.
 }
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
+	if facingError > maxFacingDeviation * .5 {
+		set WARPMODE to "PHYSICS".
+		set WARP to 0.
+	} else {
+		set WARPMODE to "PHYSICS".
+		set WARP to 2.
+	}
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
 		set WARP to 0.
