@@ -99,9 +99,11 @@ local executeGoto is {
 		set soiPatch to findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
 	}
 
-	if SHIP:BODY <> targetSoi and abs(soiPatch:periapsis - 100000)  > 1000 {
-		RUNPATH("finetune.ks", targetAltitude).
-		clearNodes().
+	if SHIP:BODY <> targetSoi {
+		until abs(soiPatch:periapsis - 100000)  > 1000 {
+			RUNPATH("finetune.ks", targetAltitude).
+			clearNodes().
+		}
 	}
 
 	// Warp to new SOI.
