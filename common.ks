@@ -169,6 +169,7 @@ function warpToTime {
 	parameter _warpToTime.
 	printLine("Warping " + round((_warpToTime - TIME:SECONDS) / 60) + " minutes.").
 	wait 0. // Wait 1 frame just in case we recently set the throttle to 0.
+	SET WARPMODE to "RAILS".
 	WARPTO(_warpToTime).
 	wait until TIME:SECONDS >= _warpToTime.
 	KUNIVERSE:TIMEWARP:CANCELWARP(). // Ensure warp is set to 0.
