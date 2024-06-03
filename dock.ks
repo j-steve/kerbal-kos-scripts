@@ -104,7 +104,7 @@ function dock {
             wait 5.
             RCS on.
             set SHIP:CONTROL:FORE to 0.1.
-            wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 0.15 or myPort:PARTNER <> "None".
+            wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 0.1 or myPort:PARTNER <> "None".
             set SHIP:CONTROL:FORE to 0.
             RCS off.
         }
