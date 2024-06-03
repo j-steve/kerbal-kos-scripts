@@ -102,12 +102,12 @@ until STAGE:NUMBER = 0 {
 burnSlowSection:END("All stages completed.").
 
 printLine("Waiting to land")...
-wait until SHIP:ALTITUDE < 750 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
+wait until SHIP:ALTITUDE < 5000.
+set WARP to 2.
+wait until SHIP:ALTITUDE < 1500.
 set WARP to 0.
 if SHIP:ALTITUDE > 25 and SHIP:STATUS <> "LANDED" and SHIP:STATUS <> "SPLASHED" {
     wait 5. // Wait for chutes
-    set WARP to 4.
-    wait until SHIP:ALTITUDE < 200 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
     set WARP to 2.
     wait until SHIP:ALTITUDE < 100 or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED".
     set WARP to 1.
