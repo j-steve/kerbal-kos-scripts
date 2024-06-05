@@ -7,7 +7,8 @@
 RUNONCEPATH("common.ks").
 RUNONCEPATH("dockUtils.ks").
 
-parameter _target is VESSEL("Station II").
+parameter _target is TARGET.
+if _target:ISTYPE("Part") {set _target to _target:SHIP.}
 parameter enableRcsLastMile is -1.
 if enableRcsLastMile = -1 {
     list RCS in myRcsParts.

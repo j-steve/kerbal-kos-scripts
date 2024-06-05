@@ -18,6 +18,8 @@ RUNONCEPATH("nodeTuner.ks").
 
 local CLOSE_APPROACH_CALC_STEPS is 500.
 
+parameter _targetFinalDistance is 75.
+
 local _target is TARGET.  // In case taget becomes unset.
 if _target:ISTYPE("Part") {set _target to _target:SHIP.}
 local startupData is startup("Rendezvousing with " + _target:NAME + ".").
@@ -84,7 +86,7 @@ function execRendezvous {
     within1kmSection:END("done").
 
     // Close in real close.
-    _closeInOnTarget(75).
+    _closeInOnTarget(_targetFinalDistance).
 
     // Come to a final stop.
     local finalStopSection is printSectionStart("Coming to a final stop...").
@@ -128,7 +130,7 @@ function execRendezvous {
 
             printLine("Aligning header to target...").
             lock STEERING to _target:POSITION.
-            wait until ABS(VANG(SHIP:FACING:FOREVECTOR, _target:POSITION)) < 1.5 or _isWithin(_distance).
+            wait until ABS(VANG(SHIP:FACING:FOREVECTOR, _target:POSITION)) < .5 or _isWithin(_distance).
 
             printLine("Engaging throggle...").
             LOCK THROTTLE TO 0.1.
@@ -175,9 +177,9 @@ function execRendezvous {
             local burnTime is calcBurnTime(relativeVelocity:MAG).
             local maxThrottle is burnTime / 10.
             // Only throttle when we're aligned to target.
-            local facingDeviation is VANG(SHIP:FACING:FOREVECTOR, retrogradeDirection).
+            local facingDeviation is ABS(VANG(SHIP:FACING:FOREVECTOR, retrogradeDirection)).
             local facingAccuracyPercent is 1 - facingDeviation / 360.
-            local throttleVal is choose MIN(maxThrottle, SQRT(facingAccuracyPercent)) if facingAccuracyPercent > 0.95 else 0.
+            local throttleVal is choose MIN(maxThrottle, SQRT(facingAccuracyPercent)) if facingAccuracyPercent > 0.99 else 0.
             lock THROTTLE to throttleVal.
             //printLine("Heading: " + round(facingAccuracyPercent * 100, 1) + "%  | Throttle: " + round(throttleVal, 5) + "%", true).
             printLine("Relative vel: " + round(relativeVelocity:MAG, 5) + " | Throttle: " + round(throttleVal, 5) + "%", true).
