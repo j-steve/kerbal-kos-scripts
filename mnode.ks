@@ -10,7 +10,7 @@ RUNONCEPATH("common.ks").
 // The minimum deviation between the expected node and the actual node.
 // Lower number means that the final course will match the orignal more precisely,
 // but it may take longer to achieve.
-declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is -1.
+declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is -1, maxPhysicsWarp is 999.
 if maxFacingDeviation = -1 {
 	set maxFacingDeviation to maxFinalDeviation * 5.
 }
@@ -21,8 +21,7 @@ local startupData is startup("Executing next maneuver node.").
 printLine("Aligning header...").
 set WARP to 0.
 SAS off.
-set WARPMODE to "PHYSICS".
-set WARP to 3.
+setPhysicsWarp(3).
 lock STEERING to NEXTNODE:BURNVECTOR.
 wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < maxFacingDeviation / 2.
 KUNIVERSE:TIMEWARP:CANCELWARP().
@@ -100,18 +99,16 @@ if (burnTime > 1) {
 	lock THROTTLE to 0.1.
 }
 lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
+wait 2. // Wait for engines in case we're nuclear.
 if NEXTNODE:DELTAV:MAG / acceleration > 10 {
-	set WARPMODE to "PHYSICS".
-	set WARP to 2.
+	setPhysicsWarp(2).
 }
 until stageDeltaV > NEXTNODE:DELTAV:MAG {
 	printLine("  Will have to stage mid-burn.").
 	if facingError > maxFacingDeviation * .5 {
-		set WARPMODE to "PHYSICS".
 		set WARP to 0.
 	} else {
-		set WARPMODE to "PHYSICS".
-		set WARP to 2.
+		setPhysicsWarp(2).
 	}
 	set stageBurnTime to stageDeltaV / acceleration.
 	until stageDeltaV <= 0 {
@@ -126,11 +123,9 @@ until stageDeltaV > NEXTNODE:DELTAV:MAG {
 }
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	if facingError > maxFacingDeviation * .5 {
-		set WARPMODE to "PHYSICS".
 		set WARP to 0.
 	} else {
-		set WARPMODE to "PHYSICS".
-		set WARP to 2.
+		setPhysicsWarp(2).
 	}
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
@@ -149,3 +144,9 @@ if HASNODE {remove NEXTNODE.}
 printLine("Burn complete.").
 
 startupData:END().
+
+function setPhysicsWarp {
+	parameter _targetWarp.
+	set WARPMODE to "PHYSICS".
+	set WARP to MIN(_targetWarp, maxPhysicsWarp).
+}
