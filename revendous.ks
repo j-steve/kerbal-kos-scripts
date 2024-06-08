@@ -99,8 +99,8 @@ function execRendezvous {
     function _execFineTuneAdjustment {
         parameter initialMinApproach.
         local closeApproachSection is printSectionStart("Tuning node to get close approach...").
-        // Fine-tune at 50% of the way to the target, but make sure it's at least 2 minutes out.
-        local fineTuneNode is addNodeAtEta(MAX(initialMinApproach:ETA() * .5, 2 * 60)). 
+        // Fine-tune at 75% of the way to the target, but make sure it's at least 2 minutes out.
+        local fineTuneNode is addNodeAtEta(MAX(initialMinApproach:ETA() * .75, 2 * 60)). 
         local searchEndTime is -1.
         tuneNode(fineTuneNode, {
                         local closeApproach is findClosestApproach(SHIP:ORBIT, _target, fineTuneNode:TIME, searchEndTime, CLOSE_APPROACH_CALC_STEPS).
