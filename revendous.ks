@@ -122,11 +122,11 @@ function execRendezvous {
         until _isWithin(_distance) {
             _killRelativeVelocity(0.1).
             
-            if SHIP:availablethrust = 0 {
-                printLine("Staging").
-                STAGE.
-                wait until STAGE:READY.
-            }
+            // if SHIP:availablethrust = 0 {
+            //     printLine("Staging").
+            //     STAGE.
+            //     wait until STAGE:READY.
+            // }
 
             printLine("Aligning header to target...").
             lock STEERING to _target:POSITION.
