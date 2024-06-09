@@ -21,17 +21,17 @@ local startupData is startup("Executing next maneuver node.").
 printLine("Aligning header...").
 set WARP to 0.
 SAS off.
-setPhysicsWarp(3).
+increasePhysicsWarp(3).
 lock STEERING to NEXTNODE:BURNVECTOR.
 wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < maxFacingDeviation / 2.
 KUNIVERSE:TIMEWARP:CANCELWARP().
 
 // Pre-stage, if needed
-until SHIP:AVAILABLETHRUST > 0 {
-	print "No thrust, staging.".
-	stage.
-	wait until STAGE:READY.
-}
+// until SHIP:AVAILABLETHRUST > 0 {
+// 	print "No thrust, staging.".
+// 	stage.
+// 	wait until STAGE:READY.
+// }
 
 // Calculate burn time.
 printLine("Aligned, warping to node start...").
@@ -98,34 +98,34 @@ if (burnTime > 1) {
 } else {
 	lock THROTTLE to 0.1.
 }
-lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
-wait 2. // Wait for engines in case we're nuclear.
+// lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
+// wait 2. // Wait for engines in case we're nuclear.
 if NEXTNODE:DELTAV:MAG / acceleration > 10 {
-	setPhysicsWarp(2).
+	increasePhysicsWarp(2).
 }
-until stageDeltaV > NEXTNODE:DELTAV:MAG {
-	printLine("  Will have to stage mid-burn.").
-	if facingError > maxFacingDeviation * .5 {
-		set WARP to 0.
-	} else {
-		setPhysicsWarp(2).
-	}
-	set stageBurnTime to stageDeltaV / acceleration.
-	until stageDeltaV <= 0 {
-		lock throttle to safeThrottle.
-	}
-	printLine("  Staging.").
-	stage.
-	wait until STAGE:READY.
-	printLine("    done").
-	set burnTime to burnTime - stageBurnTime.
-    wait 0.001.
-}
+// until stageDeltaV > NEXTNODE:DELTAV:MAG {
+// 	printLine("  Will have to stage mid-burn.").
+// 	if facingError > maxFacingDeviation * .5 {
+// 		set WARP to 0.
+// 	} else {
+// 		increasePhysicsWarp(2).
+// 	}
+// 	set stageBurnTime to stageDeltaV / acceleration.
+// 	until stageDeltaV <= 0 {
+// 		lock throttle to safeThrottle.
+// 	}
+// 	printLine("  Staging.").
+// 	stage.
+// 	wait until STAGE:READY.
+// 	printLine("    done").
+// 	set burnTime to burnTime - stageBurnTime.
+//     wait 0.001.
+// }
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	if facingError > maxFacingDeviation * .5 {
 		set WARP to 0.
 	} else {
-		setPhysicsWarp(2).
+		increasePhysicsWarp(2).
 	}
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
@@ -145,8 +145,8 @@ printLine("Burn complete.").
 
 startupData:END().
 
-function setPhysicsWarp {
+function increasePhysicsWarp {
 	parameter _targetWarp.
 	set WARPMODE to "PHYSICS".
-	set WARP to MIN(_targetWarp, maxPhysicsWarp).
+	set WARP to MAX(MIN(_targetWarp, maxPhysicsWarp), WARP).
 }
