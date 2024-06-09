@@ -99,6 +99,8 @@ local executeGoto is {
 		set soiPatch to findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
 	}
 
+	// TODO: Why isn't this being triggered on a trip to minmus?
+	printLine("ship body: " + ship:body + " target soi: " + targetSoi).
 	if SHIP:BODY <> targetSoi {
 		until abs(soiPatch:periapsis - 100000)  > 1000 {
 			RUNPATH("finetune.ks", targetAltitude).
