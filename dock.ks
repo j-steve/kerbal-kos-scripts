@@ -21,14 +21,10 @@ dock().
 startupData:END().
 
 function dock {
-    // local harborMasters is _target:PARTSTAGGED("HarborMaster").
-    // if harborMasters:LENGTH() = 0 {
-    //     //local harborMaster is harborMasters[0]:GETMODULE("kOSProcessor").
-    //     _target:CONNECTION:SENDMESSAGE("Sup dawn").
-    // }
     local myPort is findShipDockingPort().
     local stationPort is findTargetDockingPort(_target, myPort:NODETYPE).
     local portHighlight is HIGHLIGHT(myPort, BLUE).
+    local stationHighlight is HIGHLIGHT(stationPort, BLUE).
     printLine("Best port: " + myPort:NAME + " (" + myPort:NODETYPE + ")").
 
     // Point at station.
@@ -40,7 +36,6 @@ function dock {
     _warpFreeze(). // Freeze the ship.
 
     _target:CONNECTION:SENDMESSAGE(myPort:UID + "|" + stationPort:UID).
-    local stationHighlight is HIGHLIGHT(stationPort, BLUE).
     myPort:CONTROLFROM().
     if kuniverse:activevessel = SHIP {
         set TARGET to stationPort.
