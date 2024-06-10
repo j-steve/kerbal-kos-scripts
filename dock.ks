@@ -27,13 +27,9 @@ function dock {
     //     _target:CONNECTION:SENDMESSAGE("Sup dawn").
     // }
     local myPort is findShipDockingPort().
+    local stationPort is findTargetDockingPort(_target, myPort:NODETYPE).
     local portHighlight is HIGHLIGHT(myPort, BLUE).
     printLine("Best port: " + myPort:NAME + " (" + myPort:NODETYPE + ")").
-    local stationPorts is listOpenDockingPorts(_target, myPort:NODETYPE).
-    if stationPorts:LENGTH = 0 {
-        printLine("ERROR: no compatible docking ports on station!").
-        return.
-    }
 
     // Point at station.
     _warpFreeze(). // Ensure there's no initial motion in ship/station.
@@ -43,11 +39,11 @@ function dock {
     wait 1.
     _warpFreeze(). // Freeze the ship.
 
-    _target:CONNECTION:SENDMESSAGE(myPort:UID + "|" + stationPorts[0]:UID).
-    local stationHighlight is HIGHLIGHT(stationPorts[0], BLUE).
+    _target:CONNECTION:SENDMESSAGE(myPort:UID + "|" + stationPort:UID).
+    local stationHighlight is HIGHLIGHT(stationPort, BLUE).
     myPort:CONTROLFROM().
     if kuniverse:activevessel = SHIP {
-        set TARGET to stationPorts[0].
+        set TARGET to stationPort.
     }
 
     printLine("Waiting for station rotation...").
@@ -57,14 +53,14 @@ function dock {
 
     _warpFreeze(). // Freeze the station.
 
-    //lock dockingPortAlignment to VANG(stationPorts[0]:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
-    lock dockingPortAlignment to VANG(myPort:FACING:FOREVECTOR, stationPorts[0]:NODEPOSITION - myPort:NODEPOSITION).
+    //lock dockingPortAlignment to VANG(stationPort:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
+    lock dockingPortAlignment to VANG(myPort:FACING:FOREVECTOR, stationPort:NODEPOSITION - myPort:NODEPOSITION).
     until abs(dockingPortAlignment) <= 0.05 {
-        lock STEERING to stationPorts[0]:NODEPOSITION.
+        lock STEERING to stationPort:NODEPOSITION.
         printLine("Alignment: " + round(180 - dockingPortAlignment, 3), true).
         // clearvecdraws().
-        // local port2port is myPort:POSITION - stationPorts[0]:POSITION.
-        // local node2node is myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION.
+        // local port2port is myPort:POSITION - stationPort:POSITION.
+        // local node2node is myPort:NODEPOSITION - stationPort:NODEPOSITION.
 	    // //vecdraw(myPort:POSITION,  port2port:NORMALIZED * -10000000, RGB(0, 1, 0), "port", 0.15, true).
 	    // //vecdraw(myPort:NODEPOSITION,  node2node:NORMALIZED * -10000000, RGB(0, 0, 1), "node", 0.15, true).
         // vecdraw(myPort:POSITION, myPort:portfacing:forevector * 1000000, RGB(0, 0, 1), "fore", 0.15, true).
@@ -74,9 +70,9 @@ function dock {
     }
     _warpFreeze().  // Freeze the ship.
 
-    // lock dockingPortAlignment to VANG(stationPorts[0]:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
+    // lock dockingPortAlignment to VANG(stationPort:FACING:FOREVECTOR, myPort:FACING:FOREVECTOR).
     // until abs(180 - dockingPortAlignment) < 1 {
-    //     lock STEERING to stationPorts[0]:NODEPOSITION.
+    //     lock STEERING to stationPort:NODEPOSITION.
     //     printLine(dockingPortAlignment, true).
     // }
     // local currentFacing is myPort:FACING:FOREVECTOR.
@@ -90,7 +86,7 @@ function dock {
     lock STEERING to "kill".
 	set WARPMODE to "PHYSICS".
 	set WARP to 4.
-    wait until (myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION):MAG < 15.
+    wait until (myPort:NODEPOSITION - stationPort:NODEPOSITION):MAG < 15.
 	set WARP to 0.
     
     if enableRcsLastMile {
@@ -101,7 +97,7 @@ function dock {
         RCS off.
 
         if myPort:PARTNER = "None" {
-            lock steering to stationPorts[0]:NODEPOSITION.
+            lock steering to stationPort:NODEPOSITION.
             wait 5.
             RCS on.
             set SHIP:CONTROL:FORE to 0.1.
@@ -110,11 +106,11 @@ function dock {
             RCS off.
         }
     } else {
-        lock steering to stationPorts[0]:NODEPOSITION.
+        lock steering to stationPort:NODEPOSITION.
     }
 
     // until myPort:PARTNER <> "None" {
-    //     local dockDist is (myPort:NODEPOSITION - stationPorts[0]:NODEPOSITION):MAG.
+    //     local dockDist is (myPort:NODEPOSITION - stationPort:NODEPOSITION):MAG.
     //     printLine(round(dockingPortAlignment, 2) + "° | Distance: " + round(dockDist, 1), true).
     // }
     // lock steering to "kill".
@@ -123,6 +119,16 @@ function dock {
 
     set portHighlight:ENABLED to false.
     set stationHighlight:ENABLED to false.
+}
+
+function findTargetDockingPort {
+    parameter _target, _dockingPortSize.
+    local targetPorts is listOpenDockingPorts(_target, _dockingPortSize).
+    if targetPorts:LENGTH = 0 {
+        printLine("ERROR: no compatible docking ports on station!").
+        return.
+    }
+    return targetPorts[0].
 }
 
 function findShipDockingPort {
