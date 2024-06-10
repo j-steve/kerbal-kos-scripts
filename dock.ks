@@ -128,6 +128,7 @@ function findTargetDockingPort {
         printLine("ERROR: no compatible docking ports on station!").
         return.
     }
+    // TODO: Check the port facings and find the one which is most closely facing the ship.
     return targetPorts[0].
 }
 
