@@ -49,7 +49,6 @@ function printLine {
 	parameter text, overwriteLast is false.
 	set text to printPrefix + text.
 	if not overwriteLast {log (round(TIME:SECONDS) + ": " + text) to "log.txt".}
-	set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH)).
 	if isFirstPrint {
 		CLEARSCREEN.
 		set isFirstPrint to false.
@@ -61,6 +60,7 @@ function printLine {
 			print "".
 		}
 		set text to text + CLEAR_LINE.
+		set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH)).
 		print text at (0, currentPrintLine).
 	} else {
 		if priorLineOverwritable {
@@ -68,6 +68,7 @@ function printLine {
 			//print CLEAR_LINE at (0, currentPrintLine).
 		} else {
 		}
+		set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH)).
 		print text.
 		set currentPrintLine to currentPrintLine + 1.
 	}
