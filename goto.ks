@@ -102,7 +102,7 @@ local executeGoto is {
 	// TODO: Why isn't this being triggered on a trip to minmus?
 	printLine("ship body: " + ship:body + " target soi: " + targetSoi).
 	if SHIP:BODY <> targetSoi {
-		until abs(soiPatch:periapsis - targetAltitude)  < targetAltitude * .01 {
+		until abs(soiPatch:periapsis - targetAltitude)  < targetAltitude * .05 {
 			RUNPATH("finetune.ks", targetAltitude).
 			clearNodes().
 		}
