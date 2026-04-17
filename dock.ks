@@ -120,8 +120,7 @@ function findTargetDockingPort {
     parameter _target, _dockingPortSize.
     local targetPorts is listOpenDockingPorts(_target, _dockingPortSize).
     if targetPorts:LENGTH = 0 {
-        printLine("ERROR: no compatible docking ports on station!").
-        return.
+		throwError("No compatible docking ports on station!").
     }
     // TODO: Check the port facings and find the one which is most closely facing the ship.
     return targetPorts[0].
@@ -138,6 +137,9 @@ function findShipDockingPort {
             set bestPort to dockingPort.
         }
     }
+	if bestPort = -1 {
+		throwError("No docking ports on ship!").
+	}
     return bestPort.
 }
 

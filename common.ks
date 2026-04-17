@@ -60,7 +60,7 @@ function printLine {
 			print "".
 		}
 		set text to text + CLEAR_LINE.
-		set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH)).
+		set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH-1)).
 		print text at (0, currentPrintLine).
 	} else {
 		if priorLineOverwritable {
@@ -68,7 +68,7 @@ function printLine {
 			//print CLEAR_LINE at (0, currentPrintLine).
 		} else {
 		}
-		set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH)).
+		set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH-1)).
 		print text.
 		set currentPrintLine to currentPrintLine + 1.
 	}
@@ -189,4 +189,15 @@ function addNodeAtTime {
 	local _node is NODE(_timeSeconds, _prograde, _normal, _radialIn).
     ADD _node.
 	return _node.
+}
+
+function throwError {
+	parameter message.
+	print " ".
+	print "========================================".
+	print "ERROR: " + message.
+	print "========================================".
+	print " ".
+	KUNIVERSE:PAUSE(). // Pause the game.
+	print 1 / 0. // Throw exception to terminate the  program.
 }
