@@ -139,10 +139,16 @@ startupData:END().
 function maintainHeading {
 	parameter targetVector. // Either a vector, or a target pitch (scalar).
 	if SHIP:AVAILABLETHRUST = 0 {
-		lock THROTTLE to 1.
-		stage.
-		wait 5.
-		wait until stage:ready.
+		if _possibleThrustAllStages() > 0 {
+			lock THROTTLE to 1.
+			stage.
+			wait 5.
+			wait until stage:ready.
+		}
+		else {
+			printLine("WARNING: No thrust available.").
+			wait 5.
+		}
 	}
 	if targetVector:ISTYPE("scalar") {
 		set targetVector to HEADING(launchHeading, targetVector):VECTOR.
@@ -152,6 +158,17 @@ function maintainHeading {
 	lock THROTTLE to MAX(1 - facingError / 360, 0.25). // Always fire thrusters at at least 33%, as they may be needed to correct heading.
 	set RCS to facingError > 10.
 	wait 0.01.
+}
+
+function _possibleThrustAllStages {
+	local totalVesselThrust is 0.
+	list ENGINES in allEngines.
+	for eng in allEngines {
+		// MAXTHRUST returns the thrust at the current atmospheric pressure, 
+		// taking thrust limiters into account.
+		set totalVesselThrust to totalVesselThrust + eng:MAXTHRUST. 
+	}
+	return totalVesselThrust.
 }
 
 // Returns the required deltaV at apoapsis to achieve the desired periapsis.
@@ -188,4 +205,5 @@ function deploySolarPanels {
 		}
     }
 	PANELS on.
+	TOGGLE AG10.
 }
