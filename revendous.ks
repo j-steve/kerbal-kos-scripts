@@ -51,7 +51,11 @@ function execRendezvous {
             printLine("Finding closest approach in orbit #" + orbitCountI + "...").
             tuneNode(revNode, {
                     local closeApproach is findClosestApproach(revNode:ORBIT, _target, revNode:TIME, -1, CLOSE_APPROACH_CALC_STEPS).
-                        return choose 0 if closeApproach:DISTANCE < 250 else closeApproach:DISTANCE.
+					local atmosphere is revNode:ORBIT:BODY:ATM.
+					if atmosphere:EXISTS and revNode:ORBIT:PERIAPSIS < atmosphere:HEIGHT {
+						return -1. // Ignore paths that would take the ship into the atmosphere.
+					}
+					return choose 0 if closeApproach:DISTANCE < 250 else closeApproach:DISTANCE.
                 }, .01, .5).
             set minApproach to findClosestApproach(revNode:ORBIT, _target, revNode:TIME, -1, 250).
             printLine("  Min approach: " + round(minApproach:DISTANCE)).
