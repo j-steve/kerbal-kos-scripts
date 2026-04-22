@@ -87,7 +87,12 @@ local executeGoto is {
 
 	local soiPatch is findOrbitalPatchForSoi(SHIP:ORBIT, targetSoi).
 	if wasLaunched or (soiPatch:BODY <> targetSoi and findClosestApproach(SHIP:ORBIT, targetSoi):DISTANCE > SHIP:APOAPSIS)  {
-		if ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION) > 1 {
+		local targetInclination is targetSoi:ORBIT:INCLINATION.
+		if SHIP:ORBIT:BODY = targetSoi {
+			// If we're already orbiting the same body, then match inclination with the target directly.
+			set targetInclination to targetEntity:ORBIT:INCLINATION.
+		}
+		if ABS(SHIP:ORBIT:INCLINATION - targetInclination) > 1 {
 			printLine("target: " + targetSoi:NAME).
 			printLine("Updating inc" + ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION)).
 			RUNPATH("inc.ks").
