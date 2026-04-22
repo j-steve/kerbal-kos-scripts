@@ -201,3 +201,32 @@ function throwError {
 	KUNIVERSE:PAUSE(). // Pause the game.
 	print 1 / 0. // Throw exception to terminate the  program.
 }
+
+function stageIfNeeded {
+	parameter throttleLockTo.
+	if SHIP:AVAILABLETHRUST = 0 {
+		if _possibleThrustAllStages() > 0 {
+			lock THROTTLE to throttleLockTo.
+			stage.
+			if throttleLockTo > 0 {
+				// If we are full-throttle staging, continue straight for a few secs to clear the depres.
+				wait 5.
+			}
+			wait until stage:ready.
+		}
+		else {
+			printLine("WARNING: No thrust available.").
+			wait 5.
+		}
+	}
+}
+
+function _possibleThrustAllStages {
+	local totalVesselThrust is 0.
+	for eng in SHIP:ENGINES {
+		// MAXTHRUST returns the thrust at the current atmospheric pressure, 
+		// taking thrust limiters into account.
+		set totalVesselThrust to totalVesselThrust + eng:MAXTHRUST. 
+	}
+	return totalVesselThrust.
+}

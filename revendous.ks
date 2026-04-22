@@ -172,11 +172,7 @@ function execRendezvous {
         set WARPMODE to "PHYSICS".
         set WARP to 1.
         until relativeVelocity:MAG < maxRelativeVelocity or (relativeVelocity:MAG < maxRelativeVelocity * 2 and TIME:SECONDS >= maxEndTime) {
-            if SHIP:AVAILABLETHRUST = 0 {
-                lock THROTTLE to 0.
-                stage.
-                wait until stage:ready.
-            }
+            stageIfNeeded(0).
             // Decrease max throttle as needed so we'll have >= 10 seconds of burn time.
             local burnTime is calcBurnTime(relativeVelocity:MAG).
             local maxThrottle is burnTime / 10.
