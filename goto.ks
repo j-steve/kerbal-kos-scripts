@@ -191,11 +191,9 @@ function _getEntityBody {
 	parameter _entity.
 	if _entity:ISTYPE("Body") {
 		return _entity.
-	} else if _entity:ISTYPE("Vessel") {
-		return _entity:ORBIT:BODY.
 	} else {
-		printLine("ERROR: Cannot get entity body for " + _entity).
-		return _entity:THROW_ERROR. // Access a non-existant property to throw an exception.
+		// if _entity:ISTYPE("Vessel") or _entity:ISTYPE("Station")
+		return _entity:ORBIT:BODY.
 	}
 }
 
