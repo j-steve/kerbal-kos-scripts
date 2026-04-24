@@ -205,7 +205,7 @@ function throwError {
 function stageIfNeeded {
 	parameter throttleLockTo.
 	if SHIP:AVAILABLETHRUST = 0 {
-		if _possibleThrustAllStages() > 0 {
+		if _shouldStage() {
 			lock THROTTLE to throttleLockTo.
 			stage.
 			if throttleLockTo > 0 {
@@ -221,12 +221,17 @@ function stageIfNeeded {
 	}
 }
 
-function _possibleThrustAllStages {
-	local totalVesselThrust is 0.
+function _shouldStage {
+	local hasAnyActiveEngines is false.
 	for eng in SHIP:ENGINES {
-		// MAXTHRUST returns the thrust at the current atmospheric pressure, 
-		// taking thrust limiters into account.
-		set totalVesselThrust to totalVesselThrust + eng:MAXTHRUST. 
+		if not eng:FLAMEOUT {
+			if eng:STAGE = STAGE:NUMBER {
+				// Don't stage if there are any engines in this stage that haven't flamed out.
+				return false.
+			} else {
+				set hasAnyActiveEngines to true.
+			}
+		}
 	}
-	return totalVesselThrust.
+	return hasAnyActiveEngines.
 }
