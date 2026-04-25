@@ -93,7 +93,7 @@ function executeFineTune {
             }).
 
         // Execute the burn, then find the updated current orbital patch.
-        RUNPATH("mnode.ks.").
+        RUNPATH("mnode.ks").
 
     }
 
@@ -133,7 +133,7 @@ function executeFineTune {
             }).
 
         //Run the node.
-        RUNPATH("mnode.ks.").
+        RUNPATH("mnode.ks").
     }
 
 

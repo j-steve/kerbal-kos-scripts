@@ -6,7 +6,7 @@ RUNONCEPATH("common.ks").
 //   maxDeviation: Maximum acceptable angle deviation in degrees (default 0.25).
 function alignHeaderToRetrograde {
 	parameter timeoutSeconds is 6000, maxDeviation is 0.25.
-	
+
 	alignHeaderTo(-SHIP:VELOCITY:ORBIT, "retrograde", timeoutSeconds, maxDeviation).
 }
 
@@ -46,7 +46,6 @@ function increasePhysicsWarpTo {
 	set WARPMODE to "PHYSICS".
 	set WARP to MAX(_targetWarp, WARP).
 }
-
 // Sets the physics warp to the target warp, unconditionally.
 // Parameters:
 //   _targetWarp: The exact physics warp level to set.

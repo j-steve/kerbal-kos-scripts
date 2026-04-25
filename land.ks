@@ -55,7 +55,7 @@ lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
 set closeEnoughTimeout to 0.
 lock STEERING to SRFRETROGRADE.
 if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
-	alignHeaderTo(-SHIP:VELOCITY:SURFACE, "suface retrograde", 60).
+	alignHeaderTo(-SHIP:VELOCITY:SURFACE, "surface retrograde", 60).
 	printLine("Burning retrograde to kill lateral motion...").
 	until lateralMotion < 0.01 or (collisionEta > 0 and collisionEta < 60) {
 		if isFacingRetrograde() {
