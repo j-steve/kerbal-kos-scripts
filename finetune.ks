@@ -16,8 +16,7 @@
 // one for hitting a target periapsis around a body,
 // and another for reaching a target distance around a vessel.
 
-RUNONCEPATH("common.ks").
-RUNONCEPATH("nodeTuner.ks").
+RUNONCEPATH("/common/init.ks").
 
 parameter targetApproachDistance is 100000, _target is -1.
 if _target = -1 {set _target to TARGET.}

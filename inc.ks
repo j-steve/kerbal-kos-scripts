@@ -6,8 +6,7 @@
 // to precisely match the target inclination in such cases.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
-RUNONCEPATH("nodeTuner.ks").
+RUNONCEPATH("/common/init.ks").
 
 parameter debugMode is false.
 

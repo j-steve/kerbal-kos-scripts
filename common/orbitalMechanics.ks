@@ -1,5 +1,3 @@
-
-
 // Returns the average angular velocity in degrees.
 function calcMeanMotion {
 	// Mean motion can be expressed as 2pi / orbit period, or sqrt (mu / semiMajorAxis^3) -- both are equivelant.

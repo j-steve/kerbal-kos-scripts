@@ -8,8 +8,7 @@
 //       but currently it does have some Kerbin-specific logic.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
-RUNONCEPATH("nodeTuner.ks").
+RUNONCEPATH("/common/init.ks").
 
 local startupData is startup("Returning to Kerbin.").
 clearNodes().

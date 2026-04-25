@@ -1,6 +1,6 @@
 // -------------------------------------------------------------------------------------------------
-// This program contains shared, general-purpose utility methods
-// which  are used accross multiple programs.
+// This script initializes the shared library environment for all KOS scripts.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("/common/init.ks").
+RUNONCEPATH("/common.ks").
+RUNONCEPATH("/common/nodeTuner.ks").

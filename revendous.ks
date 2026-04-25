@@ -13,8 +13,7 @@
 // close by and stopped so docking can proceed from that state.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
-RUNONCEPATH("nodeTuner.ks").
+RUNONCEPATH("/common/init.ks").
 
 local CLOSE_APPROACH_CALC_STEPS is 500.
 

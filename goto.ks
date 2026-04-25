@@ -8,8 +8,7 @@
 //   goto.ks(sun, "flyby").        : Launch, escape to Kerbol (the sun) orbit, and return to Kerbin.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
-RUNONCEPATH("nodeTuner.ks").
+RUNONCEPATH("/common/init.ks").
 
 parameter targetEntity is -1, targetObjective is "dock", targetAltitude is -1.
 

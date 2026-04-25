@@ -5,7 +5,7 @@
 // Its warp is fast and precise on my PC but may overly agressive on less powerful machines.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
+RUNONCEPATH("/common/init.ks").
 
 // The minimum deviation between the expected node and the actual node.
 // Lower number means that the final course will match the orignal more precisely,

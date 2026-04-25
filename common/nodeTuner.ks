@@ -3,9 +3,6 @@
 // for any purpose.
 // -------------------------------------------------------------------------------------------------
 
-@lazyGlobal OFF.
-RUNONCEPATH("common.ks").
-
 parameter debugMode is false.
 
 // Given a maneuver node and a delta calculation function,
