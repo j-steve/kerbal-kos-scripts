@@ -73,13 +73,13 @@ if (warpTime > 0) {
 	printLine("    Warping speed 1").
 	wait warpTime - 10.
 	printLine("    Warping speed 0").
-	set WARP to 0.
+	KUNIVERSE:TIMEWARP:CANCELWARP().
 	set warpTime to NEXTNODE:ETA - halfBurnTime.
 	wait warpTime.
 }
 if WARP > 0 {
 	printLine("    Warping speed 0").
-	set WARP to 0.
+	KUNIVERSE:TIMEWARP:CANCELWARP().
 }
 
 printLine("Starting burn...").
@@ -115,15 +115,28 @@ if NEXTNODE:DELTAV:MAG / acceleration > 10 {
 // 	set burnTime to burnTime - stageBurnTime.
 //     wait 0.001.
 // }
+
+// Some ships are too large to safely warp under thurst.
+// If we have to repeatedly disable physics, we'll stop trying.
+// This prevents large shups from repeatedly trying to warp under thurst,
+// which can cause issues and potentially even destroy them.
+local _MAX_DISABLE_PHISICS_TIMES is 3.
+local _disabledPhysicsTimes is 0.
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	if facingError > maxFacingDeviation * .5 {
-		set WARP to 0.
-	} else {
+		if WARP > 0 {
+			set _disabledPhysicsTimes to _disabledPhysicsTimes + 1.
+			if _disabledPhysicsTimes >= _MAX_DISABLE_PHISICS_TIMES {
+				printLine("WARNING: Disabling warp under thrust for this burn due to instability.").
+			}
+		}
+		KUNIVERSE:TIMEWARP:CANCELWARP().
+	} else if _disabledPhysicsTimes < _MAX_DISABLE_PHISICS_TIMES {
 		increasePhysicsWarpTo(2).
 	}
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
-		set WARP to 0.
+		KUNIVERSE:TIMEWARP:CANCELWARP().
 	}
 	if NEXTNODE:DELTAV:MAG / acceleration < 1.5 { // last 1.5 seconds of burn
 		set newThrottle to newThrottle * 0.2.
