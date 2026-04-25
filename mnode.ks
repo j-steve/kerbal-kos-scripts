@@ -120,19 +120,21 @@ if NEXTNODE:DELTAV:MAG / acceleration > 10 {
 // If we have to repeatedly disable physics, we'll stop trying.
 // This prevents large shups from repeatedly trying to warp under thurst,
 // which can cause issues and potentially even destroy them.
-local _MAX_DISABLE_PHISICS_TIMES is 3.
-local _disabledPhysicsTimes is 0.
+local _maxSafePhysicsSpeed is 3.
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
+	if SHIP:ANGULARVEL:MAG > 0.0075 and WARP > 0 and _maxSafePhysicsSpeed > 0 {
+		// Use angular velocity to detect the Kracekning.
+		set _maxSafePhysicsSpeed to WARP - 1.
+		printLine("WARNING: Oscilations, slowing warp to " + _maxSafePhysicsSpeed).
+		setPhysicsWarpTo(_maxSafePhysicsSpeed).
+		wait 2.
+	}
 	if facingError > maxFacingDeviation * .5 {
 		if WARP > 0 {
-			set _disabledPhysicsTimes to _disabledPhysicsTimes + 1.
-			if _disabledPhysicsTimes >= _MAX_DISABLE_PHISICS_TIMES {
-				printLine("WARNING: Disabling warp under thrust for this burn due to instability.").
-			}
+			//KUNIVERSE:TIMEWARP:CANCELWARP().
 		}
-		KUNIVERSE:TIMEWARP:CANCELWARP().
-	} else if _disabledPhysicsTimes < _MAX_DISABLE_PHISICS_TIMES {
-		increasePhysicsWarpTo(2).
+	}  else {
+		setPhysicsWarpTo(_maxSafePhysicsSpeed).
 	}
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
