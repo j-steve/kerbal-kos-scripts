@@ -5,21 +5,13 @@
 
 @lazyGlobal OFF.
 RUNONCEPATH("orbitalMechanics.ks").
+RUNONCEPATH("/common/shipControls.ks").
 
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 
 function calcBurnTime {
 	parameter deltaV.
 	return deltaV / acceleration.
-}
-
-function alignRetrograde {
-	printLine("Aligning heading to retrograde...").
-	set WARP to 0.
-	SAS off.
-	lock STEERING to RETROGRADE.
-	wait until isFacingRetrograde().
-	printLine("  OK").
 }
 
 function isFacingRetrograde {

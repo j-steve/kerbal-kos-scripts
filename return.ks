@@ -40,7 +40,7 @@ until PERIAPSIS < 500000 or SHIP:ORBIT:TRANSITION <> "ESCAPE" {
     // TODO: what if periapsis is behind us, will this still work?
     // Note: the fact that we'r'e escaping doesn't matter if we're currently plummeting towards Kerbin.
     local cancelEscapeSection is printSectionStart("Preventing escape...").
-    alignRetrograde().
+    alignHeaderToRetrograde().
     lock THROTTLE to 1.
     wait until SHIP:ORBIT:TRANSITION <> "ESCAPE".
     lock THROTTLE to 0.
@@ -49,7 +49,7 @@ until PERIAPSIS < 500000 or SHIP:ORBIT:TRANSITION <> "ESCAPE" {
 
 until PERIAPSIS < 500000 {
     local periapsisSection is printSectionStart("Reducing periapsis...").
-    alignRetrograde().
+    alignHeaderToRetrograde().
     lock THROTTLE to 1.
     wait until PERIAPSIS < 500000.
     lock THROTTLE to 0.
@@ -89,7 +89,7 @@ set WARPMODE to "PHYSICS".
 set WARP to 4.
 until STAGE:NUMBER = 0 or SHIP:ALTITUDE - SHIP:GEOPOSITION:TERRAINHEIGHT < 15000{
     if SHIP:AVAILABLETHRUST = 0 {
-        //printLine("No throttle, staging.").
+        printLine("No throttle, staging.").
         stage.
         wait until stage:ready.
     }

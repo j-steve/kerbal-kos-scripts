@@ -35,7 +35,7 @@ lock surfaceBurnTime to SHIP:VELOCITY:SURFACE:MAG / acceleration.
 
 if PERIAPSIS > 0 {
 	local retrogradeSection is printSectionStart("Burning retrograde to intercept planet...").
-	alignRetrograde().
+	alignHeaderToRetrograde().
 	lock THROTTLE to 1.
 	wait until PERIAPSIS <= 0.
 	lock THROTTLE to 0.
@@ -55,9 +55,7 @@ lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
 set closeEnoughTimeout to 0.
 lock STEERING to SRFRETROGRADE.
 if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
-	printLine("Aligning surface retrograde...").
-	local alignmentTimeout is TIME:SECONDS + 60.
-	wait until isFacingSurfaceRetrograde() or TIME:SECONDS >= alignmentTimeout.
+	alignHeaderTo(-SHIP:VELOCITY:SURFACE, "suface retrograde", 60).
 	printLine("Burning retrograde to kill lateral motion...").
 	until lateralMotion < 0.01 or (collisionEta > 0 and collisionEta < 60) {
 		if isFacingRetrograde() {

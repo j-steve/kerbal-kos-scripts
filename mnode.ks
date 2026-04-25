@@ -18,13 +18,7 @@ if maxFacingDeviation = -1 {
 local startupData is startup("Executing next maneuver node.").
 
 // Align header.
-printLine("Aligning header...").
-set WARP to 0.
-SAS off.
-increasePhysicsWarp(3).
-lock STEERING to NEXTNODE:BURNVECTOR.
-wait until VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR) < maxFacingDeviation / 2.
-KUNIVERSE:TIMEWARP:CANCELWARP().
+alignHeaderTo(NEXTNODE:BURNVECTOR, "maneuver node burn vector").
 
 // Pre-stage, if needed
 // until SHIP:AVAILABLETHRUST > 0 {
@@ -101,14 +95,14 @@ if (burnTime > 1) {
 // lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
 // wait 2. // Wait for engines in case we're nuclear.
 if NEXTNODE:DELTAV:MAG / acceleration > 10 {
-	increasePhysicsWarp(2).
+	increasePhysicsWarpTo(2).
 }
 // until stageDeltaV > NEXTNODE:DELTAV:MAG {
 // 	printLine("  Will have to stage mid-burn.").
 // 	if facingError > maxFacingDeviation * .5 {
 // 		set WARP to 0.
 // 	} else {
-// 		increasePhysicsWarp(2).
+// 		increasePhysicsWarpTo(2).
 // 	}
 // 	set stageBurnTime to stageDeltaV / acceleration.
 // 	until stageDeltaV <= 0 {
@@ -125,7 +119,7 @@ until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	if facingError > maxFacingDeviation * .5 {
 		set WARP to 0.
 	} else {
-		increasePhysicsWarp(2).
+		increasePhysicsWarpTo(2).
 	}
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
@@ -144,9 +138,3 @@ if HASNODE {remove NEXTNODE.}
 printLine("Burn complete.").
 
 startupData:END().
-
-function increasePhysicsWarp {
-	parameter _targetWarp.
-	set WARPMODE to "PHYSICS".
-	set WARP to MAX(MIN(_targetWarp, maxPhysicsWarp), WARP).
-}

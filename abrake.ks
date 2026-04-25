@@ -4,7 +4,7 @@ RUNONCEPATH("common.ks").
 print "Warping to atmo...".
 set WARP to 6.
 wait until SHIP:ALTITUDE < SHIP:BODY:ATM:HEIGHT + 10000.
-alignRetrograde().
+alignHeaderToRetrograde().
 
 until SHIP:OBT:APOAPSIS <= SHIP:BODY:ATM:HEIGHT {
 	
