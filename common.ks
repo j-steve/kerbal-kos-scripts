@@ -6,7 +6,7 @@
 @lazyGlobal OFF.
 RUNONCEPATH("/common/orbitalMechanics.ks").
 RUNONCEPATH("/common/shipControls.ks").
-RUNONCEPATH("/common/shipControls.ks").
+RUNONCEPATH("/common/consoleOutput.ks").
 
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 
