@@ -14,10 +14,10 @@ RUNONCEPATH("nodeTuner.ks").
 local startupData is startup("Returning to Kerbin.").
 clearNodes().
 
-if SHIP:ORBIT:BODY <> KERBIN and not SHIP:ORBIT:hasnextpatch {
-    local escapeSection is printSectionStart("Burning to escape " + SHIP:ORBIT:BODY:NAME + " SOI...").
+if SHIP:ORBIT:BODY <> KERBIN and SHIP:ORBIT:BODY <> SUN and not SHIP:ORBIT:hasnextpatch {
+    local escapeSection is printSectionStart("Escaping " + SHIP:ORBIT:BODY:NAME + " SOI...").
     local nodeStartEta is ETA:PERIAPSIS.
-    if PERIAPSIS <= 0 {set nodeStartEta to ETA:apoapsis.}
+    if PERIAPSIS <= 0 {set nodeStartEta to MAX(ETA:apoapsis, 0).}
     local escapeNode is NODE(TIME:SECONDS + nodeStartEta, 0, 0, 0).
     ADD escapeNode.
     until escapeNode:ORBIT:hasnextpatch {
@@ -30,11 +30,18 @@ if SHIP:ORBIT:BODY <> KERBIN and not SHIP:ORBIT:hasnextpatch {
     escapeSection:END().
 }
 
-if SHIP:ORBIT:BODY <> KERBIN {
-    printLine("Warpint to Kerbin SOI....").
+if SHIP:ORBIT:BODY <> SUN and SHIP:ORBIT:BODY <> KERBIN {
+    printLine("Warping to next SOI....").
     wait 1. // Ensure burn is 0 so we can warp.
     warpToEta( SHIP:ORBIT:nextpatcheta + 60).
 }
+
+if SHIP:ORBIT:BODY = SUN {
+	printLine("Navigating to Kerbin").
+	SET TARGET TO KERBIN.
+	run txfr(true).
+}
+
 
 until PERIAPSIS < 500000 or SHIP:ORBIT:TRANSITION <> "ESCAPE" {
     // TODO: what if periapsis is behind us, will this still work?

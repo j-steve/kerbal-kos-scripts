@@ -24,14 +24,20 @@ function alignHeaderTo {
 	KUNIVERSE:TIMEWARP:CANCELWARP().
 	SAS off.
 	lock STEERING TO LOOKDIRUP(targetVector, SHIP:UP:VECTOR).
-	increasePhysicsWarpTo(4).
+	setPhysicsWarpTo(4).
+	wait until VANG(SHIP:FACING:FOREVECTOR, targetVector) < (maxDeviation * 10000) or TIME:SECONDS > alignmentTimeout.
+	setPhysicsWarpTo(3).
+	wait until VANG(SHIP:FACING:FOREVECTOR, targetVector) < (maxDeviation * 1000) or TIME:SECONDS > alignmentTimeout.
+	setPhysicsWarpTo(2).
+	wait until VANG(SHIP:FACING:FOREVECTOR, targetVector) < (maxDeviation * 100) or TIME:SECONDS > alignmentTimeout.
+	setPhysicsWarpTo(1).
 	wait until VANG(SHIP:FACING:FOREVECTOR, targetVector) < (maxDeviation * 10) or TIME:SECONDS > alignmentTimeout.
+	setPhysicsWarpTo(0).
+	wait until VANG(SHIP:FACING:FOREVECTOR, targetVector) < (maxDeviation) or TIME:SECONDS > alignmentTimeout.
 	if TIME:SECONDS > alignmentTimeout {
 		printLine("WARNING: Failed to align after " + timeoutSeconds + " seconds, aborting.").
 	} else {
-		setPhysicsWarpTo(3).
-		lock STEERING to targetVector.
-		wait until VANG(SHIP:FACING:FOREVECTOR, targetVector) < maxDeviation.
+		printLine("    Aligned.").
 	}
 	KUNIVERSE:TIMEWARP:CANCELWARP().
 }
