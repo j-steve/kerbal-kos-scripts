@@ -2,7 +2,7 @@
 // This program contains functions shared by `dock.ks` and `harborMaster.ks`,
 // but still specific to docking (so not a good candidate for `common.ks`).
 // -------------------------------------------------------------------------------------------------
-RUNONCEPATH("common.ks").
+RUNONCEPATH("/common/init.ks").
 
 function listOpenDockingPorts {
     parameter _vessel is SHIP, portSize is -1.

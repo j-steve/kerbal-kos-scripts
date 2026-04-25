@@ -1,4 +1,4 @@
-RUNONCEPATH("common.ks").
+RUNONCEPATH("/common/init.ks").
 
 print "Warping to atmo...".
 set WARP to 6.

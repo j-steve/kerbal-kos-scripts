@@ -7,7 +7,7 @@
 // TODO: This script may not work well for vessels with a low TWR?  More testing needed to confirm.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
+RUNONCEPATH("/common/init.ks").
 
 clearscreen.
 SAS off.

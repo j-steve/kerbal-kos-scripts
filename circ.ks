@@ -2,7 +2,7 @@
 // This program will cicularize the current orbit,  either at proapsis or at apoapsis.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
+RUNONCEPATH("/common/init.ks").
 
 parameter atPrograde is true.
 

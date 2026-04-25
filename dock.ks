@@ -4,7 +4,7 @@
 // The other ship must be running `boot/harborMaster.ks`.
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
+RUNONCEPATH("/common/init.ks").
 RUNONCEPATH("dockUtils.ks").
 
 parameter _target is TARGET.

@@ -6,7 +6,7 @@
 //       (e.g. it can plot a course from Eve to Jool, but not from Jool to Eve).
 // -------------------------------------------------------------------------------------------------
 
-RUNONCEPATH("common.ks").
+RUNONCEPATH("/common/init.ks").
 
 parameter skipCirc is false.
 

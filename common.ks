@@ -1,6 +1,0 @@
-// -------------------------------------------------------------------------------------------------
-// This program contains shared, general-purpose utility methods
-// which  are used accross multiple programs.
-// -------------------------------------------------------------------------------------------------
-
-RUNONCEPATH("/common/init.ks").
