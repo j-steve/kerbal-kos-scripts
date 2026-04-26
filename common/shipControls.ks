@@ -93,17 +93,19 @@ function addNodeAtTime {
 }
 
 function stageIfNeeded {
-	parameter throttleLockTo.
+	parameter throttleWhileStaging is 0.
 
 	if SHIP:AVAILABLETHRUST = 0 {
 		if _shouldStage() {
-			lock THROTTLE to throttleLockTo.
+			local priorThrottle is THROTTLE.
+			lock THROTTLE to throttleWhileStaging.
 			stage.
-			if throttleLockTo > 0 {
+			if throttleWhileStaging > 0 {
 				// If we are full-throttle staging, continue straight for a few secs to clear the depres.
 				wait 5.
 			}
 			wait until stage:ready.
+			lock THROTTLE to priorThrottle.
 		}
 		else {
 			printLine("WARNING: No thrust available.").

@@ -137,7 +137,10 @@ function execRendezvous {
 
             printLine("Engaging throggle...").
             LOCK THROTTLE TO 0.1.
-            wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 1 or _isWithin(_distance).
+            until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 1 or _isWithin(_distance) {
+				stageIfNeeded().
+				wait 0.1.
+			}
             LOCK THROTTLE TO 0.
             local newClosestApproach is findClosestApproach(SHIP:ORBIT, _target, -1, -1, -1, true).
 
@@ -171,7 +174,7 @@ function execRendezvous {
         set WARPMODE to "PHYSICS".
         set WARP to 1.
         until relativeVelocity:MAG < maxRelativeVelocity or (relativeVelocity:MAG < maxRelativeVelocity * 2 and TIME:SECONDS >= maxEndTime) {
-            stageIfNeeded(0).
+            stageIfNeeded().
             // Decrease max throttle as needed so we'll have >= 10 seconds of burn time.
             local burnTime is calcBurnTime(relativeVelocity:MAG).
             local maxThrottle is burnTime / 10.
