@@ -99,7 +99,7 @@ local FINE_TUNE_BURN_RATE is 0.2.
 lock facingError to ABS(VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR)).
 lock safeThrottle to 1 - sqrt(facingError / maxFacingDeviation). // Full stop at an error of maxFacingDeviation.
 lock secsToBurn to NEXTNODE:DELTAV:MAG / acceleration.
-lock burnMessage to "  " + ROUND(secsToBurn, 1) + "s | " + ROUND(facingError, 1) + " facing error.".
+lock burnMessage to "  " + ROUND(secsToBurn, 1) + "s | " + ROUND(facingError, 2) + " facing error.".
 local burnType is "normal".
 local maxSafePhysicsSpeed is 3.
 
