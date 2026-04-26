@@ -116,6 +116,7 @@ local stoppedBurningFacingError is -1.
 local minThrottle is 0.
 
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
+	stageIfNeeded().
 	local newThrottle is safeThrottle.
 	if secsToBurn > 10 {
 		// Use angular velocity to detect the Krackening.
