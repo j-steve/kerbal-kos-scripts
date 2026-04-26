@@ -10,9 +10,9 @@ RUNONCEPATH("/common/init.ks").
 // The minimum deviation between the expected node and the actual node.
 // Lower number means that the final course will match the orignal more precisely,
 // but it may take longer to achieve.
-declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is -1.
+declare parameter maxFinalDeviation is 0.2, maxFacingDeviation is -1.
 if maxFacingDeviation = -1 {
-	set maxFacingDeviation to maxFinalDeviation * 5.
+	set maxFacingDeviation to maxFinalDeviation * 10.
 }
 
 local startupData is startup("Executing next maneuver node.").
@@ -139,9 +139,9 @@ until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	local newThrottle is safeThrottle.
 	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
 		KUNIVERSE:TIMEWARP:CANCELWARP().
-	}
-	if NEXTNODE:DELTAV:MAG / acceleration < 1.5 { // last 1.5 seconds of burn
-		set newThrottle to newThrottle * 0.2.
+		if NEXTNODE:DELTAV:MAG / acceleration < 1.5 { // last 1.5 seconds of burn
+			set newThrottle to newThrottle * 0.2.
+		}
 	}
 	lock throttle to newThrottle.
 	wait 0.001.
