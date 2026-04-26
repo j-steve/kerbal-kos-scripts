@@ -94,16 +94,17 @@ printLine("Starting burn...").
 // Check for angular velocity which should be close to 0 once aligned and under burn.
 // High angular velocity = high "wobble" which can indicate Krackening and pending ship explosion.
 local MAX_WOBBLE is 0.0075.
-// Max engine thrust
+// Max engine thrust percentage during the final few seconds.
 local FINE_TUNE_BURN_RATE is 0.2.
 lock facingError to ABS(VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR)).
 lock safeThrottle to 1 - sqrt(facingError / maxFacingDeviation). // Full stop at an error of maxFacingDeviation.
 lock secsToBurn to NEXTNODE:DELTAV:MAG / acceleration.
-lock burnMessage to "  " + ROUND(secsToBurn, 1) + "s | " + ROUND(facingError, 2) + " facing error.".
+lock burnMessage to "  " + ROUND(secsToBurn, 1) + "s | " + ROUND(facingError, 2) + "% facing error.".
 local burnType is "normal".
 local maxSafePhysicsSpeed is 3.
-
-printLine("Starting burn sequence...").
+local stoppedBurningTime is -1.
+local stoppedBurningFacingError is -1.
+local minThrottle is 0.
 
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	local newThrottle is safeThrottle.
@@ -125,8 +126,29 @@ until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 			set newThrottle to MIN(newThrottle, FINE_TUNE_BURN_RATE).
 		}
 	}
+	
+	// Check if we've stopped burning to fix alignment.  If so let's make sure we actually are getting to be more aligned.
+	// Otherwise it's possible that our target burn vecotr is changing more rapidly than we can keep up with.
+	// In that situation it is better to just force the burn to help fix the alignment.
+	if facingError > 0.5 and minThrottle < 1 {
+		if stoppedBurningTime = -1 {
+			set stoppedBurningTime to TIME:SECONDS.
+			set stoppedBurningFacingError to facingError.
+		} else if TIME:SECONDS - stoppedBurningTime > 1 {
+			if facingError >= stoppedBurningFacingError {
+				set minThrottle to minThrottle + 0.1.
+				set stoppedBurningTime to -1.
+				set stoppedBurningFacingError to -1.
+				printLine("WARNING: Unaligned, up min. burn to " + minThrottle).
+			}
+		}
+	} else {
+		set stoppedBurningTime to -1.
+		set stoppedBurningFacingError to -1.
+	}
+	
 	printLine(burnMessage, true).
-	lock throttle to newThrottle.
+	lock throttle to MAX(newThrottle, minThrottle).
 	wait 0.001.
 }
 lock THROTTLE to 0.
