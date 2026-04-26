@@ -95,11 +95,13 @@ function addNodeAtTime {
 function stageIfNeeded {
 	parameter throttleWhileStaging is 0.
 
+	local didStage is false.
 	if SHIP:AVAILABLETHRUST = 0 {
 		if _shouldStage() {
 			local priorThrottle is THROTTLE.
 			lock THROTTLE to throttleWhileStaging.
 			stage.
+			set didStage to true.
 			if throttleWhileStaging > 0 {
 				// If we are full-throttle staging, continue straight for a few secs to clear the depres.
 				wait 5.
@@ -112,6 +114,7 @@ function stageIfNeeded {
 			wait 5.
 		}
 	}
+	return didStage.
 }
 
 function _shouldStage {

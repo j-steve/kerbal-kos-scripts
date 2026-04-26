@@ -37,7 +37,10 @@ if PERIAPSIS > 0 {
 	local retrogradeSection is printSectionStart("Burning retrograde to intercept planet...").
 	alignHeaderToRetrograde().
 	lock THROTTLE to 1.
-	wait until PERIAPSIS <= 0.
+	until PERIAPSIS <= 0 {
+		stageAndUpdateHeightIfNeeded().
+		wait 0.01.
+	}
 	lock THROTTLE to 0.
 	wait 0.
 	retrogradeSection:END().
@@ -62,11 +65,11 @@ if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 			lock orbitBurnTime to SHIP:VELOCITY:ORBIT:MAG / acceleration.
 			if orbitBurnTime > MIN_BURN_TIME {
 				printLine("  Doing solid burn for <= " + round(orbitBurnTime) + "s", true).
-				setThrottle(1).
+				lock throttle to 1.
 			}
 			if SHIP:VELOCITY:ORBIT:MAG / acceleration  < 2 {
 				printLine("  Doing correction burn | lateral speed: " + round(lateralMotion), true).
-				setThrottle(0.2).
+				lock throttle to 0.2.
 			}
 			// Prevent getting stuck forever making small changes.
 			if lateralMotion < 15 {
@@ -81,6 +84,7 @@ if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 			printLine("  Waiting for alignment | lateral speed: " + round(lateralMotion), true).
 			lock THROTTLE to 0.
 		}
+		stageAndUpdateHeightIfNeeded().
 		wait 0.001.
 	}
 	lock THROTTLE to 0.
@@ -115,9 +119,11 @@ until surfaceBurnTime >= collisionEta {
 // Execute final descent burn.
 set WARP to 0.
 printLine("Starting final descent burn...").
+lock THROTTLE to surfaceBurnTime / collisionEta.
 until ALT:RADAR <= shipHeightOffset + ENGINE_CUTOFF_ALTITUDE or SHIP:STATUS = "LANDED" or SHIP:STATUS = "SPLASHED" {
 	printLine("  collision: " + round(collisionEta) + "s | burn time: " + round(surfaceBurnTime) + "s | speed: " + round(fallSpeed), true).
-	setThrottle(surfaceBurnTime / collisionEta).
+	stageAndUpdateHeightIfNeeded().
+	wait 0.001.
 }
 printLine("  done").
 
@@ -133,18 +139,6 @@ wait 20.
 printLine("Landing sequence complete.").
 SAS on.
 unlock STEERING.
-
-function setThrottle {
-	parameter throttleVal.
-	if SHIP:AVAILABLETHRUST = 0 {
-		lock THROTTLE to 0.
-		stage.
-		wait 10. // Wait for new values so acceleration is updated for next stage.
-		set shipHeightOffset to calcShipHeight().
-	} else {
-		lock THROTTLE to throttleVal.
-	}
-}
 
 // Returns the height of the ship above ground.
 // Specifically, the height of the core part (the space capsule or control pod) 
@@ -172,4 +166,11 @@ function getLowestPart {
 function getPartHeight {
 	parameter part.
 	return vdot(SHIP:FACING:FOREVECTOR, part:POSITION).
+}
+
+function stageAndUpdateHeightIfNeeded() {
+	local wasStaged is stageIfNeeded().
+	if wasStaged {
+		set shipHeightOffset to calcShipHeight().
+	}
 }

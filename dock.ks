@@ -74,7 +74,10 @@ function dock {
     // lock STEERING to currentFacing.
     printLine("Hiting throttle, throttling up...").
     lock THROTTLE to 0.005.
-    wait until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 0.2.
+    until (SHIP:VELOCITY:ORBIT - _target:VELOCITY:ORBIT):MAG > 0.2 {
+		stageIfNeeded().
+		wait 0.1.
+	}
     lock THROTTLE to 0.
     
     printLine("Waiting for docking...").

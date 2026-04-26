@@ -94,12 +94,8 @@ local burnSlowSection is printSectionStart("Burning to slow down...").
 set WARPMODE to "PHYSICS".
 set WARP to 4.
 until STAGE:NUMBER = 0 or SHIP:ALTITUDE - SHIP:GEOPOSITION:TERRAINHEIGHT < 15000{
-    if SHIP:AVAILABLETHRUST = 0 {
-        printLine("No throttle, staging.").
-        stage.
-        wait until stage:ready.
-    }
-    wait 0.5.
+    stageIfNeeded().
+    wait 0.1.
 }
 until STAGE:NUMBER = 0 {
     stage.
