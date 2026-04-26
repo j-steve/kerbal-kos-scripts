@@ -10,7 +10,7 @@ RUNONCEPATH("/common/init.ks").
 // The minimum deviation between the expected node and the actual node.
 // Lower number means that the final course will match the orignal more precisely,
 // but it may take longer to achieve.
-declare parameter maxFinalDeviation is 0.2, maxFacingDeviation is -1.
+declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is -1.
 if maxFacingDeviation = -1 {
 	set maxFacingDeviation to maxFinalDeviation * 10.
 }
@@ -41,7 +41,7 @@ set WARP to 0.
 set WARPMODE to "RAILS".
 wait 0.5. // Ensure throttle is 0 before we warp.
 if warpTime > 36000 { // 10 hours
-	printLine("    Warping speed 6").
+	printLine("    Warping speed 7").
 	set WARP to 7.
 	wait warpTime - 36000. 
 }
@@ -65,7 +65,13 @@ if warpTime > 600 {
 if warpTime > 120 {
 	printLine("    Warping speed 3").
 	set WARP to 3.
-	wait warpTime - (120 / 2).
+	wait warpTime - 120 * 2. // Prevent warping past it
+	set warpTime to NEXTNODE:ETA - halfBurnTime.
+}
+if warpTime > 50 {
+	printLine("    Warping speed 2").
+	set WARP to 2.
+	wait warpTime - 50.
 	set warpTime to NEXTNODE:ETA - halfBurnTime.
 }
 if (warpTime > 0) {
@@ -84,72 +90,54 @@ if WARP > 0 {
 
 printLine("Starting burn...").
 
+// Some ships are too large to safely warp under thurst.
+// Check for angular velocity which should be close to 0 once aligned and under burn.
+// High angular velocity = high "wobble" which can indicate Krackening and pending ship explosion.
+local MAX_WOBBLE is 0.0075.
+// Max engine thrust
+local FINE_TUNE_BURN_RATE is 0.2.
 lock facingError to ABS(VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR)).
 lock safeThrottle to 1 - sqrt(facingError / maxFacingDeviation). // Full stop at an error of maxFacingDeviation.
-		
-if (burnTime > 1) {
-	lock THROTTLE to 1.0.
-} else {
-	lock THROTTLE to 0.1.
-}
-// lock stageDeltaV to SHIP:STAGEDELTAV(SHIP:STAGENUM):CURRENT.
-// wait 2. // Wait for engines in case we're nuclear.
-if NEXTNODE:DELTAV:MAG / acceleration > 10 {
-	increasePhysicsWarpTo(2).
-}
-// until stageDeltaV > NEXTNODE:DELTAV:MAG {
-// 	printLine("  Will have to stage mid-burn.").
-// 	if facingError > maxFacingDeviation * .5 {
-// 		set WARP to 0.
-// 	} else {
-// 		increasePhysicsWarpTo(2).
-// 	}
-// 	set stageBurnTime to stageDeltaV / acceleration.
-// 	until stageDeltaV <= 0 {
-// 		lock throttle to safeThrottle.
-// 	}
-// 	printLine("  Staging.").
-// 	stage.
-// 	wait until STAGE:READY.
-// 	printLine("    done").
-// 	set burnTime to burnTime - stageBurnTime.
-//     wait 0.001.
-// }
+lock secsToBurn to NEXTNODE:DELTAV:MAG / acceleration.
+lock burnMessage to "  " + ROUND(secsToBurn, 1) + "s | " + ROUND(facingError, 1) + " facing error.".
+local burnType is "normal".
+local maxSafePhysicsSpeed is 3.
 
-// Some ships are too large to safely warp under thurst.
-// If we have to repeatedly disable physics, we'll stop trying.
-// This prevents large shups from repeatedly trying to warp under thurst,
-// which can cause issues and potentially even destroy them.
-local _maxSafePhysicsSpeed is 3.
+printLine("Starting burn sequence...").
+
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
-	if SHIP:ANGULARVEL:MAG > 0.0075 and WARP > 0 and _maxSafePhysicsSpeed > 0 {
-		// Use angular velocity to detect the Kracekning.
-		set _maxSafePhysicsSpeed to WARP - 1.
-		printLine("WARNING: Oscilations, slowing warp to " + _maxSafePhysicsSpeed).
-		setPhysicsWarpTo(_maxSafePhysicsSpeed).
-		wait 2.
-	}
-	if facingError > maxFacingDeviation * .5 {
-		if WARP > 0 {
-			//KUNIVERSE:TIMEWARP:CANCELWARP().
-		}
-	}  else {
-		setPhysicsWarpTo(_maxSafePhysicsSpeed).
-	}
 	local newThrottle is safeThrottle.
-	if NEXTNODE:DELTAV:MAG / acceleration < 10 { // last 10 seconds of burn
+	if secsToBurn > 10 {
+		// Use angular velocity to detect the Krackening.
+		if SHIP:ANGULARVEL:MAG > MAX_WOBBLE and WARP > 0 and maxSafePhysicsSpeed > 0 {
+			printLine("WARNING: Oscilations, slowing warp to " + maxSafePhysicsSpeed).
+			set maxSafePhysicsSpeed to WARP - 1.
+			setPhysicsWarpTo(maxSafePhysicsSpeed).
+			wait 2.
+		} else if facingError < maxFacingDeviation * .5 { // If we are perfectly aligned, increase warp.
+			setPhysicsWarpTo(maxSafePhysicsSpeed).
+		} else {
+			KUNIVERSE:TIMEWARP:CANCELWARP().
+		}
+	} else {
 		KUNIVERSE:TIMEWARP:CANCELWARP().
-		if NEXTNODE:DELTAV:MAG / acceleration < 1.5 { // last 1.5 seconds of burn
-			set newThrottle to newThrottle * 0.2.
+		if secsToBurn < 1.5 {
+			set newThrottle to MIN(newThrottle, FINE_TUNE_BURN_RATE).
 		}
 	}
+	printLine(burnMessage, true).
 	lock throttle to newThrottle.
 	wait 0.001.
 }
 lock THROTTLE to 0.
 
+
 unlock THROTTLE.
-if HASNODE {remove NEXTNODE.}
-printLine("Burn complete.").
+if HASNODE {
+	printLine("Burn complete (deviation: " + ROUND(NEXTNODE:DELTAV:MAG, 2) + "%).").
+	remove NEXTNODE.
+} else {
+	printLine("Burn complete.").
+}
 
 startupData:END().

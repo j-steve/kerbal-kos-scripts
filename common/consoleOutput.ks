@@ -41,6 +41,7 @@ function printSectionStart {
 
 function printLine {
 	parameter text, overwriteLast is false.
+	
 	set text to printPrefix + text.
 	if not overwriteLast {log (round(TIME:SECONDS) + ": " + text) to "log.txt".}
 	if isFirstPrint {
