@@ -96,10 +96,19 @@ printLine("Starting burn...").
 local MAX_WOBBLE is 0.0075.
 // Max engine thrust percentage during the final few seconds.
 local FINE_TUNE_BURN_RATE is 0.2.
+// If we have an uncorrectable facing error of this amount of degrees or higher,
+// the system will terminate in an error state, because we cannot complete the objective.
+// Less than X degrees implies we're still ROUGHLY on target.
+local MAX_FACING_ERROR is 90.
+// Check every X seconds to see if we need to increase our min burn;
+// i.e., wait X seconds after adjustments to allow a chance to course correct.
+local STOP_BURN_CHECK_SECS is 2. 
+
 lock facingError to ABS(VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR)).
 lock safeThrottle to 1 - sqrt(facingError / maxFacingDeviation). // Full stop at an error of maxFacingDeviation.
 lock secsToBurn to NEXTNODE:DELTAV:MAG / acceleration.
 lock burnMessage to "  " + ROUND(secsToBurn, 1) + "s | " + ROUND(facingError, 2) + "% facing error.".
+
 local burnType is "normal".
 local maxSafePhysicsSpeed is 3.
 local stoppedBurningTime is -1.
@@ -130,16 +139,18 @@ until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 	// Check if we've stopped burning to fix alignment.  If so let's make sure we actually are getting to be more aligned.
 	// Otherwise it's possible that our target burn vecotr is changing more rapidly than we can keep up with.
 	// In that situation it is better to just force the burn to help fix the alignment.
-	if facingError > 0.5 and minThrottle < 1 {
+	if facingError > 0.5 {
 		if stoppedBurningTime = -1 {
 			set stoppedBurningTime to TIME:SECONDS.
 			set stoppedBurningFacingError to facingError.
-		} else if TIME:SECONDS - stoppedBurningTime > 1 {
-			if facingError >= stoppedBurningFacingError {
+		} else if TIME:SECONDS - stoppedBurningTime > STOP_BURN_CHECK_SECS and facingError >= stoppedBurningFacingError {
+			if minThrottle < 1  {
 				set minThrottle to minThrottle + 0.1.
 				set stoppedBurningTime to -1.
 				set stoppedBurningFacingError to -1.
 				printLine("WARNING: Unaligned, up min. burn to " + minThrottle).
+			} else if facingError > MAX_FACING_ERROR {
+				throwError("Cannot correct facing deviation.").
 			}
 		}
 	} else {
