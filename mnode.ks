@@ -15,26 +15,26 @@ if maxFacingDeviation = -1 {
 	set maxFacingDeviation to 1.
 }
 
+wait 0.001. // Wait a fraction of a sec in case a new nav node was added.
 if not HASNODE {
-	wait 1. // Maybe it just hasnt kicked in yet?
-	if not HASNODE {
-		throwError("No maneuver node exists.").
-	}
+	throwError("No maneuver node exists.").
 }
+
+local startupData is startup("Executing next maneuver node.").
 
 // NOTE: Atomic engines may show an initial acceleration of 0 (they need to warm up),
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 
-local startupData is startup("Executing next maneuver node.").
+local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
+lock warpTime to NEXTNODE:ETA - halfBurnTime.
+local halfBurnTime is burnTime / 2.
 
 // Align header.
-alignHeaderTo(NEXTNODE:BURNVECTOR, "maneuver node burn vector").
+alignHeaderTo(NEXTNODE:BURNVECTOR, "maneuver node burn vector", warpTime).
 
 // Calculate burn time.
 printLine("Aligned, warping to node start...").
-local burnTime is NEXTNODE:DELTAV:MAG / acceleration.
 printLine("  Will burn for " + round(burnTime) + " seconds.").
-local halfBurnTime is burnTime / 2.
 
 lock warpTime to NEXTNODE:ETA - halfBurnTime.
 printLine("  Warping " + round(warpTime) + " seconds.").
@@ -72,7 +72,7 @@ if warpTime > 50 {
 	wait warpTime - 50.
 }
 if (warpTime > 0) {
-	set WARP to 1.
+	setPhysicsWarpTo(1).
 	printLine("    Warping speed 1").
 	wait warpTime - 10.
 	printLine("    Warping speed 0").
@@ -109,8 +109,8 @@ until NEXTNODE:DELTAV:MAG < maxFinalDeviation {
 
 	physicsWarper:adjustWarpSpeed(secsToBurn, facingError).
 
-	// local minThrottle is minThrottler:findMinThrottle(facingError, newThrottle).
-	// set newThrottle to MAX(newThrottle, minThrottle).
+	//local minThrottle is minThrottler:findMinThrottle(facingError, newThrottle).
+	//set newThrottle to MAX(newThrottle, minThrottle).
 
 	if secsToBurn < 1.5 {
 		set newThrottle to MIN(newThrottle, FINE_TUNE_BURN_RATE).

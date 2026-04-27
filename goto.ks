@@ -1,6 +1,10 @@
 // -------------------------------------------------------------------------------------------------
 // This program is a "master controller" that can run a complete mission from launch to return,
 // by chaining together the other sub-programs as needed.
+//
+// PARAMETERS:
+// 	 targetEntity: The vessel name (`"Station II"`) or body name (`MINMUS`).  If not set, defaults to TARGET.
+//   targetObjective: What to do on reaching the target.  Valid options are "flyby", "orbit", "dock", or "land".
 // 
 // EXAMPLE USAGE:
 //   goto.ks().                    : Launch, intercept Minmus, and dock at Station II in its orbit.
@@ -22,7 +26,13 @@ if targetEntity = -1 {
 }
 local targetSoi is _getEntityBody(targetEntity).
 if targetAltitude = -1 {
-	if (targetSoi = MUN) {
+	if targetObjective = "land" {
+		if targetEntity:ATM:EXISTS {
+			set targetAltitude to targetEntity:ATM:HEIGHT * 0.8.
+		} else {
+			set targetAltitude to 0.
+		}
+	} else if (targetSoi = MUN) {
 		set targetAltitude to 40000.
 	} else if (targetSoi = MINMUS) {
 		set targetAltitude to 20000.
@@ -37,23 +47,13 @@ local executeGoto is {
 	local startupData is startup().
 	clearNodes().
 
-	if targetEntity = SHIP {
-		if HASTARGET {
-			SET targetEntity to TARGET.
-		} else {
-			printLine("No target, defaulting to Station II.").
-			SET targetEntity to VESSEL("Station II").
-		}
-	} else {
-		set TARGET to targetEntity.
-	}
 	set TARGET to targetSoi.
 
 	local wasLaunched is false.
 	if SHIP:STATUS = "PRELAUNCH" or SHIP:STATUS = "LANDED" {
 		local launchInc is 90.
 		if targetSoi = MINMUS {
-			// TODO: if uncrewed, wait until minmus is overhead.
+			// TODO: if uncrewed, wait until TAGET is overhead, e.g. for minmus.
 			// SET WARP TO 4.
 			// WAIT UNTIL VANG(SHIP:FACING:FOREVECTOR, MINMUS:POSITION) < 10.
 			// set launchInc to 84.
@@ -108,7 +108,11 @@ local executeGoto is {
 	// TODO: Why isn't this being triggered on a trip to minmus?
 	printLine("ship body: " + ship:body + " target soi: " + targetSoi).
 	if SHIP:BODY <> targetSoi {
-		until abs(soiPatch:periapsis - targetAltitude)  < targetAltitude * .05 {
+		// If our target altitude is very low (or 0), we dont want to force the final distance to hit that exactly.
+		// The min variance is the minimum amount of deviation considered acceptable, e.g. even if we are off by X meters,
+		// we will say "mission accomplished".
+		local MIN_VARIANCE_METERS is 1000.
+		until abs(soiPatch:periapsis - targetAltitude)  < MAX(targetAltitude * .05, MIN_VARIANCE_METERS) {
 			RUNPATH("finetune.ks", targetAltitude).
 			clearNodes().
 		}
@@ -131,6 +135,10 @@ local executeGoto is {
 
 		RUNPATH("return.ks").
 		
+		printLine("Mission complete!").
+		return.
+	} else if targetObjective = "land" {
+		RUNPATH("land.ks").
 		printLine("Mission complete!").
 		return.
 	}
