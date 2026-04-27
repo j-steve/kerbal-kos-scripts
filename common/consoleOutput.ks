@@ -60,7 +60,7 @@ function printLine {
 	} else {
 		if priorLineOverwritable {
 			// Clear the text from the prior line.
-			//print CLEAR_LINE at (0, currentPrintLine).
+			print CLEAR_LINE at (0, currentPrintLine).
 		} else {
 		}
 		set text to text:SUBSTRING(0, MIN(text:LENGTH, Terminal:WIDTH-1)).

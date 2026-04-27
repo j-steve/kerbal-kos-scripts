@@ -1,10 +1,3 @@
-lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
-
-function calcBurnTime {
-	parameter deltaV.
-
-	return deltaV / acceleration.
-}
 
 function isFacingRetrograde {
 	return VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:ORBIT:NORMALIZED) < 2.5.
@@ -103,8 +96,9 @@ function stageIfNeeded {
 			stage.
 			set didStage to true.
 			if throttleWhileStaging > 0 {
-				// If we are full-throttle staging, continue straight for a few secs to clear the depres.
-				wait 5.
+				wait 5. // If we are full-throttle staging, continue straight for a few secs to clear the depres.
+			} else {
+				wait 1.  // Otherwise wait a second for the new stage to kick in.
 			}
 			wait until stage:ready.
 			lock THROTTLE to priorThrottle.
@@ -169,7 +163,7 @@ function alignHeaderTo {
 	if TIME:SECONDS > alignmentTimeout {
 		printLine("WARNING: Failed to align after " + timeoutSeconds + " seconds, aborting.").
 	} else {
-		printLine("    Aligned.").
+		printLine("    Aligned within " + ROUND(VANG(SHIP:FACING:FOREVECTOR, targetVector), 2) + ".").
 	}
 	KUNIVERSE:TIMEWARP:CANCELWARP().
 }
