@@ -168,7 +168,7 @@ function getPartHeight {
 	return vdot(SHIP:FACING:FOREVECTOR, part:POSITION).
 }
 
-function stageAndUpdateHeightIfNeeded() {
+function stageAndUpdateHeightIfNeeded {
 	local wasStaged is stageIfNeeded().
 	if wasStaged {
 		set shipHeightOffset to calcShipHeight().
