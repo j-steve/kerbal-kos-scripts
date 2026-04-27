@@ -96,6 +96,8 @@ local executeGoto is {
 			printLine("Updating inc" + ABS(SHIP:ORBIT:INCLINATION - targetSoi:ORBIT:INCLINATION)).
 			RUNPATH("inc.ks").
 			clearNodes().
+		} else {
+			printLine("Inclination within 1 degree, not adjusting.").
 		}
 
 		RUNPATH("txfr.ks").

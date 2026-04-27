@@ -14,6 +14,14 @@ declare parameter maxFinalDeviation is 0.1, maxFacingDeviation is -1.
 if maxFacingDeviation = -1 {
 	set maxFacingDeviation to 1.
 }
+
+if not HASNODE {
+	wait 1. // Maybe it just hasnt kicked in yet?
+	if not HASNODE {
+		throwError("No maneuver node exists.").
+	}
+}
+
 // NOTE: Atomic engines may show an initial acceleration of 0 (they need to warm up),
 lock acceleration to SHIP:AVAILABLETHRUST / SHIP:MASS.
 
@@ -90,15 +98,14 @@ local FINE_TUNE_BURN_RATE is 0.2.
 
 local physicsWarper is buildPhysicsWarper(maxFacingDeviation).
 local minThrottler is buildMinThrottler(maxFacingDeviation).
-local priorSecsToBurn is NEXTNODE:DELTAV:MAG / acceleration.
 
 until NEXTNODE:DELTAV:MAG < maxFinalDeviation { 
 	lock STEERING TO LOOKDIRUP(NEXTNODE:BURNVECTOR, SHIP:UP:VECTOR).
 	stageIfNeeded().
 	
-	local secsToBurn is NEXTNODE:DELTAV:MAG / acceleration.
+	local secsToBurn is choose NEXTNODE:DELTAV:MAG / acceleration if acceleration > 0 else 0.
 	local facingError is VANG(SHIP:FACING:FOREVECTOR, NEXTNODE:BURNVECTOR).
-	local newThrottle is MAX((1 - sqrt(facingError / maxFacingDeviation)) * 2, 0). // Full stop at an error of maxFacingDeviation.
+	local newThrottle is MIN(MAX((1 - sqrt(facingError / maxFacingDeviation)) * 2, 0), 1). // Full stop at an error of maxFacingDeviation.
 
 	physicsWarper:adjustWarpSpeed(secsToBurn, facingError).
 
@@ -118,6 +125,7 @@ lock THROTTLE to 0.
 
 
 unlock THROTTLE.
+unlock STEERING.
 if HASNODE {
 	printLine("Burn complete (dev: " + ROUND(NEXTNODE:DELTAV:MAG, 2) + ").").
 	remove NEXTNODE.
