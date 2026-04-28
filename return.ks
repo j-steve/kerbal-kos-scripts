@@ -76,7 +76,7 @@ until ABS(50000-PERIAPSIS) < 2500 {
 }
 
 local periapsisWarpSection is printSectionStart("Warping to periapsis...").
-warpToEta(ETA:PERIAPSIS - 5 * 15).
+warpToEta(ETA:PERIAPSIS - 600).
 RCS on.
 PANELS off.
 lock STEERING to RETROGRADE.

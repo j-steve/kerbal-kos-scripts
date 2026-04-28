@@ -46,6 +46,12 @@ if PERIAPSIS > 0 {
 	retrogradeSection:END().
 }
 
+if ALT:RADAR > 100000 {
+	printLine("Warping to get close (level 5)...").
+	set WARP to 5.
+	wait until ALT:RADAR < 100000.
+}
+
 if ALT:RADAR > 25000 {
 	printLine("Warping to get close...").
 	set WARP to 4.
@@ -57,33 +63,15 @@ set WARP to 0.
 lock lateralMotion to abs(SHIP:VELOCITY:SURFACE:MAG - abs(fallSpeed)).
 set closeEnoughTimeout to 0.
 lock STEERING to SRFRETROGRADE.
+set MAX_FACING_DEVIATION to 5.
 if lateralMotion > 0.11 and (collisionEta < 0 or collisionEta > 60) {
 	alignHeaderTo(-SHIP:VELOCITY:SURFACE, "surface retrograde", 60).
 	printLine("Burning retrograde to kill lateral motion...").
 	until lateralMotion < 0.01 or (collisionEta > 0 and collisionEta < 60) {
-		if isFacingRetrograde() {
-			lock orbitBurnTime to SHIP:VELOCITY:ORBIT:MAG / acceleration.
-			if orbitBurnTime > MIN_BURN_TIME {
-				printLine("  Doing solid burn for <= " + round(orbitBurnTime) + "s", true).
-				lock throttle to 1.
-			}
-			if SHIP:VELOCITY:ORBIT:MAG / acceleration  < 2 {
-				printLine("  Doing correction burn | lateral speed: " + round(lateralMotion), true).
-				lock throttle to 0.2.
-			}
-			// Prevent getting stuck forever making small changes.
-			if lateralMotion < 15 {
-				if closeEnoughTimeout = 0 {
-					set closeEnoughTimeout to time:seconds + 30.
-				} else if time:seconds >= closeEnoughTimeout {
-					printLine("  Close enough, correction timed out. | lateral speed: " + round(lateralMotion)).
-					break.
-				}
-			}
-		} else {
-			printLine("  Waiting for alignment | lateral speed: " + round(lateralMotion), true).
-			lock THROTTLE to 0.
-		}
+		lock STEERING to SRFRETROGRADE.
+		local facingError is VANG(SHIP:FACING:FOREVECTOR, -SHIP:VELOCITY:SURFACE).
+		local newThrottle is MIN(MAX((1 - sqrt(facingError / MAX_FACING_DEVIATION)) * 2, 0), 1).
+		lock THROTTLE to newThrottle.
 		stageAndUpdateHeightIfNeeded().
 		wait 0.001.
 	}
