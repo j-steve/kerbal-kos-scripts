@@ -57,7 +57,10 @@ until PERIAPSIS < 500000 {
     local periapsisSection is printSectionStart("Reducing periapsis...").
     alignHeaderToRetrograde().
     lock THROTTLE to 1.
-    wait until PERIAPSIS < 500000.
+    until PERIAPSIS < 500000 {
+		stageIfNeeded().
+		wait 0.1.
+	}
     lock THROTTLE to 0.
     // local returnNode is NODE(TIME:SECONDS + 10 * 60, 0, 0, 0).
     // ADD returnNode.
