@@ -203,5 +203,12 @@ function execRendezvous {
         parameter _distance.
         return distanceBetween(SHIP:POSITION, _target:POSITION) < _distance.
     }
+	
+	function calcBurnTime {
+		parameter deltaV.
+		
+		local acceleration is SHIP:AVAILABLETHRUST / SHIP:MASS.
+		return deltaV / acceleration.
+	}
 
 }

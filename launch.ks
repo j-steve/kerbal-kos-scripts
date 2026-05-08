@@ -167,18 +167,20 @@ function calcRequiredVelocityAtApoapsis {
 // Activates all deployables that should be initated when we hit space: solar panels, fairings, antennas.
 function deploySolarPanels {
     for part in SHIP:PARTS {
-		for module in part:MODULES {
-			if part:HASMODULE("ModuleProceduralFairing") {
-				local fairingModule is part:GETMODULE("ModuleProceduralFairing").
-				if fairingModule:HASEVENT("deploy") {
-					fairingModule:DOEVENT("deploy").
+		if part:TAG <> "ignore" {
+			for module in part:MODULES {
+				if part:HASMODULE("ModuleProceduralFairing") {
+					local fairingModule is part:GETMODULE("ModuleProceduralFairing").
+					if fairingModule:HASEVENT("deploy") {
+						fairingModule:DOEVENT("deploy").
+					}
 				}
-			}
-			if part:GETMODULE(module):HASEVENT("extend solar panel") {
-				part:GETMODULE(module):doevent("extend solar panel").
-			}
-			if part:GETMODULE(module):HASEVENT("extend antenna") {
-				part:GETMODULE(module):doevent("extend antenna").
+				if part:GETMODULE(module):HASEVENT("extend solar panel") {
+					part:GETMODULE(module):doevent("extend solar panel").
+				}
+				if part:GETMODULE(module):HASEVENT("extend antenna") {
+					part:GETMODULE(module):doevent("extend antenna").
+				}
 			}
 		}
     }

@@ -1,8 +1,7 @@
 @lazyGlobal OFF.
 
 CD("0:").
-RUNONCEPATH("common.ks").
-RUNONCEPATH("dockUtils.ks").
+RUNONCEPATH("/common/init.ks").
 
 until false {
     printLine("Monitoring for harbor traffic...").

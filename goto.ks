@@ -63,13 +63,14 @@ local executeGoto is {
 		set wasLaunched to true.
 	}
 
-	if targetEntity = SUN {
+	if targetSoi <> SHIP:ORBIT:BODY and targetSoi:ORBIT:BODY <> SHIP:ORBIT:BODY {
+		printLine("Transferring to a different planet").
 		if SHIP:ORBIT:BODY <> SUN {
 			_execEscape().
 		}
 		if SHIP:ORBIT:BODY = SUN {
 			printLine("Reached Kerbol (Sun) orbit.").
-			if targetObjective = "flyby" {
+			if target = SUN and targetObjective = "flyby" {
 				local returnNode is addNodeAtEta(60).
 				until returnNode:ORBIT:HASNEXTPATCH and returnNode:ORBIT:NEXTPATCHETA < 60 * 60 * 5 {
 					// Wait for patch to be <= 5 hours into the future.  We don't want to wait to intercept Kerbin next year or something.
@@ -80,6 +81,8 @@ local executeGoto is {
 				warpToSoiTransfer().
 				RUNPATH("return.ks").
 			}
+		} else {
+			RUNPATH("txfr.ks", true).
 		}
 		return.
 	}

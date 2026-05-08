@@ -19,7 +19,7 @@ function listOpenDockingPorts {
 				wait until _part:state = "Ready" or time:seconds > _deadline.
 			}
 		}
-        if _part:STATE = "Ready" and _part:TAG <> "nodock" {
+        if _part:STATE = "Ready" and _part:TAG <> "nodock" and _part:TAG <> "ignore" {
             if portSize = -1 or _part:NODETYPE = portSize {
                 dockingPorts:ADD(_part).
             }
